@@ -6,11 +6,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
-// Load the GeoJSON file
-fetch('ethiopia.geojson')
-    .then(response => response.json())
-    .then(data => {
-        // Add the GeoJSON layer to the map
-        L.geoJSON(data).addTo(map);
-    })
-    .catch(error => console.log('Error loading the GeoJSON file:', error));
+// Function to load GeoJSON file
+function loadGeoJSON(url, styleOptions) {
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: styleOptions
+            }).addTo(map);
+        })
+        .catch(error => console.log('Error loading the GeoJSON file:', error));
+}
+
+// Load GeoJSON files
+loadGeoJSON('ethiopia.geojson', {color: 'blue', weight: 2});
+loadGeoJSON('eth_zone.geojson', {color: 'green', weight: 2});
+loadGeoJSON('eth_reg.geojson', {color: 'red', weight: 2});
