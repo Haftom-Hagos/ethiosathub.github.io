@@ -3,40 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Basic Website</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Map of Ethiopia</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>A new versatile Website</h1>
-        </div>
-    </header>
-    
-    <nav>
-        <div class="container">
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Services</a></li>
-                <li><a href="#">Contact</a></li>
-            </ul>
-        </div>
-    </nav>
-    
-    <main>
-        <div class="container">
-            <section>
-                <h2>Welcome to My Website</h2>
-                <p>This is a trial website development.</p>
-            </section>
-        </div>
-    </main>
-    
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 My Website. All rights reserved.</p>
-        </div>
-    </footer>
+    <h1>Map of Ethiopia</h1>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
