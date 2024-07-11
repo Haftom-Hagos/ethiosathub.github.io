@@ -9,13 +9,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // Function to load GeoJSON file
 function loadGeoJSON(url, styleOptions) {
     fetch(url)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('GeoJSON data loaded successfully from ' + url);
             L.geoJSON(data, {
                 style: styleOptions
             }).addTo(map);
         })
-        .catch(error => console.log('Error loading the GeoJSON file:', error));
+        .catch(error => console.error('Error loading the GeoJSON file:', error));
 }
 
 // Load GeoJSON files
