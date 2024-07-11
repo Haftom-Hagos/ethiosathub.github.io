@@ -26,7 +26,7 @@ function loadGeoJSON(url, styleOptions, layerName) {
         .catch(error => console.error('Error loading the GeoJSON file:', error));
 }
 
-// Load GeoJSON files and add initial layers to the map
+// Load GeoJSON files
 loadGeoJSON('ethiopia.geojson', {color: 'blue', weight: 2}, 'ethiopia');
 loadGeoJSON('eth_zone.geojson', {color: 'green', weight: 2}, 'zone');
 loadGeoJSON('eth_reg.geojson', {color: 'red', weight: 2}, 'region');
@@ -50,5 +50,4 @@ document.getElementById('zone').addEventListener('change', function(event) {
 });
 
 document.getElementById('region').addEventListener('change', function(event) {
-    toggleLayer('region', event.target.checked);
-});
+    toggleLayer('
