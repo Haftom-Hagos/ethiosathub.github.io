@@ -57,6 +57,9 @@
             <button class="tablinks" onclick="openTab(event, 'home')">Home</button>
         </div>
         <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'maps')">Maps</button>
+        </div>
+        <div class="tab">
             <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
         </div>
         <div class="tab">
@@ -70,9 +73,17 @@
         </div>
     </div>
 
-    <div id="home" class="tabcontent">
+    <div id="home" class="tabcontent" style="display: block;">
         <h3>Home</h3>
         <p>Welcome to the Home page!</p>
+    </div>
+
+    <div id="maps" class="tabcontent">
+        <h3>Maps</h3>
+        <div id="map"></div>
+        <div class="layer-control">
+            <label><input type="checkbox" id="osm" checked> OpenStreetMap</label><br>
+        </div>
     </div>
 
     <div id="data" class="tabcontent">
@@ -95,15 +106,6 @@
         <p>Contact information goes here.</p>
     </div>
 
-    <div id="map"></div>
-
-    <div class="layer-control">
-        <label><input type="checkbox" id="ethiopia" checked> Ethiopia</label><br>
-        <label><input type="checkbox" id="zone" checked> Zones</label><br>
-        <label><input type="checkbox" id="region" checked> Regions</label><br>
-        <label><input type="checkbox" id="river" checked> Rivers</label>
-    </div>
-
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="script.js"></script>
 
@@ -120,6 +122,37 @@
             }
             document.getElementById(tabName).style.display = "block";
             evt.currentTarget.className += " active";
+
+            // If Maps tab is clicked, initialize or update map
+            if (tabName === 'maps') {
+                initializeMap();
+            }
+        }
+
+        function initializeMap() {
+            if (!map) {
+                // Initialize the map if it's not already initialized
+                var map = L.map('map').setView([9.145, 40.489673], 6);
+
+                // Add OpenStreetMap tile layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                // Event listener for OpenStreetMap checkbox
+                document.getElementById('osm').addEventListener('change', function(event) {
+                    if (event.target.checked) {
+                        map.addLayer(osmLayer);
+                    } else {
+                        map.removeLayer(osmLayer);
+                    }
+                });
+
+                // Store map globally so it can be accessed and reused
+                window.map = map;
+                // Initial layer added
+                var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            }
         }
 
         // Show default tab on page load
