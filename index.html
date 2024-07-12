@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Leaflet Map with GeoJSON</title>
+    <title>Leaflet Map with GeoJSON and Tabs</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map { height: 600px; }
@@ -15,18 +15,115 @@
             padding: 10px;
             border-radius: 5px;
         }
+        .tabs {
+            overflow: hidden;
+            background-color: #f1f1f1;
+        }
+
+        .tab {
+            float: left;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            width: calc(20% - 2px); /* Adjust width based on number of tabs */
+        }
+
+        .tab button {
+            display: block;
+            background-color: inherit;
+            color: black;
+            padding: 14px 16px;
+            width: 100%;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border-top: none;
+        }
     </style>
 </head>
 <body>
+    <div class="tabs">
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'home')">Home</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'about')">About</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'contact')">Contact</button>
+        </div>
+    </div>
+
+    <div id="home" class="tabcontent">
+        <h3>Home</h3>
+        <p>Welcome to the Home page!</p>
+    </div>
+
+    <div id="data" class="tabcontent">
+        <h3>Data</h3>
+        <p>Data content goes here.</p>
+    </div>
+
+    <div id="gallery" class="tabcontent">
+        <h3>Gallery</h3>
+        <p>Gallery content goes here.</p>
+    </div>
+
+    <div id="about" class="tabcontent">
+        <h3>About</h3>
+        <p>About content goes here.</p>
+    </div>
+
+    <div id="contact" class="tabcontent">
+        <h3>Contact</h3>
+        <p>Contact information goes here.</p>
+    </div>
+
+    <div id="map"></div>
+
     <div class="layer-control">
         <label><input type="checkbox" id="ethiopia" checked> Ethiopia</label><br>
         <label><input type="checkbox" id="zone" checked> Zones</label><br>
         <label><input type="checkbox" id="region" checked> Regions</label><br>
-		<label><input type="checkbox" id="river" checked> Rivers</label>
-
+        <label><input type="checkbox" id="river" checked> Rivers</label>
     </div>
-    <div id="map"></div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="script.js"></script>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Show default tab on page load
+        document.getElementById("home").style.display = "block";
+    </script>
 </body>
 </html>
