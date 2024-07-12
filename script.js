@@ -28,9 +28,9 @@ function loadGeoJSON(url, styleOptions, layerName) {
 }
 
 // Load GeoJSON files and add initial layers to the map
-loadGeoJSON('ethiopia.geojson', {color: 'blue', weight: 2}, 'ethiopia');
-loadGeoJSON('eth_zone.geojson', {color: 'green', weight: 2}, 'zone');
-loadGeoJSON('eth_reg.geojson', {color: 'red', weight: 2}, 'region');
+loadGeoJSON('ethiopia.geojson', {weight: 2}, 'ethiopia');
+loadGeoJSON('eth_zone.geojson', {weight: 2}, 'zone');
+loadGeoJSON('eth_reg.geojson', {weight: 2}, 'region');
 loadGeoJSON('clipped_rivers_ethiopia.geojson', {color: 'blue', weight: 2}, 'river');
 
 
