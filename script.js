@@ -10,7 +10,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 var layers = {
     ethiopia: null,
     zone: null,
-	region: null,
+    region: null,
     river: null
 };
 
@@ -19,6 +19,9 @@ function loadGeoJSON(url, styleOptions, layerName) {
     fetch(url)
         .then(response => response.json())
         .then(data => {
+            // Make shapes hollow (only borders)
+            styleOptions.fill = false;
+
             layers[layerName] = L.geoJSON(data, {
                 style: styleOptions
             });
@@ -28,11 +31,10 @@ function loadGeoJSON(url, styleOptions, layerName) {
 }
 
 // Load GeoJSON files and add initial layers to the map
-loadGeoJSON('ethiopia.geojson', {color: 'blue', weight: 2, opacity: 0.9}, 'ethiopia');
-loadGeoJSON('eth_zone.geojson', {color: 'green', weight: 2}, 'zone');
-loadGeoJSON('eth_reg.geojson', {color: 'red', weight: 2}, 'region');
-loadGeoJSON('clipped_rivers_ethiopia.geojson', {color: 'blue', weight: 2}, 'river');
-
+loadGeoJSON('ethiopia.geojson', { color: 'blue', weight: 2 }, 'ethiopia');
+loadGeoJSON('eth_zone.geojson', { color: 'green', weight: 2 }, 'zone');
+loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
+loadGeoJSON('clipped_rivers_ethiopia.geojson', { color: 'blue', weight: 2 }, 'river');
 
 // Function to toggle layers
 function toggleLayer(layerName, checked) {
