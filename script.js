@@ -31,7 +31,7 @@ function loadGeoJSON(url, styleOptions, layerName) {
 loadGeoJSON('ethiopia.geojson', {color: 'blue', weight: 2}, 'ethiopia');
 loadGeoJSON('eth_zone.geojson', {color: 'green', weight: 2}, 'zone');
 loadGeoJSON('eth_reg.geojson', {color: 'red', weight: 2}, 'region');
-loadGeoJSON('clipped_rivers_ethiopia.geojson', {color: 'red', weight: 2}, 'rivers');
+loadGeoJSON('clipped_rivers_ethiopia.geojson', {color: 'blue', weight: 2}, 'rivers');
 
 
 // Function to toggle layers
@@ -54,6 +54,8 @@ document.getElementById('zone').addEventListener('change', function(event) {
 
 document.getElementById('region').addEventListener('change', function(event) {
     toggleLayer('region', event.target.checked);
+});
+
 document.getElementById('rivers').addEventListener('change', function(event) {
     toggleLayer('rivers', event.target.checked);
 });
