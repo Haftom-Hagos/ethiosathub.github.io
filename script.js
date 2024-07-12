@@ -57,5 +57,5 @@ document.getElementById('region').addEventListener('change', function(event) {
 });
 
 document.getElementById('river').addEventListener('change', function(event) {
-    toggleLayer('rivers', event.target.checked);
+    toggleLayer('river', event.target.checked);
 });
