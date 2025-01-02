@@ -7,6 +7,141 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <!-- Remaining content stays the same -->
+    <div class="tabs">
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'home')">Home</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'maps')">Maps</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'about')">About</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'contact')">Contact</button>
+        </div>
+    </div>
+
+    <div id="home" class="tabcontent" style="display: block;">
+        <h3>Home</h3>
+        <p>Welcome to the Home page!</p>
+    </div>
+
+    <div id="maps" class="tabcontent">
+        <h3>Maps</h3>
+        <div id="map"></div>
+        <div class="layer-control">
+            <label><input type="checkbox" id="ethiopia" checked> Ethiopia</label><br>
+            <label><input type="checkbox" id="zone" checked> Zones</label><br>
+            <label><input type="checkbox" id="region" checked> Regions</label><br>
+            <label><input type="checkbox" id="river" checked> Rivers</label>
+        </div>
+    </div>
+
+    <div id="data" class="tabcontent">
+        <h3>Data</h3>
+        <p>Data content goes here.</p>
+    </div>
+
+    <div id="gallery" class="tabcontent">
+        <h3>Gallery</h3>
+        <p>Check out some of our fancy maps developed in Jupyter Notebook.</p>
+        <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_Cities_Population.png?raw=true" 
+             alt="Population Density" style="width: 800px; height: auto;">
+    </div>
+
+    <div id="about" class="tabcontent">
+        <h3>About</h3>
+        <p>About content goes here.</p>
+    </div>
+
+    <div id="contact" class="tabcontent">
+        <h3>Contact</h3>
+        <p>Contact information goes here.</p>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            if (tabName === 'maps') {
+                initializeMap();
+            }
+        }
+
+        function initializeMap() {
+            if (!window.map) {
+                window.map = L.map('map').setView([9.145, 40.489673], 6);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(window.map);
+
+                loadGeoJSON('ethiopia.geojson', { color: 'blue', weight: 2 }, 'ethiopia');
+                loadGeoJSON('eth_zone.geojson', { color: 'green', weight: 2 }, 'zone');
+                loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
+                loadGeoJSON('clipped_rivers_ethiopia.geojson', { color: 'blue', weight: 2 }, 'river');
+            }
+        }
+
+        function loadGeoJSON(url, styleOptions, layerName) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    styleOptions.fill = false;
+
+                    layers[layerName] = L.geoJSON(data, {
+                        style: styleOptions
+                    });
+                    layers[layerName].addTo(window.map);
+                })
+                .catch(error => console.error('Error loading the GeoJSON file:', error));
+        }
+
+        function toggleLayer(layerName, checked) {
+            if (checked) {
+                window.map.addLayer(layers[layerName]);
+            } else {
+                window.map.removeLayer(layers[layerName]);
+            }
+        }
+
+        document.getElementById('ethiopia').addEventListener('change', function(event) {
+            toggleLayer('ethiopia', event.target.checked);
+        });
+
+        document.getElementById('zone').addEventListener('change', function(event) {
+            toggleLayer('zone', event.target.checked);
+        });
+
+        document.getElementById('region').addEventListener('change', function(event) {
+            toggleLayer('region', event.target.checked);
+        });
+
+        document.getElementById('river').addEventListener('change', function(event) {
+            toggleLayer('river', event.target.checked);
+        });
+
+        document.getElementById("home").style.display = "block";
+    </script>
 </body>
 </html>
