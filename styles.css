@@ -1,84 +1,48 @@
-/* Reset some default styles for consistency */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+#map {
+    height: 600px;
 }
 
-/* Global styles */
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    background-color: #f0f0f0;
-}
-
-.container {
-    width: 80%;
-    margin: auto;
-    overflow: hidden; /* Clear floats */
-    padding: 20px;
-}
-
-header {
-    background: #333;
-    color: #fff;
-    padding: 10px 0;
-    text-align: center;
-}
-
-header h1 {
-    font-size: 2.5em;
-}
-
-nav {
-    background: #444;
-    color: #fff;
-    padding: 10px 0;
-}
-
-nav ul {
-    list-style-type: none;
-    text-align: center;
-}
-
-nav ul li {
-    display: inline;
-    margin-right: 10px;
-}
-
-nav ul li a {
-    color: #fff;
-    text-decoration: none;
-    padding: 5px 10px;
-    transition: background-color 0.3s;
-}
-
-nav ul li a:hover {
-    background-color: #555;
-}
-
-main {
-    padding: 20px 0;
-}
-
-section {
-    background: #fff;
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
+.layer-control {
+    position: absolute;
+    top: 180px;
+    right: 40px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
     border-radius: 5px;
 }
 
-footer {
-    background: #333;
-    color: #fff;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
+.tabs {
+    overflow: hidden;
+    background-color: #f1f1f1;
 }
 
-footer p {
-    font-size: 0.8em;
+.tab {
+    float: left;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+    width: calc(20% - 2px); /* Adjust width based on number of tabs */
+}
+
+.tab button {
+    display: block;
+    background-color: inherit;
+    color: black;
+    padding: 14px 16px;
+    width: 100%;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+}
+
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tabcontent {
+    display: none;
+    padding: 20px;
+    border-top: none;
 }
