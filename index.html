@@ -46,30 +46,80 @@
         </div>
     </div>
 
-    <div id="data" class="tabcontent">
-        <h3>Data</h3>
-        <p>Data content goes here.</p>
-    </div>
-
     <div id="gallery" class="tabcontent">
-        <h3>Gallery</h3>
+    <h3>Gallery</h3>
     <p>Check out some of our fancy maps developed in Jupyter Notebook.</p>
-    <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_Cities_Population.png?raw=true" 
-         alt="Population Density" style="width: 800px; height: auto;">
-    <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Etho_rivers.png?raw=true" 
-         alt="Etho River" style="width: 800px; height: auto;">
-    <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/S_tigray_CH.png?raw=true" 
-         alt="South Tigray Canopy Height" style="width: 800px; height: auto;">
-    <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Addis_roads.png?raw=true" 
-         alt="Addis Nighttime Lights" style="width: 800px; height: auto;">
-    <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Roads_tigray.png?raw=true" 
-         alt="Tigray Roads" style="width: 800px; height: auto;">
-    <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Tigray_river.png?raw=true" 
-         alt="Africa Map" style="width: 800px; height: auto;">
-    <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Africa_wars.png?raw=true" 
-         alt="Africa Map" style="width: 800px; height: auto;">
-
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
+            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_Cities_Population.png?raw=true" 
+                 alt="Population Density" style="width: 300px; height: auto; cursor: pointer;" 
+                 onclick="showImageModal(this.src, 'Population Density')">
+            <p>Population Density</p>
+        </div>
+        
+        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
+            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_rivers.png?raw=true"  
+                 alt="Ethio Rivers" style="width: 300px; height: auto; cursor: pointer;" 
+                 onclick="showImageModal(this.src, 'Ethio Rivers')">
+            <p>Ethio Rivers</p>
+        </div>
+        
+        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
+            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/S_tigray_CH.png?raw=true" 
+                 alt="South Tigray Canopy Height" style="width: 300px; height: auto; cursor: pointer;" 
+                 onclick="showImageModal(this.src, 'South Tigray Canopy Height')">
+            <p>South Tigray Canopy Height</p>
+        </div>
+        
+        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
+            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Addis_roads.png?raw=true" 
+                 alt="Addis Roads" style="width: 300px; height: auto; cursor: pointer;" 
+                 onclick="showImageModal(this.src, 'Addis Roads')">
+            <p>Addis Roads</p>
+        </div>
+        
+        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
+            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Roads_tigray.png?raw=true" 
+                 alt="Tigray Roads" style="width: 300px; height: auto; cursor: pointer;" 
+                 onclick="showImageModal(this.src, 'Tigray Roads')">
+            <p>Tigray Roads</p>
+        </div>
+        
+        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
+            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Tigray_river.png?raw=true" 
+                 alt="Tigray River" style="width: 300px; height: auto; cursor: pointer;" 
+                 onclick="showImageModal(this.src, 'Tigray River')">
+            <p>Tigray River</p>
+        </div>
+        
+        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
+            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Africa_wars.png?raw=true" 
+                 alt="Africa Wars" style="width: 300px; height: auto; cursor: pointer;" 
+                 onclick="showImageModal(this.src, 'Africa Wars')">
+            <p>Africa Wars</p>
+        </div>
     </div>
+</div>
+
+<!-- Modal for image zoom -->
+<div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center; text-align: center;">
+    <span style="color: white; position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer;" onclick="closeImageModal()">×</span>
+    <img id="modalImage" src="" style="max-width: 90%; max-height: 90%;">
+    <p id="modalCaption" style="color: white; font-size: 20px; margin-top: 10px;"></p>
+</div>
+
+<script>
+    function showImageModal(src, caption) {
+        document.getElementById('modalImage').src = src;
+        document.getElementById('modalCaption').textContent = caption;
+        document.getElementById('imageModal').style.display = 'flex';
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').style.display = 'none';
+    }
+</script>
     <!--
     <div id="about" class="tabcontent">
         <h3>About</h3>
