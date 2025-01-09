@@ -29,13 +29,13 @@
     background-color: inherit;
     color: black;
     padding: 14px 16px;
-    width: calc(15% - 2px);
+    width: calc(7% - 2px);
     border: none;
     outline: none;
     cursor: pointer;
     transition: background-color 0.3s;
     text-align: center;
-    font-size: 18px;
+    font-size: 22px;
 }
 
 .tab button:hover {
