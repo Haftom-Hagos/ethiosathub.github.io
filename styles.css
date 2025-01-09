@@ -1,31 +1,48 @@
+#map {
+    height: 600px;
+}
+
+.layer-control {
+    position: absolute;
+    top: 180px;
+    right: 40px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+}
+
 .tabs {
-    display: flex;
-    justify-content: center;
-    gap: 10px; /* Optional: Adds space between tabs */
-}
-.social-icons {
-    display: flex;
-    justify-content: center; /* Centers the icons */
-    gap: 15px; /* Adds spacing between icons */
-    margin-top: 20px; /* Optional: Adjusts spacing from other elements */
+    overflow: hidden;
+    background-color: #f1f1f1;
 }
 
-.social-icons a {
-    text-decoration: none;
-    color: #555; /* Default color */
-    font-size: 24px; /* Icon size */
+.tab {
+    float: left;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+    width: calc(20% - 2px); /* Adjust width based on number of tabs */
 }
 
-.social-icons a:hover {
-    color: #000; /* Changes color on hover */
-}
-#home img {
+.tab button {
     display: block;
-    margin: 0 auto; /* Centers the image */
-    max-width: 100%; /* Ensures the image is responsive */
-    height: auto;
+    background-color: inherit;
+    color: black;
+    padding: 14px 16px;
+    width: 100%;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
 }
 
-#home h3, #home p {
-    text-align: center;
+.tab button:hover {
+    background-color: #ddd;
+}
+
+.tabcontent {
+    display: none;
+    padding: 20px;
+    border-top: none;
 }
