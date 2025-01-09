@@ -1,50 +1,138 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Haftom Hagos</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="utf-8">
+    <title>Leaflet Map with GeoJSON and Tabs</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        .tabcontent {
+            text-align: center;
+            margin: 20px auto;
+        }
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .social-icons a {
+            text-decoration: none;
+            color: #000;
+            font-size: 24px;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <h1 class="name">Haftom Hagos</h1>
-      <nav class="navigation">
-        <ul>
-          <li><a href="#home">Home</a></li>
-          <li><a href="#blog">Blog</a></li>
-          <li><a href="#data-visualizations">Data Visualizations</a></li>
-          <li><a href="#maps">Maps</a></li>
-          <li><a href="#research">Research</a></li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-      </nav>
+    <div class="tabs">
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'home')">Home</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'maps')">Maps</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button>
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'contact')">Contact</button>
+        </div>
     </div>
-  </header>
 
-  <main id="home">
-    <div class="background">
-      <div class="intro">
-        <h2>Hi, I'm Haftom</h2>
-        <p>
-          I am a Data Analyst passionate about using data for impactful decision-making.
-          My expertise lies in visualizing and analyzing big data. I specialize in creating
-          interactive maps and dashboards.
-        </p>
-        <a href="#maps" class="button">Open My Map Vault</a>
-      </div>
-      <img src="path/to/your-photo.jpg" alt="Haftom Hagos" class="profile-photo">
+    <!-- Home Tab -->
+    <div id="home" class="tabcontent" style="display: block;">
+        <h3>Welcome to My Website</h3>
+        <p>Hello! I’m Haftom, a GIS and Remote Sensing enthusiast. Explore the tabs to learn more about my work, maps, and projects.</p>
+        <img src="https://via.placeholder.com/150" alt="My Photo" style="border-radius: 50%; margin: 20px auto;">
     </div>
-  </main>
 
-  <footer>
+    <!-- Maps Tab -->
+    <div id="maps" class="tabcontent">
+        <h3>Maps</h3>
+        <div id="map"></div>
+        <div class="layer-control">
+            <label><input type="checkbox" id="ethiopia" checked> Ethiopia</label><br>
+            <label><input type="checkbox" id="zone" checked> Zones</label><br>
+            <label><input type="checkbox" id="region" checked> Regions</label><br>
+            <label><input type="checkbox" id="river" checked> Rivers</label>
+        </div>
+    </div>
+
+    <!-- Gallery Tab -->
+    <div id="gallery" class="tabcontent">
+        <h3>Gallery</h3>
+        <p>Check out some of our fancy maps developed in Jupyter Notebook.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <!-- Gallery images -->
+        </div>
+    </div>
+
+    <!-- Contact Tab -->
+    <div id="contact" class="tabcontent">
+        <h3>Contact</h3>
+        <p>Contact information goes here.</p>
+    </div>
+
+    <!-- Social Media Icons -->
     <div class="social-icons">
-      <a href="#" target="_blank">Twitter</a>
-      <a href="#" target="_blank">LinkedIn</a>
-      <a href="#" target="_blank">GitHub</a>
+        <a href="https://twitter.com" target="_blank">🐦</a>
+        <a href="https://linkedin.com" target="_blank">🔗</a>
+        <a href="https://github.com" target="_blank">🐙</a>
     </div>
-    <p>&copy; 2025 Haftom Hagos. All rights reserved.</p>
-  </footer>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+
+            if (tabName === 'maps') {
+                initializeMap();
+            }
+        }
+
+        function initializeMap() {
+            if (!window.map) {
+                window.map = L.map('map').setView([9.145, 40.489673], 6);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(window.map);
+
+                loadGeoJSON('ethiopia.geojson', { color: 'blue', weight: 2 }, 'ethiopia');
+                loadGeoJSON('eth_zone.geojson', { color: 'green', weight: 2 }, 'zone');
+                loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
+                loadGeoJSON('clipped_rivers_ethiopia.geojson', { color: 'blue', weight: 2 }, 'river');
+            }
+        }
+
+        function loadGeoJSON(url, styleOptions, layerName) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    styleOptions.fill = false;
+
+                    layers[layerName] = L.geoJSON(data, {
+                        style: styleOptions
+                    });
+                    layers[layerName].addTo(window.map);
+                })
+                .catch(error => console.error('Error loading GeoJSON:', error));
+        }
+    </script>
 </body>
 </html>
