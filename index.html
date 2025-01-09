@@ -1,213 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Leaflet Map with GeoJSON and Tabs</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haftom Hagos</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="tabs">
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'home')">Home</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'maps')">Maps</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button>
-        </div>
-        <!--
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'about')">About</button>
-        </div>
-        -->
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'contact')">Contact</button>
-        </div>
+  <header>
+    <div class="container">
+      <h1 class="name">Haftom Hagos</h1>
+      <nav class="navigation">
+        <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#blog">Blog</a></li>
+          <li><a href="#data-visualizations">Data Visualizations</a></li>
+          <li><a href="#maps">Maps</a></li>
+          <li><a href="#research">Research</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
     </div>
+  </header>
 
-    <div id="home" class="tabcontent" style="display: block;">
-        <h3>Home</h3>
-        <p>Welcome to the Home page!</p>
+  <main id="home">
+    <div class="background">
+      <div class="intro">
+        <h2>Hi, I'm Haftom</h2>
+        <p>
+          I am a Data Analyst passionate about using data for impactful decision-making.
+          My expertise lies in visualizing and analyzing big data. I specialize in creating
+          interactive maps and dashboards.
+        </p>
+        <a href="#maps" class="button">Open My Map Vault</a>
+      </div>
+      <img src="path/to/your-photo.jpg" alt="Haftom Hagos" class="profile-photo">
     </div>
+  </main>
 
-    <div id="maps" class="tabcontent">
-        <h3>Maps</h3>
-        <div id="map"></div>
-        <div class="layer-control">
-            <label><input type="checkbox" id="ethiopia" checked> Ethiopia</label><br>
-            <label><input type="checkbox" id="zone" checked> Zones</label><br>
-            <label><input type="checkbox" id="region" checked> Regions</label><br>
-            <label><input type="checkbox" id="river" checked> Rivers</label>
-        </div>
+  <footer>
+    <div class="social-icons">
+      <a href="#" target="_blank">Twitter</a>
+      <a href="#" target="_blank">LinkedIn</a>
+      <a href="#" target="_blank">GitHub</a>
     </div>
-
-    <div id="gallery" class="tabcontent">
-    <h3>Gallery</h3>
-    <p>Check out some of our fancy maps developed in Jupyter Notebook.</p>
-    
-    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_Cities_Population.png?raw=true" 
-                 alt="Population Density" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, 'Population Density')">
-            <p>Population Density</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_rivers.png?raw=true"  
-                 alt="Ethio Rivers" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, 'Ethio Rivers')">
-            <p>Ethio Rivers</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/S_tigray_CH.png?raw=true" 
-                 alt="South Tigray Canopy Height" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, 'South Tigray Canopy Height')">
-            <p>South Tigray Canopy Height</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Addis_roads.png?raw=true" 
-                 alt="Addis Roads" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, 'Addis Roads')">
-            <p>Addis Roads</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Roads_tigray.png?raw=true" 
-                 alt="Tigray Roads" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, 'Tigray Roads')">
-            <p>Tigray Roads</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Tigray_river.png?raw=true" 
-                 alt="Tigray River" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, 'Tigray River')">
-            <p>Tigray River</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Africa_wars.png?raw=true" 
-                 alt="Africa Wars" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, 'Africa Wars')">
-            <p>Africa Wars</p>
-        </div>
-    </div>
-</div>
-
-<!-- Modal for image zoom -->
-<div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center; text-align: center;">
-    <span style="color: white; position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer;" onclick="closeImageModal()">×</span>
-    <img id="modalImage" src="" style="max-width: 90%; max-height: 90%;">
-    <p id="modalCaption" style="color: white; font-size: 20px; margin-top: 10px;"></p>
-</div>
-
-<script>
-    function showImageModal(src, caption) {
-        document.getElementById('modalImage').src = src;
-        document.getElementById('modalCaption').textContent = caption;
-        document.getElementById('imageModal').style.display = 'flex';
-    }
-
-    function closeImageModal() {
-        document.getElementById('imageModal').style.display = 'none';
-    }
-</script>
-    <!--
-    <div id="about" class="tabcontent">
-        <h3>About</h3>
-        <p>About content goes here.</p>
-    </div>
-    -->
-
-    <div id="contact" class="tabcontent">
-        <h3>Contact</h3>
-        <p>Contact information goes here.</p>
-    </div>
-
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="script.js"></script>
-
-    <script>
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
-
-            if (tabName === 'maps') {
-                initializeMap();
-            }
-        }
-
-        function initializeMap() {
-            if (!window.map) {
-                window.map = L.map('map').setView([9.145, 40.489673], 6);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(window.map);
-
-                loadGeoJSON('ethiopia.geojson', { color: 'blue', weight: 2 }, 'ethiopia');
-                loadGeoJSON('eth_zone.geojson', { color: 'green', weight: 2 }, 'zone');
-                loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
-                loadGeoJSON('clipped_rivers_ethiopia.geojson', { color: 'blue', weight: 2 }, 'river');
-            }
-        }
-
-        function loadGeoJSON(url, styleOptions, layerName) {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    styleOptions.fill = false;
-
-                    layers[layerName] = L.geoJSON(data, {
-                        style: styleOptions
-                    });
-                    layers[layerName].addTo(window.map);
-                })
-                .catch(error => console.error('Error loading the GeoJSON file:', error));
-        }
-
-        function toggleLayer(layerName, checked) {
-            if (checked) {
-                window.map.addLayer(layers[layerName]);
-            } else {
-                window.map.removeLayer(layers[layerName]);
-            }
-        }
-
-        document.getElementById('ethiopia').addEventListener('change', function(event) {
-            toggleLayer('ethiopia', event.target.checked);
-        });
-
-        document.getElementById('zone').addEventListener('change', function(event) {
-            toggleLayer('zone', event.target.checked);
-        });
-
-        document.getElementById('region').addEventListener('change', function(event) {
-            toggleLayer('region', event.target.checked);
-        });
-
-        document.getElementById('river').addEventListener('change', function(event) {
-            toggleLayer('river', event.target.checked);
-        });
-
-        document.getElementById("home").style.display = "block";
-    </script>
+    <p>&copy; 2025 Haftom Hagos. All rights reserved.</p>
+  </footer>
 </body>
 </html>
