@@ -171,7 +171,7 @@
                 loadGeoJSON('ethiopia.geojson', { color: 'blue', weight: 2 }, 'ethiopia');
                 loadGeoJSON('eth_zone.geojson', { color: 'green', weight: 2 }, 'zone');
                 loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
-                loadGeoJSON('clipped_rivers_ethiopia.geojson', { color: 'blue', weight: 2 }, 'river');
+                <!--loadGeoJSON('clipped_rivers_ethiopia.geojson', { color: 'blue', weight: 2 }, 'river');-->
             }
         }
 
@@ -209,8 +209,8 @@
             toggleLayer('region', event.target.checked);
         });
 
-        document.getElementById('river').addEventListener('change', function(event) {
-            toggleLayer('river', event.target.checked);
+        <!--document.getElementById('river').addEventListener('change', function(event) {
+            toggleLayer('river', event.target.checked);-->
         });
 
         document.getElementById("home").style.display = "block";
