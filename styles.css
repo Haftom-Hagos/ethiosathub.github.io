@@ -21,7 +21,7 @@
     float: left;
     border: 1px solid #ccc;
     background-color: #f1f1f1;
-    width: calc(40% - 2px); /* Adjust width based on number of tabs */
+    width: calc(5% - 2px); /* Adjust width based on number of tabs */
     margin-right: -8px; /* Negative margin to pull tabs closer together */
 }
 
