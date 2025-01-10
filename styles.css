@@ -18,7 +18,7 @@
 }
 
 .tab {
-    float: center;
+    float: left;
     border: 1px solid #ccc;
     background-color: #f1f1f1;
     width: calc(10% - 2px); /* Adjust width based on number of tabs */
