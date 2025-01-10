@@ -15,10 +15,12 @@
 .tabs {
     overflow: hidden;
     background-color: #f1f1f1;
+    display: flex; /* Use flexbox for layout */
+    justify-content: center; /* Center tabs horizontally */
 }
 
 .tab {
-    float: left;
+    /* float: left; */
     border: 1px solid #ccc;
     background-color: #f1f1f1;
     width: calc(10% - 2px); /* Adjust width based on number of tabs */
