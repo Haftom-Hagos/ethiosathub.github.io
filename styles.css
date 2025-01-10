@@ -30,13 +30,13 @@
     background-color: inherit;
     color: black;
     padding: 14px 16px;
-    width: calc(25% - 2px);
+    width: 100%; /* calc(25% - 2px) */
     border: none;
     outline: none;
     cursor: pointer;
     transition: background-color 0.3s;
     text-align: center;
-    font-size: 22px;
+    font-size: 25px;
 }
 
 .tab button:hover {
@@ -45,6 +45,6 @@
 
 .tabcontent {
     display: none;
-    padding: 20px;
+    padding: 5px;
     border-top: none;
 }
