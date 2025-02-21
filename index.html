@@ -41,6 +41,11 @@
         </div>
     </div>
 
+    <div id="data" class="tabcontent">
+        <h3>Data</h3>
+        <p>Data content goes here.</p>
+    </div>
+
     <div id="gallery" class="tabcontent">
         <h3>Gallery</h3>
         <p>Check out some of our fancy maps developed in Jupyter Notebook.</p>
@@ -87,14 +92,19 @@
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
-            document.getElementById(tabName).style.display = "block";
+            var tab = document.getElementById(tabName);
+            if (tab) {
+                tab.style.display = "block";
+            } else {
+                console.error("Tab not found:", tabName);
+            }
             evt.currentTarget.className += " active";
 
             if (tabName === 'maps') {
                 initializeMap();
                 setTimeout(() => {
-                    if (window.map) {
-                        window.map.invalidateSize();
+                    if (map) {
+                        map.invalidateSize();
                         console.log("Map refreshed.");
                     }
                 }, 100);
