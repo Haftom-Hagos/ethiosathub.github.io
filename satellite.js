@@ -32,10 +32,11 @@ map.on('draw:created', (e) => {
     drawnItems.addLayer(selectedArea);
 });
 
-// Initialize GEE
+// Function to initialize Google Earth Engine with OAuth authentication
 function initializeGEE() {
     ee.Authenticate(function() {
         console.log('Authenticated successfully!');
+        // Initialize after successful authentication
         ee.initialize(null, null, () => {
             console.log("Google Earth Engine initialized!");
         }, (error) => {
@@ -48,8 +49,9 @@ function initializeGEE() {
     });
 }
 
-// Call the initialize function
+// Call the initialization function to begin the process
 initializeGEE();
+
 
 // Example NDVI calculation and download function (can be the same)
 function calculateNDVI(geometry) {
