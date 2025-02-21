@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EthioSatHub - Satellite Image Processing</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css"> <!-- Your existing CSS -->
+</head>
+<body>
+    <h1>Welcome to EthioSatHub</h1>
+    <p>Select an area on the map and download NDVI or Land Cover maps.</p>
+
+    <!-- Map Container -->
+    <div id="map" style="height: 500px; width: 100%;"></div>
+
+    <!-- Controls -->
+    <div style="margin-top: 10px;">
+        <button id="ndviBtn">Download NDVI Map</button>
+        <button id="landCoverBtn">Download Land Cover Map</button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://earthengine.googleapis.com/v1alpha/projects/earthengine-public/assets:lookup"></script>
+    <script src="https://code.earthengine.google.com/static/eejs/v1.0.0/ee_api_js.js"></script>
+    <script src="script.js"></script> <!-- Your custom JS -->
+</body>
+</html>
