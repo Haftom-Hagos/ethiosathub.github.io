@@ -17,13 +17,32 @@
     <h1>Welcome to EthioSatHub</h1>
     <p>Select an area on the map and download NDVI or Land Cover maps.</p>
 
-    <!-- Map Container -->
-    <div id="map" style="height: 500px; width: 100%;"></div>
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+        <ul>
+            <li><a href="#mapTab">Map</a></li>
+            <li><a href="#otherTab1">Other Tab 1</a></li>
+            <li><a href="#otherTab2">Other Tab 2</a></li>
+        </ul>
+    </div>
 
-    <!-- Controls -->
-    <div style="margin-top: 10px;">
-        <button id="ndviBtn">Download NDVI Map</button>
-        <button id="landCoverBtn">Download Land Cover Map</button>
+    <div id="mapTab" class="tab-content">
+        <h2>Map View with NDVI</h2>
+        <div id="map" style="height: 500px; width: 100%;"></div>
+        <div style="margin-top: 10px;">
+            <button id="ndviBtn">Download NDVI Map</button>
+            <button id="landCoverBtn">Download Land Cover Map</button>
+        </div>
+    </div>
+
+    <div id="otherTab1" class="tab-content">
+        <h2>Other Content 1</h2>
+        <p>Content for other tab 1 goes here.</p>
+    </div>
+
+    <div id="otherTab2" class="tab-content">
+        <h2>Other Content 2</h2>
+        <p>Content for other tab 2 goes here.</p>
     </div>
 
     <!-- Scripts -->
@@ -34,6 +53,22 @@
     <script src="satellite.js"></script>
     
     <script>
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.tabs a');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetTab = document.querySelector(this.getAttribute('href'));
+                tabContents.forEach(content => content.style.display = 'none');
+                targetTab.style.display = 'block';
+            });
+        });
+
+        // Show the first tab by default
+        tabContents[0].style.display = 'block';
+
         // Initialize Leaflet Map
         const map = L.map('map').setView([9.145, 40.4897], 6); // Center on Ethiopia
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
