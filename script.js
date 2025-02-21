@@ -96,34 +96,7 @@ map.on('draw:created', function(e) {
 });
 
 
-// Create a layer to hold drawn shapes
-var drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
 
-// Add drawing controls (rectangle only for simplicity)
-var drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: {
-        polygon: false, // No polygons
-        marker: false, // No markers
-        circle: false, // No circles
-        polyline: false, // No lines
-        rectangle: true // Just rectangles
-    }
-});
-map.addControl(drawControl);
-
-// When a rectangle is drawn, grab the coordinates
-map.on('draw:created', function(e) {
-    var layer = e.layer;
-    drawnItems.addLayer(layer);
-    var bounds = layer.getBounds();
-    var coords = {
-        northEast: bounds.getNorthEast(), // Top-right corner
-        southWest: bounds.getSouthWest() // Bottom-left corner
-    };
-    console.log("Selected Area:", coords); // For now, log it—later, use it!
-});
 
 
 
