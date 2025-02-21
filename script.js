@@ -3,7 +3,8 @@ var map = L.map('map').setView([9.145, 40.489673], 6);
 
 // Add OpenStreetMap tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
 }).addTo(map);
 
 // Layers object to store the GeoJSON layers
@@ -38,10 +39,12 @@ loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
 
 // Function to toggle layers
 function toggleLayer(layerName, checked) {
-    if (checked) {
-        map.addLayer(layers[layerName]);
-    } else {
-        map.removeLayer(layers[layerName]);
+    if (layers[layerName]) {
+        if (checked) {
+            map.addLayer(layers[layerName]);
+        } else {
+            map.removeLayer(layers[layerName]);
+        }
     }
 }
 
@@ -61,35 +64,33 @@ document.getElementById('region').addEventListener('change', function(event) {
 // document.getElementById('river').addEventListener('change', function(event) {
 //    toggleLayer('river', event.target.checked);
 //}); 
+
 // Create a layer to hold drawn shapes
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
-// Add drawing controls (rectangle only for simplicity)
+// Add drawing controls (rectangle only)
 var drawControl = new L.Control.Draw({
     edit: { featureGroup: drawnItems },
     draw: {
-        polygon: false, // No polygons
-        marker: false, // No markers
-        circle: false, // No circles
-        polyline: false, // No lines
-        rectangle: true // Just rectangles
+        polygon: false, 
+        marker: false, 
+        circle: false, 
+        polyline: false, 
+        rectangle: true 
     }
 });
 map.addControl(drawControl);
 
-// When a rectangle is drawn, grab the coordinates
+// When a rectangle is drawn, store the selected area
 map.on('draw:created', function(e) {
-    var layer = e.layer;
-    drawnItems.addLayer(layer);
-    var bounds = layer.getBounds();
+    drawnItems.clearLayers(); // Remove previous selections
+    drawnItems.addLayer(e.layer);
+
+    var bounds = e.layer.getBounds();
     var coords = {
         northEast: bounds.getNorthEast(), // Top-right corner
         southWest: bounds.getSouthWest() // Bottom-left corner
     };
-    console.log("Selected Area:", coords); // For now, log it—later, use it!
+    console.log("Selected Area:", coords);
 });
-
-
-
-
