@@ -89,39 +89,7 @@ map.on('draw:created', function(e) {
     };
     console.log("Selected Area:", coords); // For now, log it—later, use it!
 });
-// Initialize Leaflet Map
-const map = L.map('map').setView([9.145, 40.4897], 6); // Center on Ethiopia
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap'
-}).addTo(map);
 
-// Variable to store user-selected area
-let selectedArea = null;
-
-// Add drawing capability (simple rectangle for now)
-const drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
-
-const drawControl = new L.Control.Draw({
-    draw: {
-        rectangle: true,
-        polygon: false,
-        circle: false,
-        marker: false,
-        polyline: false
-    },
-    edit: {
-        featureGroup: drawnItems
-    }
-});
-map.addControl(drawControl);
-
-map.on('draw:created', (e) => {
-    drawnItems.clearLayers();
-    selectedArea = e.layer;
-    drawnItems.addLayer(selectedArea);
-});
 
 
 
