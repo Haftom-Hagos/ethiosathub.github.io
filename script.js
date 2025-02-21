@@ -1,102 +1,95 @@
-// Initialize the map
-var map = L.map('map').setView([9.145, 40.489673], 6);
+// Global variable for the map
+let map;
 
-// Add OpenStreetMap tile layer
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19
-}).addTo(map);
+// Initialize the map for the Maps tab
+function initializeMap() {
+    if (!map) {
+        map = L.map('map').setView([9.145, 40.4897], 6); // Center on Ethiopia
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
 
-// Layers object to store the GeoJSON layers
-var layers = {
-    ethiopia: null,
-    zone: null,
-    region: null,
-    river: null
-};
+        // Add drawing capability (rectangle only)
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
 
-// Function to load GeoJSON file
-function loadGeoJSON(url, styleOptions, layerName) {
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            // Make shapes hollow (only borders)
-            styleOptions.fill = false;
+        const drawControl = new L.Control.Draw({
+            draw: {
+                rectangle: true,
+                polygon: false,
+                circle: false,
+                marker: false,
+                polyline: false
+            },
+            edit: {
+                featureGroup: drawnItems
+            }
+        });
+        map.addControl(drawControl);
 
-            layers[layerName] = L.geoJSON(data, {
-                style: styleOptions
-            });
-            layers[layerName].addTo(map);
-        })
-        .catch(error => console.error('Error loading the GeoJSON file:', error));
-}
+        let selectedArea = null;
+        map.on('draw:created', (e) => {
+            drawnItems.clearLayers();
+            selectedArea = e.layer;
+            drawnItems.addLayer(selectedArea);
+        });
 
-// Load GeoJSON files and add initial layers to the map
-loadGeoJSON('ethiopia.geojson', { color: 'blue', weight: 2 }, 'ethiopia');
-loadGeoJSON('eth_zone.geojson', { color: 'green', weight: 2 }, 'zone');
-loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
-// loadGeoJSON('clipped_rivers_ethiopia.geojson', { color: 'blue', weight: 2 }, 'river'); 
+        // Google Earth Engine Initialization
+        ee.initialize(null, null, () => {
+            console.log("Google Earth Engine initialized!");
+        }, (error) => {
+            console.error("GEE Initialization failed:", error);
+        });
 
-// Function to toggle layers
-function toggleLayer(layerName, checked) {
-    if (layers[layerName]) {
-        if (checked) {
-            map.addLayer(layers[layerName]);
-        } else {
-            map.removeLayer(layers[layerName]);
+        // Function to calculate NDVI
+        function calculateNDVI(geometry) {
+            const sentinel2 = ee.ImageCollection('COPERNICUS/S2')
+                .filterBounds(geometry)
+                .filterDate('2023-01-01', '2023-12-31')
+                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+                .median();
+
+            const ndvi = sentinel2.normalizedDifference(['B8', 'B4']).rename('NDVI');
+            return ndvi.clip(geometry);
         }
+
+        // Function to download image
+        function downloadImage(image, filename) {
+            image.getDownloadURL({
+                name: filename,
+                scale: 30, // Resolution in meters
+                region: selectedArea.toGeoJSON().geometry,
+                format: 'GeoTIFF'
+            }, (url) => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+            }, (error) => {
+                alert('Error generating download: ' + error);
+            });
+        }
+
+        // Button Event Listeners
+        document.getElementById('ndviBtn').addEventListener('click', () => {
+            if (!selectedArea) {
+                alert('Please draw an area on the map first!');
+                return;
+            }
+            const geometry = ee.Geometry.Rectangle(selectedArea.getBounds().toBBoxArray());
+            const ndviImage = calculateNDVI(geometry);
+            downloadImage(ndviImage, 'NDVI_Map');
+        });
+
+        document.getElementById('landCoverBtn').addEventListener('click', () => {
+            if (!selectedArea) {
+                alert('Please draw an area on the map first!');
+                return;
+            }
+            const geometry = ee.Geometry.Rectangle(selectedArea.getBounds().toBBoxArray());
+            const landCover = ee.Image('COPERNICUS/S2_LC').clip(geometry);
+            downloadImage(landCover, 'LandCover_Map');
+        });
     }
 }
-
-// Event listeners for checkboxes
-document.getElementById('ethiopia').addEventListener('change', function(event) {
-    toggleLayer('ethiopia', event.target.checked);
-});
-
-document.getElementById('zone').addEventListener('change', function(event) {
-    toggleLayer('zone', event.target.checked);
-});
-
-document.getElementById('region').addEventListener('change', function(event) {
-    toggleLayer('region', event.target.checked);
-});
-
-// document.getElementById('river').addEventListener('change', function(event) {
-//    toggleLayer('river', event.target.checked);
-//}); 
-
-// Create a layer to hold drawn shapes
-var drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
-
-// Add drawing controls (rectangle only)
-var drawControl = new L.Control.Draw({
-    edit: { featureGroup: drawnItems },
-    draw: {
-        polygon: false, 
-        marker: false, 
-        circle: false, 
-        polyline: false, 
-        rectangle: true 
-    }
-});
-map.addControl(drawControl);
-
-// When a rectangle is drawn, store the selected area
-map.on('draw:created', function(e) {
-    drawnItems.clearLayers(); // Remove previous selections
-    drawnItems.addLayer(e.layer);
-
-    var bounds = e.layer.getBounds();
-    var coords = {
-        northEast: bounds.getNorthEast(), // Top-right corner
-        southWest: bounds.getSouthWest() // Bottom-left corner
-    };
-    console.log("Selected Area:", coords);
-});
-
-
-
-
-
-
