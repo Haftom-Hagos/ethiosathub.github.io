@@ -1,7 +1,6 @@
 // Global variable for the map
 let map;
 
-// Initialize the map for the Maps tab
 function initializeMap() {
     if (!map) {
         map = L.map('map').setView([9.145, 40.4897], 6); // Center on Ethiopia
@@ -35,15 +34,22 @@ function initializeMap() {
             drawnItems.addLayer(selectedArea);
         });
 
-        // Google Earth Engine Initialization
-        ee.initialize(null, null, () => {
-            console.log("Google Earth Engine initialized!");
-        }, (error) => {
-            console.error("GEE Initialization failed:", error);
-        });
+        // Google Earth Engine Initialization with Debugging
+        console.log("Attempting to initialize GEE...");
+        if (typeof ee === 'undefined') {
+            console.error("GEE library not loaded. Check script tags in HTML.");
+        } else {
+            ee.initialize(null, null, () => {
+                console.log("GEE initialized successfully!");
+            }, (error) => {
+                console.error("GEE initialization failed:", error);
+                alert("GEE failed to initialize. Please authenticate with Google Earth Engine and try again.");
+            });
+        }
 
         // Function to calculate NDVI
         function calculateNDVI(geometry) {
+            console.log("Calculating NDVI...");
             const sentinel2 = ee.ImageCollection('COPERNICUS/S2')
                 .filterBounds(geometry)
                 .filterDate('2023-01-01', '2023-12-31')
@@ -56,17 +62,20 @@ function initializeMap() {
 
         // Function to download image
         function downloadImage(image, filename) {
+            console.log("Generating download URL for", filename);
             image.getDownloadURL({
                 name: filename,
-                scale: 30, // Resolution in meters
+                scale: 30,
                 region: selectedArea.toGeoJSON().geometry,
                 format: 'GeoTIFF'
             }, (url) => {
+                console.log("Download URL generated:", url);
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = filename;
                 link.click();
             }, (error) => {
+                console.error("Download failed:", error);
                 alert('Error generating download: ' + error);
             });
         }
