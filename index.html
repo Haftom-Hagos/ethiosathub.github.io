@@ -1,223 +1,142 @@
 <!DOCTYPE html>
-<html>
-    <!-- Leaflet Draw Stylesheet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@latest/dist/leaflet.draw.css" />
-<!-- Leaflet Draw Script -->
-    <script src="https://unpkg.com/leaflet-draw@latest/dist/leaflet.draw.js"></script>
-
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Leaflet Map with GeoJSON and Tabs</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EthioSatHub - Satellite Image Processing</title>
+    
+    <!-- Leaflet and Leaflet Draw -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <link rel="stylesheet" href="styles.css"> <!-- Your existing CSS -->
 </head>
 <body>
-    <div class="tabs">
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'home')">Home</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'maps')">Maps</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button>
-        </div>
-        <!--
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'about')">About</button>
-        </div>
-        -->
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'contact')">Contact</button>
-        </div>
+    <h1>Welcome to EthioSatHub</h1>
+    <p>Select an area on the map and download NDVI or Land Cover maps.</p>
+
+    <!-- Map Container -->
+    <div id="map" style="height: 500px; width: 100%;"></div>
+
+    <!-- Controls -->
+    <div style="margin-top: 10px;">
+        <button id="ndviBtn">Download NDVI Map</button>
+        <button id="landCoverBtn">Download Land Cover Map</button>
     </div>
 
-    <div id="home" class="tabcontent" style="display: block;">
-        <h3>Home</h3>
-        <p>Welcome to the Home page!</p>
-    </div>
+    <!-- Scripts -->
+    <script src="https://earthengine.googleapis.com/v1alpha/projects/earthengine-public/assets:lookup"></script>
+    <script src="https://code.earthengine.google.com/static/eejs/v1.0.0/ee_api_js.js"></script>
 
-    <div id="maps" class="tabcontent">
-        <h3>Maps</h3>
-        <a href="satellite.html">Start Satellite Image Processing</a>
-        <div id="map"></div>
-         <!--
-        <div class="layer-control">
-            <label><input type="checkbox" id="ethiopia" checked> Ethiopia</label><br>
-            <label><input type="checkbox" id="zone" checked> Zones</label><br>
-            <label><input type="checkbox" id="region" checked> Regions</label><br>
-        </div>
-        -->
-    </div>
-
-    <div id="gallery" class="tabcontent">
-    <h3>Gallery</h3>
-    <p>Check out some of our fancy maps developed in Jupyter Notebook.</p>
+    <!-- Include your custom JavaScript -->
+    <script src="satellite.js"></script>
     
-    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_Cities_Population.png?raw=true" 
-                 alt="Population Density of Major Ethiopian Cities (2024)" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>Population Density of Major Ethiopian Cities (2024)</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Ethio_rivers.png?raw=true"  
-                 alt="Rivers of Ethiopia" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>Rivers of Ethiopia</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/S_tigray_CH.png?raw=true" 
-                 alt="Canopy Height Map (2020) of Southern Tigray, Ethiopia" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>Canopy Height Map (2020) of Southern Tigray, Ethiopia</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Addis_roads.png?raw=true" 
-                 alt="Road Network of Addis Ababa, Ethiopia" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>Road Network of Addis Ababa, Ethiopia</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Roads_tigray.png?raw=true" 
-                 alt="Road Network Density (Tigray, Ethiopia)" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>Road Network Density (Tigray, Ethiopia)</p>
-        </div>
-            <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/mk_green.png?raw=true" 
-                 alt="Tree Patches and Green Areas in Mekelle City, Ethiopia" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>Tree Patches and Green Areas in Mekelle City, Ethiopia</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Tigray_river.png?raw=true" 
-                 alt="3D Elevation and River Map of Tigray, Ethiopia" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>3D Elevation and River Map of Tigray, Ethiopia</p>
-        </div>
-        
-        <div style="text-align: center; border: 2px solid #ddd; padding: 10px; border-radius: 10px;">
-            <img src="https://github.com/Haftom-Hagos/ethiosathub.github.io/blob/main/Africa_wars.png?raw=true" 
-                 alt="Number Wars/Conflicts in Africa (1900 to 2024)" style="width: 300px; height: auto; cursor: pointer;" 
-                 onclick="showImageModal(this.src, '')">
-            <p>Number Wars/Conflicts in Africa (1900 to 2024)</p>
-        </div>
-    </div>
-</div>
-
-<!-- Modal for image zoom -->
-<div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center; text-align: center;">
-    <span style="color: white; position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer;" onclick="closeImageModal()">×</span>
-    <img id="modalImage" src="" style="max-width: 90%; max-height: 90%;">
-    <p id="modalCaption" style="color: white; font-size: 20px; margin-top: 10px;"></p>
-</div>
-
-<script>
-    function showImageModal(src, caption) {
-        document.getElementById('modalImage').src = src;
-        document.getElementById('modalCaption').textContent = caption;
-        document.getElementById('imageModal').style.display = 'flex';
-    }
-
-    function closeImageModal() {
-        document.getElementById('imageModal').style.display = 'none';
-    }
-</script>
-    <!--
-    <div id="about" class="tabcontent">
-        <h3>About</h3>
-        <p>About content goes here.</p>
-    </div>
-    -->
-
-    <div id="contact" class="tabcontent">
-        <h3>Contact</h3>
-        <p>Contact information goes here.</p>
-    </div>
-
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="script.js"></script>
- 
     <script>
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
+        // Initialize Leaflet Map
+        const map = L.map('map').setView([9.145, 40.4897], 6); // Center on Ethiopia
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Variable to store user-selected area
+        let selectedArea = null;
+
+        // Add drawing capability (simple rectangle for now)
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        const drawControl = new L.Control.Draw({
+            draw: {
+                rectangle: true,
+                polygon: false,
+                circle: false,
+                marker: false,
+                polyline: false
+            },
+            edit: {
+                featureGroup: drawnItems
             }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
+        });
+        map.addControl(drawControl);
 
-            if (tabName === 'maps') {
-                initializeMap();
-            }
-        }
-
-        function initializeMap() {
-            if (!window.map) {
-                window.map = L.map('map').setView([9.145, 40.489673], 6);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(window.map);
-
-                loadGeoJSON('ethiopia.geojson', { color: 'blue', weight: 2 }, 'ethiopia');
-                loadGeoJSON('eth_zone.geojson', { color: 'green', weight: 2 }, 'zone');
-                loadGeoJSON('eth_reg.geojson', { color: 'red', weight: 2 }, 'region');
-            }
-        }
-
-        function loadGeoJSON(url, styleOptions, layerName) {
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    styleOptions.fill = false;
-
-                    layers[layerName] = L.geoJSON(data, {
-                        style: styleOptions
-                    });
-                    layers[layerName].addTo(window.map);
-                })
-                .catch(error => console.error('Error loading the GeoJSON file:', error));
-        }
-
-        function toggleLayer(layerName, checked) {
-            if (checked) {
-                window.map.addLayer(layers[layerName]);
-            } else {
-                window.map.removeLayer(layers[layerName]);
-            }
-        }
-
-        document.getElementById('ethiopia').addEventListener('change', function(event) {
-            toggleLayer('ethiopia', event.target.checked);
+        map.on('draw:created', (e) => {
+            drawnItems.clearLayers();
+            selectedArea = e.layer;
+            drawnItems.addLayer(selectedArea);
         });
 
-        document.getElementById('zone').addEventListener('change', function(event) {
-            toggleLayer('zone', event.target.checked);
+        // Google Earth Engine Initialization (added authentication)
+        function initializeGEE() {
+            ee.Authenticate(function() {
+                console.log('Authenticated successfully!');
+                // Initialize after successful authentication
+                ee.initialize(null, null, () => {
+                    console.log("Google Earth Engine initialized!");
+                }, (error) => {
+                    console.error("GEE Initialization failed:", error);
+                    alert('Google Earth Engine initialization failed. Check the console for details.');
+                });
+            }, function(error) {
+                console.error('Authentication failed:', error);
+                alert('Authentication failed. Please check your Google account permissions.');
+            });
+        }
+
+        // Call the initialization function
+        initializeGEE();
+
+        // Function to calculate NDVI
+        function calculateNDVI(geometry) {
+            const sentinel2 = ee.ImageCollection('COPERNICUS/S2')
+                .filterBounds(geometry)
+                .filterDate('2023-01-01', '2023-12-31')
+                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+                .median();
+
+            const ndvi = sentinel2.normalizedDifference(['B8', 'B4']).rename('NDVI');
+            return ndvi.clip(geometry);
+        }
+
+        // Function to download image
+        function downloadImage(image, filename) {
+            image.getDownloadURL({
+                name: filename,
+                scale: 30, // Resolution in meters
+                region: selectedArea.toGeoJSON().geometry,
+                format: 'GeoTIFF'
+            }, (url) => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+            }, (error) => {
+                alert('Error generating download: ' + error);
+            });
+        }
+
+        // Button Event Listeners
+        document.getElementById('ndviBtn').addEventListener('click', () => {
+            if (!selectedArea) {
+                alert('Please draw an area on the map first!');
+                return;
+            }
+            const geometry = ee.Geometry.Rectangle(selectedArea.getBounds().toBBoxArray());
+            const ndviImage = calculateNDVI(geometry);
+            downloadImage(ndviImage, 'NDVI_Map');
         });
 
-        document.getElementById('region').addEventListener('change', function(event) {
-            toggleLayer('region', event.target.checked);
+        document.getElementById('landCoverBtn').addEventListener('click', () => {
+            if (!selectedArea) {
+                alert('Please draw an area on the map first!');
+                return;
+            }
+            const geometry = ee.Geometry.Rectangle(selectedArea.getBounds().toBBoxArray());
+            const landCover = ee.Image('COPERNICUS/S2_LC').clip(geometry);
+            downloadImage(landCover, 'LandCover_Map');
         });
-
-
-
-        document.getElementById("home").style.display = "block";
     </script>
 </body>
 </html>
