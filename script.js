@@ -1,8 +1,5 @@
 let map, drawnItems, selectedArea;
 
-// Replace with your Sentinel Hub INSTANCE ID
-const SENTINEL_HUB_INSTANCE_ID = 'c34e4a71-86d3-459b-84fc-07075d6b2737'; // Your Instance ID
-
 function initializeMap() {
     if (!map) {
         map = L.map('map').setView([9.145, 40.4897], 6);
@@ -26,27 +23,15 @@ function initializeMap() {
             drawnItems.addLayer(selectedArea);
         });
 
-        function getSentinelHubUrl(bbox, layer) {
-            const baseUrl = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_INSTANCE_ID}`;
-            const timeRange = '2023-01-01/2025-02-20'; // Up to yesterday
-            return `${baseUrl}?service=WMS&request=GetMap&layers=${layer}&format=image/png&width=512&height=512&bbox=${bbox}&crs=EPSG:4326&time=${timeRange}&transparent=true&version=1.3.0`;
-        }
-
         function downloadImage(url, filename) {
-            console.log("Fetching URL:", url);
             fetch(url)
                 .then(response => {
-                    console.log("Response status:", response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.blob();
                 })
                 .then(blob => {
-                    console.log("Blob size:", blob.size, "bytes");
-                    if (blob.size < 1024) {
-                        throw new Error("Received an invalid or empty image.");
-                    }
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
                     link.download = filename;
@@ -58,16 +43,35 @@ function initializeMap() {
                 });
         }
 
-        // Use configured layer names
         document.getElementById('ndviBtn').addEventListener('click', () => {
             if (!selectedArea) {
                 alert('Please draw an area on the map first!');
                 return;
             }
             const bounds = selectedArea.getBounds();
-            const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-            const url = getSentinelHubUrl(bbox, 'NDVI'); // Replace with your configured layer name
-            downloadImage(url, 'NDVI_Map.png');
+            const bbox = {
+                west: bounds.getWest(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                north: bounds.getNorth()
+            };
+            fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/getNDVI', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bbox })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.url) {
+                    downloadImage(data.url, 'NDVI_Map.png');
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error("API call failed:", error);
+                alert("Failed to fetch NDVI: " + error.message);
+            });
         });
 
         document.getElementById('landCoverBtn').addEventListener('click', () => {
@@ -76,9 +80,29 @@ function initializeMap() {
                 return;
             }
             const bounds = selectedArea.getBounds();
-            const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-            const url = getSentinelHubUrl(bbox, 'TRUE-COLOR-S2L2A'); // Replace with your configured layer name
-            downloadImage(url, 'LandCover_Map.png');
+            const bbox = {
+                west: bounds.getWest(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                north: bounds.getNorth()
+            };
+            fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/getLandCover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bbox })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.url) {
+                    downloadImage(data.url, 'LandCover_Map.png');
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error("API call failed:", error);
+                alert("Failed to fetch Land Cover: " + error.message);
+            });
         });
     }
 }
