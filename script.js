@@ -1,7 +1,7 @@
 let map, drawnItems, selectedArea;
 
-// Replace with your Sentinel Hub CLIENT_ID
-const SENTINEL_HUB_CLIENT_ID = 'c34e4a71-86d3-459b-8f4c-07075db72f37'; // Your ID
+// Replace with your Sentinel Hub INSTANCE ID
+const SENTINEL_HUB_INSTANCE_ID = 'c34e4a71-86d3-459b-84fc-07075d6b2737'; // Your Instance ID
 
 function initializeMap() {
     if (!map) {
@@ -26,44 +26,10 @@ function initializeMap() {
             drawnItems.addLayer(selectedArea);
         });
 
-        // NDVI Evalscript with RGB output
-        const ndviEvalscript = `
-            //VERSION=3
-            function setup() {
-                return {
-                    input: ["B04", "B08", "dataMask"],
-                    output: { bands: 4 } // RGBA for PNG
-                };
-            }
-            function evaluatePixel(sample) {
-                let ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04);
-                // Simple color ramp: green for high NDVI, gray for low
-                let r = ndvi < 0 ? 128 : Math.min(255 * (1 - ndvi), 255);
-                let g = ndvi > 0 ? Math.min(255 * ndvi, 255) : 128;
-                let b = 128;
-                return [r / 255, g / 255, b / 255, sample.dataMask]; // Normalize to 0-1 for PNG
-            }
-        `;
-
-        // Land Cover Evalscript (True Color as proxy)
-        const landCoverEvalscript = `
-            //VERSION=3
-            function setup() {
-                return {
-                    input: ["B04", "B03", "B02", "dataMask"],
-                    output: { bands: 4 } // RGBA for PNG
-                };
-            }
-            function evaluatePixel(sample) {
-                return [sample.B04 * 2.5, sample.B03 * 2.5, sample.B02 * 2.5, sample.dataMask]; // Enhance brightness
-            }
-        `;
-
-        function getSentinelHubUrl(bbox, evalscript) {
-            const baseUrl = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_CLIENT_ID}`;
+        function getSentinelHubUrl(bbox, layer) {
+            const baseUrl = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_INSTANCE_ID}`;
             const timeRange = '2023-01-01/2025-02-20'; // Up to yesterday
-            // Remove layers parameter, rely on evalscript
-            return `${baseUrl}?service=WMS&request=GetMap&format=image/png&width=512&height=512&bbox=${bbox}&crs=EPSG:4326&time=${timeRange}&evalscript=${encodeURIComponent(evalscript)}&transparent=true`;
+            return `${baseUrl}?service=WMS&request=GetMap&layers=${layer}&format=image/png&width=512&height=512&bbox=${bbox}&crs=EPSG:4326&time=${timeRange}&transparent=true&version=1.3.0`;
         }
 
         function downloadImage(url, filename) {
@@ -92,6 +58,7 @@ function initializeMap() {
                 });
         }
 
+        // Use configured layer names
         document.getElementById('ndviBtn').addEventListener('click', () => {
             if (!selectedArea) {
                 alert('Please draw an area on the map first!');
@@ -99,7 +66,7 @@ function initializeMap() {
             }
             const bounds = selectedArea.getBounds();
             const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-            const url = getSentinelHubUrl(bbox, ndviEvalscript);
+            const url = getSentinelHubUrl(bbox, 'NDVI'); // Replace with your configured layer name
             downloadImage(url, 'NDVI_Map.png');
         });
 
@@ -110,7 +77,7 @@ function initializeMap() {
             }
             const bounds = selectedArea.getBounds();
             const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-            const url = getSentinelHubUrl(bbox, landCoverEvalscript);
+            const url = getSentinelHubUrl(bbox, 'TRUE-COLOR-S2L2A'); // Replace with your configured layer name
             downloadImage(url, 'LandCover_Map.png');
         });
     }
