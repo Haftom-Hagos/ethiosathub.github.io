@@ -1,8 +1,7 @@
 let map, drawnItems, selectedArea;
 
-// Replace with your Sentinel Hub CLIENT_ID from your dashboard
+// Add your Sentinel Hub CLIENT_ID from your dashboard
 const SENTINEL_HUB_CLIENT_ID = '62cbf745-c1c9-473e-b88a-cbb3a0ae4f75'; // Get this from sentinel-hub.com
-
 function initializeMap() {
     if (!map) {
         map = L.map('map').setView([9.145, 40.4897], 6);
@@ -26,26 +25,56 @@ function initializeMap() {
             drawnItems.addLayer(selectedArea);
         });
 
-        // Sentinel Hub real-time NDVI layer
-        const ndviLayer = L.tileLayer.wms('https://services.sentinel-hub.com/ogc/wms/' + SENTINEL_HUB_CLIENT_ID, {
-            layers: 'NDVI',
-            format: 'image/png',
-            transparent: true,
-            maxZoom: 19
-        });
+        // NDVI custom script (simplified for real-time)
+        const ndviEvalscript = `
+            //VERSION=3
+            function setup() {
+                return {
+                    input: ["B04", "B08"],
+                    output: { bands: 1 }
+                };
+            }
+            function evaluatePixel(sample) {
+                let ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04);
+                return [ndvi];
+            }
+        `;
 
-        // Sentinel Hub real-time Land Cover layer (using a custom script for simplicity)
-        const landCoverLayer = L.tileLayer.wms('https://services.sentinel-hub.com/ogc/wms/' + SENTINEL_HUB_CLIENT_ID, {
-            layers: 'TRUE_COLOR', // Placeholder; customize with a land cover script if needed
-            format: 'image/png',
-            transparent: true,
-            maxZoom: 19
-        });
+        // Land Cover (using TRUE_COLOR as placeholder; customize if needed)
+        const landCoverEvalscript = `
+            //VERSION=3
+            function setup() {
+                return {
+                    input: ["B04", "B03", "B02"],
+                    output: { bands: 3 }
+                };
+            }
+            function evaluatePixel(sample) {
+                return [sample.B04, sample.B03, sample.B02];
+            }
+        `;
+
+        function getSentinelHubUrl(bbox, evalscript, layerType) {
+            const baseUrl = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_CLIENT_ID}`;
+            const timeRange = '2023-01-01/2025-02-21'; // Adjust to latest available data
+            return `${baseUrl}?service=WMS&request=GetMap&layers=SENTINEL2_L2A&format=image/png&width=512&height=512&bbox=${bbox}&srs=EPSG:4326&time=${timeRange}&evalscript=${encodeURIComponent(evalscript)}`;
+        }
 
         function downloadImage(url, filename) {
+            console.log("Fetching URL:", url);
             fetch(url)
-                .then(response => response.blob())
+                .then(response => {
+                    console.log("Response status:", response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.blob();
+                })
                 .then(blob => {
+                    console.log("Blob size:", blob.size, "bytes");
+                    if (blob.size < 1024) { // Check if less than 1KB
+                        throw new Error("Received an invalid or empty image.");
+                    }
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
                     link.download = filename;
@@ -53,7 +82,7 @@ function initializeMap() {
                 })
                 .catch(error => {
                     console.error("Download failed:", error);
-                    alert("Error downloading map: " + error);
+                    alert("Error downloading map: " + error.message);
                 });
         }
 
@@ -64,8 +93,7 @@ function initializeMap() {
             }
             const bounds = selectedArea.getBounds();
             const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-            const url = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_CLIENT_ID}?service=WMS&request=GetMap&layers=NDVI&format=image/png&width=512&height=512&bbox=${bbox}&srs=EPSG:4326`;
-            map.addLayer(ndviLayer); // Show on map
+            const url = getSentinelHubUrl(bbox, ndviEvalscript, 'NDVI');
             downloadImage(url, 'NDVI_Map.png');
         });
 
@@ -76,8 +104,7 @@ function initializeMap() {
             }
             const bounds = selectedArea.getBounds();
             const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-            const url = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_CLIENT_ID}?service=WMS&request=GetMap&layers=TRUE_COLOR&format=image/png&width=512&height=512&bbox=${bbox}&srs=EPSG:4326`;
-            map.addLayer(landCoverLayer); // Show on map
+            const url = getSentinelHubUrl(bbox, landCoverEvalscript, 'LandCover');
             downloadImage(url, 'LandCover_Map.png');
         });
     }
