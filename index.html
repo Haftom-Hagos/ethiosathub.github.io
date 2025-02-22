@@ -6,24 +6,19 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <link rel="stylesheet" href="styles.css" />
+    <style>
+        #map { height: 500px; width: 100%; }
+        .button-container { margin-top: 10px; z-index: 1000; position: relative; }
+        .button-container button { margin-right: 10px; }
+    </style>
 </head>
 <body>
     <div class="tabs">
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'home')">Home</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'maps')">Maps</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'data')">Data</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button>
-        </div>
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'contact')">Contact</button>
-        </div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'home')">Home</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'maps')">Maps</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'data')">Data</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'contact')">Contact</button></div>
     </div>
 
     <div id="home" class="tabcontent" style="display: block;">
@@ -33,9 +28,9 @@
 
     <div id="maps" class="tabcontent">
         <h3>Maps</h3>
-        <p>Select an area on the map and download NDVI or Land Cover maps.</p>
-        <div id="map" style="height: 500px; width: 100%;"></div>
-        <div style="margin-top: 10px;">
+        <p>Select an area on the map and download NDVI or Land Cover maps in real-time.</p>
+        <div id="map"></div>
+        <div class="button-container">
             <button id="ndviBtn">Download NDVI Map</button>
             <button id="landCoverBtn">Download Land Cover Map</button>
         </div>
@@ -67,7 +62,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <script src="https://earthengine.google.com/static/eejs/ee_api_js.js"></script>
     <script src="script.js"></script>
 
     <script>
