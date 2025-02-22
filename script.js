@@ -1,21 +1,7 @@
-// Global variable for the map
-let map;
+let map, drawnItems, selectedArea;
 
-window.addEventListener('load', () => {
-    console.log("Page loaded, checking GEE...");
-    if (typeof ee === 'undefined') {
-        console.error("GEE library not loaded. Check script tags in HTML or network connectivity.");
-        alert("GEE failed to load. Check console for details.");
-    } else {
-        console.log("Attempting to initialize GEE...");
-        ee.initialize(null, null, () => {
-            console.log("GEE initialized successfully!");
-        }, (error) => {
-            console.error("GEE initialization failed:", error);
-            alert("GEE failed to initialize: " + error + ". Please authenticate with Google Earth Engine.");
-        });
-    }
-});
+// Replace with your Sentinel Hub CLIENT_ID from your dashboard
+const SENTINEL_HUB_CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // Get this from sentinel-hub.com
 
 function initializeMap() {
     if (!map) {
@@ -25,7 +11,7 @@ function initializeMap() {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        const drawnItems = new L.FeatureGroup();
+        drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
 
         const drawControl = new L.Control.Draw({
@@ -34,41 +20,41 @@ function initializeMap() {
         });
         map.addControl(drawControl);
 
-        let selectedArea = null;
         map.on('draw:created', (e) => {
             drawnItems.clearLayers();
             selectedArea = e.layer;
             drawnItems.addLayer(selectedArea);
         });
 
-        function calculateNDVI(geometry) {
-            console.log("Calculating NDVI...");
-            const sentinel2 = ee.ImageCollection('COPERNICUS/S2')
-                .filterBounds(geometry)
-                .filterDate('2023-01-01', '2023-12-31')
-                .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
-                .median();
-            const ndvi = sentinel2.normalizedDifference(['B8', 'B4']).rename('NDVI');
-            return ndvi.clip(geometry);
-        }
+        // Sentinel Hub real-time NDVI layer
+        const ndviLayer = L.tileLayer.wms('https://services.sentinel-hub.com/ogc/wms/' + SENTINEL_HUB_CLIENT_ID, {
+            layers: 'NDVI',
+            format: 'image/png',
+            transparent: true,
+            maxZoom: 19
+        });
 
-        function downloadImage(image, filename) {
-            console.log("Generating download URL for", filename);
-            image.getDownloadURL({
-                name: filename,
-                scale: 30,
-                region: selectedArea.toGeoJSON().geometry,
-                format: 'GeoTIFF'
-            }, (url) => {
-                console.log("Download URL generated:", url);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = filename;
-                link.click();
-            }, (error) => {
-                console.error("Download failed:", error);
-                alert('Error generating download: ' + error);
-            });
+        // Sentinel Hub real-time Land Cover layer (using a custom script for simplicity)
+        const landCoverLayer = L.tileLayer.wms('https://services.sentinel-hub.com/ogc/wms/' + SENTINEL_HUB_CLIENT_ID, {
+            layers: 'TRUE_COLOR', // Placeholder; customize with a land cover script if needed
+            format: 'image/png',
+            transparent: true,
+            maxZoom: 19
+        });
+
+        function downloadImage(url, filename) {
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    link.click();
+                })
+                .catch(error => {
+                    console.error("Download failed:", error);
+                    alert("Error downloading map: " + error);
+                });
         }
 
         document.getElementById('ndviBtn').addEventListener('click', () => {
@@ -76,9 +62,11 @@ function initializeMap() {
                 alert('Please draw an area on the map first!');
                 return;
             }
-            const geometry = ee.Geometry.Rectangle(selectedArea.getBounds().toBBoxArray());
-            const ndviImage = calculateNDVI(geometry);
-            downloadImage(ndviImage, 'NDVI_Map');
+            const bounds = selectedArea.getBounds();
+            const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+            const url = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_CLIENT_ID}?service=WMS&request=GetMap&layers=NDVI&format=image/png&width=512&height=512&bbox=${bbox}&srs=EPSG:4326`;
+            map.addLayer(ndviLayer); // Show on map
+            downloadImage(url, 'NDVI_Map.png');
         });
 
         document.getElementById('landCoverBtn').addEventListener('click', () => {
@@ -86,9 +74,11 @@ function initializeMap() {
                 alert('Please draw an area on the map first!');
                 return;
             }
-            const geometry = ee.Geometry.Rectangle(selectedArea.getBounds().toBBoxArray());
-            const landCover = ee.Image('COPERNICUS/S2_LC').clip(geometry);
-            downloadImage(landCover, 'LandCover_Map');
+            const bounds = selectedArea.getBounds();
+            const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+            const url = `https://services.sentinel-hub.com/ogc/wms/${SENTINEL_HUB_CLIENT_ID}?service=WMS&request=GetMap&layers=TRUE_COLOR&format=image/png&width=512&height=512&bbox=${bbox}&srs=EPSG:4326`;
+            map.addLayer(landCoverLayer); // Show on map
+            downloadImage(url, 'LandCover_Map.png');
         });
     }
 }
