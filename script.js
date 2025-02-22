@@ -1,7 +1,7 @@
 let map, drawnItems, selectedArea;
 
 // Replace with your Sentinel Hub CLIENT_ID
-const SENTINEL_HUB_CLIENT_ID = '62cbf745-c1c9-473e-b88a-cbb3a0ae4f75'; // Your ID
+const SENTINEL_HUB_CLIENT_ID = 'c34e4a71-86d3-459b-8f4c-07075db72f37'; // Your ID
 
 function initializeMap() {
     if (!map) {
