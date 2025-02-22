@@ -1,7 +1,7 @@
 let map, drawnItems, selectedArea;
 
 // Replace with your Sentinel Hub CLIENT_ID from your dashboard
-const SENTINEL_HUB_CLIENT_ID = 'YOUR_CLIENT_ID_HERE'; // Get this from sentinel-hub.com
+const SENTINEL_HUB_CLIENT_ID = '62cbf745-c1c9-473e-b88a-cbb3a0ae4f75'; // Get this from sentinel-hub.com
 
 function initializeMap() {
     if (!map) {
