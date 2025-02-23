@@ -38,6 +38,27 @@ function initializeMap() {
             return layer;
         }
 
+        function downloadImage(url, filename) {
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    link.click();
+                })
+                .catch(error => {
+                    console.error("Download failed:", error);
+                    alert("Error downloading map: " + error.message);
+                });
+        }
+
+        // Download NDVI Map
         document.getElementById('ndviBtn').addEventListener('click', () => {
             if (!selectedArea) {
                 alert('Please draw an area on the map first!');
@@ -62,10 +83,8 @@ function initializeMap() {
                 return response.json();
             })
             .then(data => {
-                if (data.mapId && data.token) {
-                    if (ndviLayer) map.removeLayer(ndviLayer);
-                    addGEELayer(data.mapId, data.token, 'NDVI');
-                    alert('NDVI visualized on the map!');
+                if (data.url) {
+                    downloadImage(data.url, 'NDVI_Map.png');
                 } else if (data.error) {
                     alert(data.error);
                 }
@@ -76,6 +95,7 @@ function initializeMap() {
             });
         });
 
+        // Download Land Cover Map
         document.getElementById('landCoverBtn').addEventListener('click', () => {
             if (!selectedArea) {
                 alert('Please draw an area on the map first!');
@@ -100,6 +120,82 @@ function initializeMap() {
                 return response.json();
             })
             .then(data => {
+                if (data.url) {
+                    downloadImage(data.url, 'LandCover_Map.png');
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error("API call failed:", error);
+                alert("Failed to fetch Land Cover: " + error.message);
+            });
+        });
+
+        // View NDVI Map
+        document.getElementById('viewNdviBtn').addEventListener('click', () => {
+            if (!selectedArea) {
+                alert('Please draw an area on the map first!');
+                return;
+            }
+            const bounds = selectedArea.getBounds();
+            const bbox = {
+                west: bounds.getWest(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                north: bounds.getNorth()
+            };
+            fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/viewNDVI', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bbox })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.mapId && data.token) {
+                    if (ndviLayer) map.removeLayer(ndviLayer);
+                    addGEELayer(data.mapId, data.token, 'NDVI');
+                    alert('NDVI visualized on the map!');
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error("API call failed:", error);
+                alert("Failed to fetch NDVI visualization: " + error.message);
+            });
+        });
+
+        // View Land Cover Map
+        document.getElementById('viewLandCoverBtn').addEventListener('click', () => {
+            if (!selectedArea) {
+                alert('Please draw an area on the map first!');
+                return;
+            }
+            const bounds = selectedArea.getBounds();
+            const bbox = {
+                west: bounds.getWest(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                north: bounds.getNorth()
+            };
+            fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/viewLandCover', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bbox })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
                 if (data.mapId && data.token) {
                     if (landCoverLayer) map.removeLayer(landCoverLayer);
                     addGEELayer(data.mapId, data.token, 'Land Cover');
@@ -110,7 +206,7 @@ function initializeMap() {
             })
             .catch(error => {
                 console.error("API call failed:", error);
-                alert("Failed to fetch Land Cover: " + error.message);
+                alert("Failed to fetch Land Cover visualization: " + error.message);
             });
         });
     }
