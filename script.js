@@ -1,4 +1,4 @@
-let map, drawnItems, selectedArea;
+let map, drawnItems, selectedArea, ndviLayer, landCoverLayer;
 
 function initializeMap() {
     if (!map) {
@@ -21,26 +21,21 @@ function initializeMap() {
             drawnItems.clearLayers();
             selectedArea = e.layer;
             drawnItems.addLayer(selectedArea);
+            // Remove existing layers before adding new ones
+            if (ndviLayer) map.removeLayer(ndviLayer);
+            if (landCoverLayer) map.removeLayer(landCoverLayer);
         });
 
-        function downloadImage(url, filename) {
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.blob();
-                })
-                .then(blob => {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = filename;
-                    link.click();
-                })
-                .catch(error => {
-                    console.error("Download failed:", error);
-                    alert("Error downloading map: " + error.message);
-                });
+        function addGEELayer(mapId, token, name) {
+            const url = `https://earthengine.googleapis.com/map/${mapId}/{z}/{x}/{y}?token=${token}`;
+            const layer = L.tileLayer(url, {
+                maxZoom: 18,
+                attribution: 'Google Earth Engine'
+            });
+            layer.addTo(map);
+            if (name === 'NDVI') ndviLayer = layer;
+            else if (name === 'Land Cover') landCoverLayer = layer;
+            return layer;
         }
 
         document.getElementById('ndviBtn').addEventListener('click', () => {
@@ -60,10 +55,17 @@ function initializeMap() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bbox })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.url) {
-                    downloadImage(data.url, 'NDVI_Map.png');
+                if (data.mapId && data.token) {
+                    if (ndviLayer) map.removeLayer(ndviLayer);
+                    addGEELayer(data.mapId, data.token, 'NDVI');
+                    alert('NDVI visualized on the map!');
                 } else if (data.error) {
                     alert(data.error);
                 }
@@ -91,10 +93,17 @@ function initializeMap() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bbox })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.url) {
-                    downloadImage(data.url, 'LandCover_Map.png');
+                if (data.mapId && data.token) {
+                    if (landCoverLayer) map.removeLayer(landCoverLayer);
+                    addGEELayer(data.mapId, data.token, 'Land Cover');
+                    alert('Land Cover visualized on the map!');
                 } else if (data.error) {
                     alert(data.error);
                 }
