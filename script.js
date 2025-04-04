@@ -211,3 +211,28 @@ function initializeMap() {
         });
     }
 }
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const galleryItems = document.querySelectorAll('.gallery-item');
+
+    galleryItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Toggle zoomed class on the clicked item
+            item.classList.toggle('zoomed');
+            document.body.classList.toggle('zoomed');
+
+            // If zoomed, add a click-outside listener to close
+            if (item.classList.contains('zoomed')) {
+                document.addEventListener('click', function closeZoom(e) {
+                    if (!item.contains(e.target)) {
+                        item.classList.remove('zoomed');
+                        document.body.classList.remove('zoomed');
+                        document.removeEventListener('click', closeZoom);
+                    }
+                });
+            }
+        });
+    });
+});
