@@ -51,6 +51,12 @@
     border-top: none;
 }
 
+.filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+}
 
 .gallery-item {
     cursor: pointer; /* Makes it look clickable */
