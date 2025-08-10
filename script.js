@@ -1,5 +1,24 @@
 let map, drawnItems, selectedArea, ndviLayer, landCoverLayer;
 
+function getSelectedDateRange() {
+    const yearEl = document.getElementById('yearSelect');
+    const mStartEl = document.getElementById('monthStart');
+    const mEndEl = document.getElementById('monthEnd');
+    if (!yearEl || !mStartEl || !mEndEl) {
+        return null;
+    }
+    const year = parseInt(yearEl.value, 10);
+    const ms = parseInt(mStartEl.value, 10);
+    const me = parseInt(mEndEl.value, 10);
+    const mStart = Math.min(ms, me);
+    const mEnd = Math.max(ms, me);
+    const startDate = `${year}-${String(mStart).padStart(2, '0')}-01`;
+    // End date: last day of end month
+    const lastDay = new Date(year, mEnd, 0).getDate();
+    const endDate = `${year}-${String(mEnd).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    return { startDate, endDate };
+}
+
 function initializeMap() {
     if (!map) {
         map = L.map('map').setView([9.145, 40.4897], 6);
@@ -64,6 +83,7 @@ function initializeMap() {
                 alert('Please draw an area on the map first!');
                 return;
             }
+            const dateRange = getSelectedDateRange();
             const bounds = selectedArea.getBounds();
             const bbox = {
                 west: bounds.getWest(),
@@ -74,7 +94,7 @@ function initializeMap() {
             fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/getNDVI', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bbox })
+                body: JSON.stringify({ bbox, ...dateRange })
             })
             .then(response => {
                 if (!response.ok) {
@@ -101,6 +121,7 @@ function initializeMap() {
                 alert('Please draw an area on the map first!');
                 return;
             }
+            const dateRange = getSelectedDateRange();
             const bounds = selectedArea.getBounds();
             const bbox = {
                 west: bounds.getWest(),
@@ -111,7 +132,7 @@ function initializeMap() {
             fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/getLandCover', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bbox })
+                body: JSON.stringify({ bbox, ...dateRange })
             })
             .then(response => {
                 if (!response.ok) {
@@ -138,6 +159,7 @@ function initializeMap() {
                 alert('Please draw an area on the map first!');
                 return;
             }
+            const dateRange = getSelectedDateRange();
             const bounds = selectedArea.getBounds();
             const bbox = {
                 west: bounds.getWest(),
@@ -148,7 +170,7 @@ function initializeMap() {
             fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/viewNDVI', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bbox })
+                body: JSON.stringify({ bbox, ...dateRange })
             })
             .then(response => {
                 if (!response.ok) {
@@ -177,6 +199,7 @@ function initializeMap() {
                 alert('Please draw an area on the map first!');
                 return;
             }
+            const dateRange = getSelectedDateRange();
             const bounds = selectedArea.getBounds();
             const bbox = {
                 west: bounds.getWest(),
@@ -187,7 +210,7 @@ function initializeMap() {
             fetch('https://ethiosathub-gee-cf19aa5b98a7.herokuapp.com/viewLandCover', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bbox })
+                body: JSON.stringify({ bbox, ...dateRange })
             })
             .then(response => {
                 if (!response.ok) {
@@ -216,6 +239,34 @@ function initializeMap() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const galleryItems = document.querySelectorAll('.gallery-item');
+
+    // Populate filters
+    const yearSelect = document.getElementById('yearSelect');
+    const monthStart = document.getElementById('monthStart');
+    const monthEnd = document.getElementById('monthEnd');
+
+    if (yearSelect && monthStart && monthEnd) {
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear; y >= 2016; y -= 1) {
+            const opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = String(y);
+            yearSelect.appendChild(opt);
+        }
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        for (let m = 1; m <= 12; m += 1) {
+            const opt1 = document.createElement('option');
+            opt1.value = String(m);
+            opt1.textContent = `${String(m).padStart(2,'0')} (${monthNames[m-1]})`;
+            monthStart.appendChild(opt1);
+            const opt2 = opt1.cloneNode(true);
+            monthEnd.appendChild(opt2);
+        }
+        // Default: current year, Jan to Dec
+        yearSelect.value = String(currentYear);
+        monthStart.value = '1';
+        monthEnd.value = '12';
+    }
 
     galleryItems.forEach(item => {
         item.addEventListener('click', () => {
