@@ -71,13 +71,28 @@ p {
 }
 
 /* ===== Data Section Styling ===== */
-#data ul {
+.data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.data-grid h4 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 20px;
+    border-bottom: 2px solid #1abc9c;
+    padding-bottom: 5px;
+}
+
+.data-grid ul {
     list-style: none;
     padding-left: 0;
 }
 
-#data ul li {
-    margin-bottom: 10px;
+.data-grid li {
+    margin-bottom: 12px;
 }
 
 /* Make download links look like buttons */
@@ -131,3 +146,4 @@ p {
 .gallery-item:hover {
     transform: scale(1.05);
 }
+
