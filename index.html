@@ -10,18 +10,36 @@
         #map { height: 500px; width: 100%; }
         .button-container { margin-top: 10px; z-index: 1000; position: relative; }
         .button-container button { margin-right: 10px; }
+        /* Added basic lightbox styling to ensure it works */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+        }
     </style>
 </head>
 <body>
     <div class="tabs">
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'home')">Home</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'maps')">Maps</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'data')">Data</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'contact')">Contact</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'home')" role="tab" aria-controls="home">Home</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'maps')" role="tab" aria-controls="maps">Maps</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'data')" role="tab" aria-controls="data">Data</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'gallery')" role="tab" aria-controls="gallery">Gallery</button></div>
+        <div class="tab"><button class="tablinks" onclick="openTab(event, 'contact')" role="tab" aria-controls="contact">Contact</button></div>
     </div>
 
-    <div id="home" class="tabcontent" style="display: block;">
+    <!-- Removed inline style as it's set by JavaScript -->
+    <div id="home" class="tabcontent">
         <h3>Home</h3>
         <p>Welcome to the Home page!</p>
     </div>
@@ -48,8 +66,8 @@
 
     <div id="data" class="tabcontent">
         <h3>Data</h3>
-        <p>    
-            This section provides <b>administrative boundary datasets of Ethiopia</b> in GeoPackage format.  
+        <p>
+            This section provides <b>administrative boundary datasets of Ethiopia</b> in GeoPackage format.
             The datasets are organized into different administrative levels:
         </p>
         <ul>
@@ -57,23 +75,22 @@
             <li><b>Level 1</b> – Regional boundaries</li>
             <li><b>Level 2</b> – Zonal boundaries</li>
             <li><b>Level 3</b> – Woreda (district) boundaries</li>
-<!--             <li><b>Level 4</b> – Kebele (local administrative unit) boundaries</li> -->
+            <li><b>Level 4</b> – Kebele (local administrative unit) boundaries</li> <!-- Uncommented to align with download links -->
         </ul>
         <p>
-            Each dataset is available in two coordinate reference systems:  
+            Each dataset is available in two coordinate reference systems:
         </p>
         <ul>
             <li><b>Geographic Coordinate System (GCS)</b>: EPSG:4326 – WGS 84</li>
             <li><b>Projected Coordinate System (PCS)</b>: EPSG:32637 – WGS 84 / UTM Zone 37N</li>
         </ul>
         <p>
-            The GCS version is useful for web mapping and global datasets, while the PCS version is recommended 
-            for spatial analysis and distance/area measurements within Ethiopia.  
-            These datasets are suitable for GIS applications, research, and visualization projects related to 
-            Ethiopia’s administrative divisions.  
+            The GCS version is useful for web mapping and global datasets, while the PCS version is recommended
+            for spatial analysis and distance/area measurements within Ethiopia.
+            These datasets are suitable for GIS applications, research, and visualization projects related to
+            Ethiopia’s administrative divisions.
         </p>
         <p><i>Click the links below to download the data:</i></p>
-            <!-- Two-column layout -->
         <div class="data-grid">
             <div>
                 <h4>GCS (EPSG:4326)</h4>
@@ -98,103 +115,94 @@
         </div>
     </div>
 
-    
     <div id="gallery" class="tabcontent">
         <h3>Gallery</h3>
         <p>Explore our collection of thematic and 3D maps from different parts of Ethiopia. Click an image to enlarge and learn more.</p>
-    
         <div class="gallery-grid">
             <!-- Item 1 -->
             <div class="gallery-card">
                 <img src="3d_aa_chm_1.png" alt="3D Canopy Height Map - Addis Ababa" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        3D visualization of canopy height model for Addis Ababa. 
-                        <span class="more-text">This map illustrates urban vegetation structure and tree distribution, highlighting canopy cover variations across the city.</span>
+                        3D visualization of canopy height model for Addis Ababa.
+                        <span class="more-text" style="display: none;">This map illustrates urban vegetation structure and tree distribution, highlighting canopy cover variations across the city.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
-
             <!-- Item 2 -->
             <div class="gallery-card">
                 <img src="3d_aa_chm_3.png" alt="3D CHM Addis Ababa" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        Another perspective of Addis Ababa’s canopy height. 
-                        <span class="more-text">Generated from LiDAR-derived data to emphasize vertical vegetation profiles in urban landscapes.</span>
+                        Another perspective of Addis Ababa’s canopy height.
+                        <span class="more-text" style="display: none;">Generated from LiDAR-derived data to emphasize vertical vegetation profiles in urban landscapes.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
-
             <!-- Item 3 -->
             <div class="gallery-card">
                 <img src="3d_land_cover_addis_2023.png" alt="Land Cover Addis Ababa 2023" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        2023 Land Cover Classification for Addis Ababa. 
-                        <span class="more-text">Classes include vegetation, built-up areas, water, and bare soil, mapped using Sentinel imagery and supervised classification.</span>
+                        2023 Land Cover Classification for Addis Ababa.
+                        <span class="more-text" style="display: none;">Classes include vegetation, built-up areas, water, and bare soil, mapped using Sentinel imagery and supervised classification.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
-
             <!-- Item 4 -->
             <div class="gallery-card">
                 <img src="Addis_roads.png" alt="Road Network Addis Ababa" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        Road network map of Addis Ababa. 
-                        <span class="more-text">The map combines OpenStreetMap road data with satellite imagery to highlight infrastructure density and accessibility.</span>
+                        Road network map of Addis Ababa.
+                        <span class="more-text" style="display: none;">The map combines OpenStreetMap road data with satellite imagery to highlight infrastructure density and accessibility.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
-
             <!-- Item 5 -->
             <div class="gallery-card">
                 <img src="Tigray_river.png" alt="River Network Tigray" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        River network of Tigray Region. 
-                        <span class="more-text">Hydrological features mapped using DEM and flow accumulation models to trace drainage patterns.</span>
+                        River network of Tigray Region.
+                        <span class="more-text" style="display: none;">Hydrological features mapped using DEM and flow accumulation models to trace drainage patterns.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
-
             <!-- Item 6 -->
             <div class="gallery-card">
                 <img src="S_tigray_CH.png" alt="Canopy Height Southern Tigray" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        Canopy height model of Southern Tigray. 
-                        <span class="more-text">Derived from LiDAR data and processed with rioxarray in Python to reveal spatial vegetation distribution.</span>
+                        Canopy height model of Southern Tigray.
+                        <span class="more-text" style="display: none;">Derived from LiDAR data and processed with rioxarray in Python to reveal spatial vegetation distribution.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
-
             <!-- Item 7 -->
             <div class="gallery-card">
                 <img src="3d_southern_t_land_cover_1.png" alt="3D Land Cover Southern Tigray" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        3D land cover map of Southern Tigray. 
-                        <span class="more-text">Combines elevation and classification data to visualize land use distribution in three dimensions.</span>
+                        3D land cover map of Southern Tigray.
+                        <span class="more-text" style="display: none;">Combines elevation and classification data to visualize land use distribution in three dimensions.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
-
             <!-- Item 8 -->
             <div class="gallery-card">
                 <img src="Ethio_rivers.png" alt="River Network Ethiopia" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        National river network of Ethiopia. 
-                        <span class="more-text">Includes major rivers and tributaries extracted from DEM hydrological analysis.</span>
+                        National river network of Ethiopia.
+                        <span class="more-text" style="display: none;">Includes major rivers and tributaries extracted from DEM hydrological analysis.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
@@ -207,15 +215,12 @@
         <img id="lightbox-img">
     </div>
 
-    <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center; text-align: center;">
-        <span style="color: white; position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer;" onclick="closeImageModal()">×</span>
-        <img id="modalImage" src="" style="max-width: 90%; max-height: 90%;">
-        <p id="modalCaption" style="color: white; font-size: 20px; margin-top: 10px;"></p>
-    </div>
-
+    <!-- Updated contact section with placeholder content -->
     <div id="contact" class="tabcontent">
         <h3>Contact</h3>
-        <p>----------------.</p>
+        <p>Contact us for more information about our datasets and maps.</p>
+        <p>Email: <a href="mailto:info@ethiosathub.org">info@ethiosathub.org</a></p>
+        <p>Follow us on <a href="https://x.com/EthioSatHub" target="_blank">X</a> for updates.</p>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -223,16 +228,29 @@
     <script src="script.js"></script>
 
     <script>
-        function showImageModal(src, caption) {
-            document.getElementById('modalImage').src = src;
-            document.getElementById('modalCaption').textContent = caption;
-            document.getElementById('imageModal').style.display = "flex";
+        // Lightbox functions
+        function openLightbox(img) {
+            document.getElementById("lightbox-img").src = img.src;
+            document.getElementById("lightbox").style.display = "flex";
         }
 
-        function closeImageModal() {
-            document.getElementById('imageModal').style.display = "none";
+        function closeLightbox() {
+            document.getElementById("lightbox").style.display = "none";
         }
 
+        // Read more toggle
+        function toggleRead(button) {
+            let moreText = button.previousElementSibling.querySelector(".more-text");
+            if (moreText.style.display === "inline") {
+                moreText.style.display = "none";
+                button.innerText = "Read more";
+            } else {
+                moreText.style.display = "inline";
+                button.innerText = "Read less";
+            }
+        }
+
+        // Tab navigation
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");
@@ -258,18 +276,12 @@
                         map.invalidateSize();
                         console.log("Map refreshed.");
                     }
-                }, 100);
+                }, 200); // Increased delay to 200ms for safer map rendering
             }
         }
 
+        // Initialize home tab
         document.getElementById("home").style.display = "block";
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
