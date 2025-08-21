@@ -1,35 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Leaflet Map with GeoJSON and Tabs</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    <link rel="stylesheet" href="styles.css" />
-    <style>
-        #map { height: 500px; width: 100%; }
-        .button-container { margin-top: 10px; z-index: 1000; position: relative; }
-        .button-container button { margin-right: 10px; }
-    </style>
-</head>
-<body>
-    <div class="tabs">
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'home')">Home</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'maps')">Maps</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'data')">Data</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'gallery')">Gallery</button></div>
-        <div class="tab"><button class="tablinks" onclick="openTab(event, 'contact')">Contact</button></div>
-    </div>
-
-    <div id="home" class="tabcontent" style="display: block;">
-        <h3>Home</h3>
-        <p>Welcome to the Home page!</p>
-    </div>
-
-    <div id="maps" class="tabcontent">
-        <h3>Maps</h3>
-        <p>Select an area on the map and download NDVI or Land Cover maps in real-time.</p>
-        <div id="map"></div>
+<h3>Maps</h3>
+<p>Select an area on the map and download NDVI or Land Cover maps.</p>
+<div id="map"></div>
         <div class="filters">
             <label for="yearSelect">Year</label>
             <select id="yearSelect"></select>
@@ -38,107 +9,27 @@
             <label for="monthEnd">To</label>
             <select id="monthEnd"></select>
         </div>
-        <div class="button-container">
-            <button id="ndviBtn">Download NDVI Map</button>
-            <button id="landCoverBtn">Download Land Cover Map</button>
-            <button id="viewNdviBtn">View NDVI Map</button>
-            <button id="viewLandCoverBtn">View Land Cover Map</button>
-        </div>
-    </div>
+<div class="button-container">
+<button id="ndviBtn">Download NDVI Map</button>
+<button id="landCoverBtn">Download Land Cover Map</button>
+<button id="viewNdviBtn">View NDVI Map</button>
+<button id="viewLandCoverBtn">View Land Cover Map</button>
+</div>
+</div>
 
-    <div id="data" class="tabcontent">
-        <h3>Data</h3>
-        <p>Vector data and shapefiles related to Ethiopia will be uploaded soon.</p>
-    </div>
+<div id="data" class="tabcontent">
+<h3>Data</h3>
+<p>Vector data and shapefiles related to Ethiopia will be uploaded soon.</p>
+</div>
 
-    <div id="gallery" class="tabcontent">
-        <h3>Gallery</h3>
-        <p>Check out some of our fancy maps.</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-            <div class="gallery-item">
-                <img src="3d_aa_chm_1.png" alt="Image 1" style="max-width: 200px; height: auto;">
-            </div>
-            <div class="gallery-item">
-                <img src="3d_aa_chm_3.png" alt="Image 2" style="max-width: 200px; height: auto;">
-            </div>
-            <div class="gallery-item">
-                <img src="3d_land_cover_addis_2023.png" alt="Image 2" style="max-width: 200px; height: auto;">
-            </div>
-            <div class="gallery-item">
-                <img src="Addis_roads.png" alt="Image 1" style="max-width: 200px; height: auto;">
-            </div>
-            <div class="gallery-item">
-                <img src="Tigray_river.png" alt="Image 2" style="max-width: 200px; height: auto;">
-            </div>
-            <div class="gallery-item">
-                <img src="S_tigray_CH.png" alt="Image 2" style="max-width: 200px; height: auto;">
-            </div>
-            <div class="gallery-item">
-                <img src="3d_southern_t_land_cover_1.png" alt="Image 1" style="max-width: 200px; height: auto;">
-            </div>
-            <div class="gallery-item">
-                <img src="Ethio_rivers.png" alt="Image 2" style="max-width: 200px; height: auto;">
-            </div>
-            <!-- Gallery content unchanged -->
-        </div>
-    </div>
-
-    <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center; text-align: center;">
-        <span style="color: white; position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer;" onclick="closeImageModal()">×</span>
-        <img id="modalImage" src="" style="max-width: 90%; max-height: 90%;">
-        <p id="modalCaption" style="color: white; font-size: 20px; margin-top: 10px;"></p>
-    </div>
-
-    <div id="contact" class="tabcontent">
-        <h3>Contact</h3>
-        <p>----------------.</p>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <script src="script.js"></script>
-
-    <script>
-        function showImageModal(src, caption) {
-            document.getElementById('modalImage').src = src;
-            document.getElementById('modalCaption').textContent = caption;
-            document.getElementById('imageModal').style.display = "flex";
-        }
-
-        function closeImageModal() {
-            document.getElementById('imageModal').style.display = "none";
-        }
-
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
-            var tab = document.getElementById(tabName);
-            if (tab) {
-                tab.style.display = "block";
-            } else {
-                console.error("Tab not found:", tabName);
-            }
-            evt.currentTarget.className += " active";
-
-            if (tabName === 'maps') {
-                initializeMap();
-                setTimeout(() => {
-                    if (map) {
-                        map.invalidateSize();
-                        console.log("Map refreshed.");
-                    }
-                }, 100);
-            }
-        }
-
-        document.getElementById("home").style.display = "block";
-    </script>
-</body>
-</html>
+<div id="gallery" class="tabcontent">
+<h3>Gallery</h3>
+<p>Check out some of our fancy maps.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 20px;">
+<div class="gallery-item">
+<img src="3d_aa_chm_1.png" alt="Image 1" style="max-width: 200px; height: auto;">
+</div>
+<div class="gallery-item">
+<img src="3d_aa_chm_3.png" alt="Image 2" style="max-width: 200px; height: auto;">
+</div>
+<div class="gallery-item">
