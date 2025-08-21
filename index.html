@@ -121,7 +121,7 @@
         <div class="gallery-grid">
             <!-- Item 1 -->
             <div class="gallery-card">
-                <img src="3d_aa_chm_1.png" alt="3D Canopy Height Map - Addis Ababa" class="gallery-item" onclick="openLightbox(this)">
+                <img src="aa_3d.png" alt="3D Canopy Height Map - Addis Ababa" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
                         3D visualization of canopy height model for Addis Ababa.
@@ -160,7 +160,15 @@
                 <div class="desc">
                     <p>
                         2023 Land Cover Classification for Addis Ababa.
-                        <span class="more-text" style="display: none;">Classes include vegetation, built-up areas, water, and bare soil, mapped using Sentinel imagery and supervised classification.</span>
+                        <span class="more-text" style="display: none;">3D land cover maps offer a more realistic visualization of the study area compared to traditional 2D maps. 
+                                                                        While 3D representations may not yet be practical for routine quantitative analysis, they provide valuable 
+                                                                        insights into landform characteristics and the spatial distribution of land cover classes across varied terrain.
+                                                                        For 2023, the 3D land cover map of Addis Ababa and its surrounding districts shows that trees are largely confined to
+                                                                        mountainous areas, whereas cropland and built-up areas dominate flat and gently sloping landscapes. 
+                                                                        Built-up areas are noticeably expanding, often encroaching on croplands, while some rangelands have transitioned 
+                                                                        into cropland, tree cover, or built-up zones. The inclusion of a highway road network highlights the pattern of 
+                                                                        urban and suburban development along major roadways extending outward from the city. Incorporating 3D maps into 
+                                                                        land cover or elevation analyses enhances visualization and provides insights that are not fully captured in 2D representations.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
@@ -171,7 +179,10 @@
                 <div class="desc">
                     <p>
                         Road network map of Addis Ababa.
-                        <span class="more-text" style="display: none;">The map combines OpenStreetMap road data with satellite imagery to highlight infrastructure density and accessibility.</span>
+                        <span class="more-text" style="display: none;">This map presents the road network of Addis Ababa, Ethiopia, generated using data from OpenStreetMap and processed in Jupyter Notebook. 
+                            The visualization distinguishes between different types of roads: primary and major roads are depicted with greater width, emphasizing the main transport arteries, while 
+                            residential and minor roads are shown thinner, highlighting the finer details of the city’s street layout. This representation provides a clear overview of Addis Ababa’s urban connectivity 
+                            and infrastructure, supporting urban planning, transportation analysis, and spatial studies.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
@@ -182,7 +193,10 @@
                 <div class="desc">
                     <p>
                         River network of Tigray Region.
-                        <span class="more-text" style="display: none;">Hydrological features mapped using DEM and flow accumulation models to trace drainage patterns.</span>
+                        <span class="more-text" style="display: none;">This 3D elevation map of Tigray, located in northern Ethiopia, showcases the region’s distinctive and rugged topography. 
+                            The map highlights the intricate network of rivers that traverse the mountainous terrain, emphasizing how these natural features shape the landscape. 
+                            By visualizing elevation in three dimensions, the map provides a deeper understanding of the region’s geographic complexity and scenic beauty, offering 
+                            valuable insights for environmental studies, land-use planning, and geographic education.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
@@ -193,7 +207,11 @@
                 <div class="desc">
                     <p>
                         Canopy height model of Southern Tigray.
-                        <span class="more-text" style="display: none;">Derived from LiDAR data and processed with rioxarray in Python to reveal spatial vegetation distribution.</span>
+                        <span class="more-text" style="display: none;">Canopy height is a fundamental parameter for understanding forest structure and biomass production, 
+                            both of which are critical for environmental research. This map presents a detailed canopy height model of Southern Tigray, Ethiopia, at a 10-meter resolution, 
+                            generated using Datashader. It prominently highlights the Hugumbrda Forest, one of Ethiopia’s dry Afromontane forests. 
+                            The underlying dataset is globally available for the year 2020 at 10-meter resolution, providing a valuable resource for researchers studying 
+                            forest vertical structure, biomass estimation, and related ecological processes.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
@@ -204,17 +222,21 @@
                 <div class="desc">
                     <p>
                         3D land cover map of Southern Tigray.
-                        <span class="more-text" style="display: none;">Combines elevation and classification data to visualize land use distribution in three dimensions.</span>
+                        <span class="more-text" style="display: none;">Traditional land cover maps are typically limited to a horizontal view, overlooking the influence of terrain on land cover patterns. 
+                            The 2023 3D land cover map of Southern Tigray, Ethiopia, combines elevation data to illustrate how terrain shapes the distribution of land cover.
+                            The map shows that croplands and built-up areas are concentrated on flatter terrains, while trees and rangelands are more common in rugged landscapes.
+                            Integrating 3D land cover maps into planning processes can support smarter, more sustainable decision-making. Such visualizations are valuable for land-use planners, 
+                            policymakers, and other stakeholders pursuing environmentally responsible and climate-resilient development.</span>
                     </p>
                     <button class="read-more" onclick="toggleRead(this)">Read more</button>
                 </div>
             </div>
             <!-- Item 8 -->
             <div class="gallery-card">
-                <img src="Central_Tigray_Vegetation_map.jpg" alt="River Network Ethiopia" class="gallery-item" onclick="openLightbox(this)">
+                <img src="Centeral_Tigray_Vegetation_map.jpg" alt="Central Tigray Vegetation Cover" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        National river network of Ethiopia.
+                        Central Tigray Vegetation Cover.
                         <span class="more-text" style="display: none;">This map illustrates vegetation coverage in the Central Zone of Tigray, Ethiopia, based on unsupervised classification of Sentinel-2 imagery. 
                                                                         Pixels were initially clustered into five classes and subsequently reclassified into vegetated and non-vegetated areas, providing a clear overview 
                                                                         of the region’s green coverage</span>
@@ -300,6 +322,7 @@
     </script>
 </body>
 </html>
+
 
 
 
