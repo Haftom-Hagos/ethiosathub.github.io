@@ -2,6 +2,9 @@ let map, drawnItems, selectedArea, ndviLayer;
 
 const BACKEND_URL = 'https://hafrepo.onrender.com'; // <-- Replace with your Render backend URL
 
+const cors = require('cors');
+app.use(cors());
+
 function getSelectedDateRange() {
     const yearEl = document.getElementById('yearSelect');
     const mStartEl = document.getElementById('monthStart');
@@ -149,3 +152,4 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 });
+
