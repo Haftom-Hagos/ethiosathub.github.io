@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Leaflet Map with GeoJSON and Tabs</title>
+    <title>Ethiopia GeoSpatial Hub – Mapping, Analysis & Consultancy</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <link rel="stylesheet" href="styles.css" />
@@ -39,6 +39,29 @@
     </div>
 
     <!-- Removed inline style as it's set by JavaScript -->
+    <div id="home" class="tabcontent">
+        <h3>Home</h3>
+        <p>Welcome to the Home page!</p>
+
+        <h4>🌍 <b>Remote Sensing & Environmental Consultancy – Ethiopia</b></h4>
+        <p>
+            We provide specialized consultancy services in remote sensing and GIS applications tailored to Ethiopia’s environmental challenges. 
+            Beyond our online tools, we support organizations, researchers, and policymakers with <b>offline analysis services</b>, including:
+        </p>
+        <ul>
+            <li><b>Supervised classification</b> using client-provided ground truth data</li>
+            <li><b>Machine learning–based environmental mapping</b></li>
+            <li><b>Ready-to-use outputs</b> such as high-resolution maps, statistics, and reports</li>
+        </ul>
+        <p>
+            Our consultancy services are designed to turn satellite data into <b>actionable insights</b> for agriculture, forestry, water resources, 
+            urban planning, and climate resilience projects.
+        </p>
+        <p>
+            Whether you are a government agency, NGO, researcher, or private business, we ensure that your data translates into reliable, 
+            decision-ready solutions.
+        </p>
+    </div>
     <div id="home" class="tabcontent">
         <h3>Home</h3>
         <p>Welcome to the Home page!</p>
@@ -86,10 +109,17 @@
         </ul>
         <p>
             The GCS version is useful for web mapping and global datasets, while the PCS version is recommended
-            for spatial analysis and distance/area measurements within Ethiopia.
+            for spatial analysis and distance/area measurements.
             These datasets are suitable for GIS applications, research, and visualization projects related to
             Ethiopia’s administrative divisions.
         </p>
+        <p>
+            <b>GeoPackage Format</b>: GeoPackage (GPKG) is an open, internationally recognized format for storing and sharing geographic data.  
+            GeoPackage is supported by most modern GIS software including QGIS, ArcGIS, and GDAL. It allows users to organize multiple 
+            layers and their attributes efficiently in one file, making it straightforward to exchange and reuse data.  In geopackage format both 
+            vector and raster layers can be stored in a single, compact file. Using GeoPackage is a normal part of today’s geospatial workflows, offering 
+            a reliable and future-proof way to manage spatial information.
+        <p>
         <p><i>Click the links below to download the data:</i></p>
         <div class="data-grid">
             <div>
@@ -192,7 +222,7 @@
                 <img src="Tigray_river.png" alt="River Network Tigray" class="gallery-item" onclick="openLightbox(this)">
                 <div class="desc">
                     <p>
-                        River network of Tigray Region.
+                        3D River network of Tigray Region.
                         <span class="more-text" style="display: none;">This 3D elevation map of Tigray, located in northern Ethiopia, showcases the region’s distinctive and rugged topography. 
                             The map highlights the intricate network of rivers that traverse the mountainous terrain, emphasizing how these natural features shape the landscape. 
                             By visualizing elevation in three dimensions, the map provides a deeper understanding of the region’s geographic complexity and scenic beauty, offering 
@@ -322,6 +352,7 @@
     </script>
 </body>
 </html>
+
 
 
 
