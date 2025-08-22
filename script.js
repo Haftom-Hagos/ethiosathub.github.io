@@ -4,6 +4,23 @@ const BACKEND_URL = 'https://hafrepo.onrender.com'; // <-- Replace with your Ren
 
 //const cors = require('cors');
 //app.use(cors());
+
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");   // <--- add this
+const ee = require("@google/earthengine");
+const privateKey = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+
+const app = express();
+app.use(bodyParser.json());
+
+// Allow your website to access backend
+app.use(cors({
+  origin: ["https://ethiosathub.com"],   // allow your frontend domain
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 const cors = require('cors');
 app.use(cors({ origin: '*' })); // allow requests from any domain
 
@@ -172,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 });
+
 
 
 
