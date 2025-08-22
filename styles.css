@@ -213,3 +213,19 @@ p {
     background: #16a085;
 }
 
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #4CAF50; /* green */
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.btn:hover {
+    background-color: #45a049;
+}
+
+
+
