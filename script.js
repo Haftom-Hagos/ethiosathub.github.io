@@ -72,7 +72,7 @@ function initializeMap() {
                 north: bounds.getNorth()
             };
 
-            fetch(`${BACKEND_URL}/ndvi`, { 
+            fetch(`https://hafrepo.onrender.com/ndvi`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -153,3 +153,4 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 });
+
