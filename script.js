@@ -1,29 +1,6 @@
 let map, drawnItems, selectedArea, ndviLayer;
 
-const BACKEND_URL = 'https://hafrepo.onrender.com'; // <-- Replace with your Render backend URL
-
-//const cors = require('cors');
-//app.use(cors());
-
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");   // <--- add this
-const ee = require("@google/earthengine");
-const privateKey = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-
-const app = express();
-app.use(bodyParser.json());
-
-// Allow your website to access backend
-app.use(cors({
-  origin: ["https://ethiosathub.com"],   // allow your frontend domain
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
-
-const cors = require('cors');
-app.use(cors({ origin: '*' })); // allow requests from any domain
-
+const BACKEND_URL = 'https://hafrepo.onrender.com'; // Render backend URL
 
 function getSelectedDateRange() {
     const yearEl = document.getElementById('yearSelect');
@@ -95,28 +72,15 @@ function initializeMap() {
                 north: bounds.getNorth()
             };
 
-            fetch('https://hafrepo.onrender.com/ndvi', { 
+            fetch(`${BACKEND_URL}/ndvi`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                bbox: bbox,
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate
+                    bbox: bbox,
+                    startDate: dateRange.startDate,
+                    endDate: dateRange.endDate
                 })
             })
-
-            //fetch('https://hafrepo.onrender.com/ndvi', { 
-                //method: 'POST',
-                //headers: { 'Content-Type': 'application/json' },
-                //body: JSON.stringify({ bbox, startDate: dateRange.startDate, endDate: dateRange.endDate })
-            //})
-
-
-            //fetch(`${BACKEND_URL}/ndvi`, {
-                //method: 'POST',
-                //headers: { 'Content-Type': 'application/json' },
-                //body: JSON.stringify({ bbox, ...dateRange })
-            //})
             .then(res => res.json())
             .then(data => {
                 if (data.mapId && data.token) {
@@ -189,7 +153,3 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 });
-
-
-
-
