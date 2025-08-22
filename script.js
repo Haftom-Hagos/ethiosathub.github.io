@@ -2,8 +2,11 @@ let map, drawnItems, selectedArea, ndviLayer;
 
 const BACKEND_URL = 'https://hafrepo.onrender.com'; // <-- Replace with your Render backend URL
 
+//const cors = require('cors');
+//app.use(cors());
 const cors = require('cors');
-app.use(cors());
+app.use(cors({ origin: '*' })); // allow requests from any domain
+
 
 function getSelectedDateRange() {
     const yearEl = document.getElementById('yearSelect');
@@ -75,12 +78,21 @@ function initializeMap() {
                 north: bounds.getNorth()
             };
 
-
             fetch('https://hafrepo.onrender.com/ndvi', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bbox, startDate: dateRange.startDate, endDate: dateRange.endDate })
+                body: JSON.stringify({
+                bbox: bbox,
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate
+                })
             })
+
+            //fetch('https://hafrepo.onrender.com/ndvi', { 
+                //method: 'POST',
+                //headers: { 'Content-Type': 'application/json' },
+                //body: JSON.stringify({ bbox, startDate: dateRange.startDate, endDate: dateRange.endDate })
+            //})
 
 
             //fetch(`${BACKEND_URL}/ndvi`, {
@@ -160,5 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 });
+
 
 
