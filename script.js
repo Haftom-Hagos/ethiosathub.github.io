@@ -75,10 +75,10 @@ function initializeMap() {
             fetch(`https://hafrepo.onrender.com/ndvi`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    bbox: bbox,
-                    startDate: dateRange.startDate,
-                    endDate: dateRange.endDate
+                body: JSON.stringify({bbox, startDate: dateRange.startDate, endDate: dateRange.endDate
+                    //bbox: bbox,
+                    //startDate: dateRange.startDate,
+                    //endDate: dateRange.endDate
                 })
             })
             .then(res => res.json())
@@ -115,8 +115,8 @@ function initializeMap() {
             .then(data => {
                 if (data.url) {
                     downloadImage(data.url, 'NDVI_Map.tif');
-                } else if (data.error) {
-                    alert(data.error);
+                } else if (data.message) {
+                    alert(data.message);
                 }
             })
             .catch(err => alert('Failed to download NDVI: ' + err.message));
@@ -153,4 +153,5 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 });
+
 
