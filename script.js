@@ -21,11 +21,6 @@ function getSelectedDateRange() {
     return { startDate, endDate };
 }
 
-function addGEELayer(mapId, token) {
-    const url = `https://earthengine.googleapis.com/map/${mapId}/{z}/{x}/{y}?token=${token}`;
-    ndviLayer = L.tileLayer(url, { maxZoom: 18, attribution: 'Google Earth Engine' }).addTo(map);
-}
-
 function downloadImage(url, filename) {
     fetch(url)
         .then(res => res.blob())
@@ -35,7 +30,7 @@ function downloadImage(url, filename) {
             link.download = filename;
             link.click();
         })
-        .catch(err => alert('Error downloading map: ' + err.message));
+        .catch(err => alert('Error downloading NDVI: ' + err.message));
 }
 
 function initializeMap() {
@@ -64,7 +59,7 @@ function initializeMap() {
     });
 
     // View NDVI
-    document.getElementById('viewNdviBtn').addEventListener('click', () => {
+    document.getElementById('viewNdviBtn').addEventListener('click', async () => {
         if (!selectedArea) return alert('Please draw an area on the map first!');
         const dateRange = getSelectedDateRange();
         const bounds = selectedArea.getBounds();
@@ -75,26 +70,27 @@ function initializeMap() {
             north: bounds.getNorth()
         };
 
-        fetch(`${BACKEND_URL}/ndvi`, { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ bbox, ...dateRange })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.mapId && data.token) {
+        try {
+            const res = await fetch(`${BACKEND_URL}/ndvi`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bbox, ...dateRange })
+            });
+            const data = await res.json();
+            if (data.tileUrl) {
                 if (ndviLayer) map.removeLayer(ndviLayer);
-                addGEELayer(data.mapId, data.token);
+                ndviLayer = L.tileLayer(data.tileUrl, { maxZoom: 18, attribution: 'NDVI' }).addTo(map);
                 alert('NDVI visualized on the map!');
             } else if (data.error) {
                 alert(data.error);
             }
-        })
-        .catch(err => alert('Failed to fetch NDVI: ' + err.message));
+        } catch (err) {
+            alert('Failed to fetch NDVI: ' + err.message);
+        }
     });
 
     // Download NDVI
-    document.getElementById('ndviBtn').addEventListener('click', () => {
+    document.getElementById('ndviBtn').addEventListener('click', async () => {
         if (!selectedArea) return alert('Please draw an area on the map first!');
         const dateRange = getSelectedDateRange();
         const bounds = selectedArea.getBounds();
@@ -105,20 +101,21 @@ function initializeMap() {
             north: bounds.getNorth()
         };
 
-        fetch(`${BACKEND_URL}/downloadNDVI`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ bbox, ...dateRange })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.url) {
-                downloadImage(data.url, 'NDVI_Map.tif');
-            } else if (data.message) {
-                alert(data.message);
+        try {
+            const res = await fetch(`${BACKEND_URL}/downloadNDVI`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bbox, ...dateRange })
+            });
+            const data = await res.json();
+            if (data.downloadUrl) {
+                downloadImage(data.downloadUrl, 'NDVI_Map.tif');
+            } else if (data.error) {
+                alert(data.error);
             }
-        })
-        .catch(err => alert('Failed to download NDVI: ' + err.message));
+        } catch (err) {
+            alert('Failed to download NDVI: ' + err.message);
+        }
     });
 }
 
