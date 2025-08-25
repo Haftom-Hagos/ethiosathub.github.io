@@ -21,16 +21,11 @@ function getSelectedDateRange() {
     return { startDate, endDate };
 }
 
-function downloadImage(url, filename) {
-    fetch(url)
-        .then(res => res.blob())
-        .then(blob => {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            link.click();
-        })
-        .catch(err => alert('Error downloading NDVI: ' + err.message));
+function downloadBlob(blob, filename) {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
 }
 
 function initializeMap() {
@@ -76,14 +71,15 @@ function initializeMap() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bbox, ...dateRange })
             });
-            const data = await res.json();
-            if (data.tileUrl) {
-                if (ndviLayer) map.removeLayer(ndviLayer);
-                ndviLayer = L.tileLayer(data.tileUrl, { maxZoom: 18, attribution: 'NDVI' }).addTo(map);
-                alert('NDVI visualized on the map!');
-            } else if (data.error) {
-                alert(data.error);
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || 'Backend error');
             }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            if (ndviLayer) map.removeLayer(ndviLayer);
+            ndviLayer = L.imageOverlay(url, bounds).addTo(map);
+            alert('NDVI visualized on the map!');
         } catch (err) {
             alert('Failed to fetch NDVI: ' + err.message);
         }
@@ -102,17 +98,17 @@ function initializeMap() {
         };
 
         try {
-            const res = await fetch(`${BACKEND_URL}/downloadNDVI`, {
+            const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ bbox, ...dateRange })
             });
-            const data = await res.json();
-            if (data.downloadUrl) {
-                downloadImage(data.downloadUrl, 'NDVI_Map.tif');
-            } else if (data.error) {
-                alert(data.error);
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || 'Backend error');
             }
+            const blob = await res.blob();
+            downloadBlob(blob, 'NDVI_Map.tif');
         } catch (err) {
             alert('Failed to download NDVI: ' + err.message);
         }
@@ -146,5 +142,5 @@ document.addEventListener('DOMContentLoaded', () => {
         monthStart.value = '1';
         monthEnd.value = '12';
     }
+    initializeMap(); // Initialize map on load
 });
-
