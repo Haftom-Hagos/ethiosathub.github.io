@@ -31,14 +31,66 @@ function downloadBlob(blob, filename) {
     link.click();
 }
 
+
+// function initializeMap() {
+//     if (map) return;
+
+//     map = L.map('map').setView([9.145, 40.4897], 6);
+//     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+//         maxZoom: 19,
+//         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+//     }).addTo(map);
+
+//     drawnItems = new L.FeatureGroup();
+//     map.addLayer(drawnItems);
+
+//     const drawControl = new L.Control.Draw({
+//         draw: { rectangle: true, polygon: false, circle: false, marker: false, polyline: false },
+//         edit: { featureGroup: drawnItems }
+//     });
+//     map.addControl(drawControl);
+
+//     map.on('draw:created', (e) => {
+//         drawnItems.clearLayers();
+//         selectedArea = e.layer;
+//         drawnItems.addLayer(selectedArea);
+//         if (ndviLayer) map.removeLayer(ndviLayer);
+//         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
+//     });
+// }
+
+
 function initializeMap() {
     if (map) return;
 
-    map = L.map('map').setView([9.145, 40.4897], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    map = L.map('map', {
+        center: [9.145, 40.4897],
+        zoom: 6,
+        layers: [] // Initialize without a default layer
+    });
+
+    // Define base maps
+    const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+
+    const satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
+
+    // Add street map as default
+    streetMap.addTo(map);
+
+    // Define base layers for control
+    const baseMaps = {
+        "Street Map": streetMap,
+        "Satellite Map": satelliteMap
+    };
+
+    // Add layer control with checkboxes
+    L.control.layers(baseMaps, null, { collapsed: false }).addTo(map);
 
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -56,6 +108,33 @@ function initializeMap() {
         if (ndviLayer) map.removeLayer(ndviLayer);
         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
     });
+
+
+// function initializeMap() {
+//     if (map) return;
+
+//     map = L.map('map').setView([9.145, 40.4897], 6);
+//     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+//         maxZoom: 19,
+//         attribution: '© OpenStreetMap'
+//     }).addTo(map);
+
+//     drawnItems = new L.FeatureGroup();
+//     map.addLayer(drawnItems);
+
+//     const drawControl = new L.Control.Draw({
+//         draw: { rectangle: true, polygon: false, circle: false, marker: false, polyline: false },
+//         edit: { featureGroup: drawnItems }
+//     });
+//     map.addControl(drawControl);
+
+//     map.on('draw:created', (e) => {
+//         drawnItems.clearLayers();
+//         selectedArea = e.layer;
+//         drawnItems.addLayer(selectedArea);
+//         if (ndviLayer) map.removeLayer(ndviLayer);
+//         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
+//     });
 
     // View NDVI
     document.getElementById('viewNdviBtn').addEventListener('click', async () => {
@@ -182,3 +261,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMap();
     console.log('Map initialized');
 });
+
