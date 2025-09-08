@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> EGSH-Gallery</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="styles1.css" />
+
+   <style>
+    .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+        }
+   </style>
+
+</head>
+<body>
+    <nav class="navbars1">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index1.html">EGSH</a>
+            </div>
+                <ul class="nav-menu">
+                    <li class="nav-item"> <a href="index1.html" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="maps1.html" class="nav-link">Maps</a></li>
+                    <li class="nav-item"><a href="data.html" class="nav-link">Data</a></li>
+                    <li class="nav-item"><a href="gallery.html" class="nav-link active">Gallery</a></li>
+                    <!-- <li class="nav-item"><a href="#contact" class="nav-link">Contact Us</a></li> -->
+                    <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
+                </ul>
+            </div>
+   </nav>
+
+    
+    <div class="gallery-contents">
+        <div id="gallery" class="tabcontent">
+                <h2>Gallery</h2>
+                <p>Explore our collection of thematic and 3D maps from different parts of Ethiopia. Click an image to enlarge and learn more.</p>
+                <div class="gallery-grid">
+                    <!-- Item 1 -->
+                    <div class="gallery-card">
+                        <img src="aa_3d.png" alt="3D Canopy Height Map - Addis Ababa" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                3D visualization of canopy height model for Addis Ababa.
+                                <span class="more-text" style="display: none;">
+                                    A 3D height map was created for a section of Addis Ababa by subtracting the Digital Terrain Model (DTM) from the Digital Surface Model (DSM), both derived from LiDAR point clouds. 
+                                    LiDAR provides high-resolution data, capturing precise distances of surface features from the ground. In the visualization, building heights are represented with a color gradient: 
+                                    light gray or white for ground level, followed by brown, orange, and purple for the tallest structures. 
+                                    In the zoomed in image, green for ground level, followed by blue, yellow, and red for the tallest structures. The Commercial Bank of Ethiopia (CBE) building, the tallest in East Africa, 
+                                    is highlighted in red, standing prominently among surrounding buildings as shown in the zoomed in image.High-resolution DSM and DTM data are essential for a range of urban applications, 
+                                    including mapping tree canopies, monitoring infrastructure, assessing flood risks, optimizing road networks, and supporting sustainable urban planning. Despite its advantages, LiDAR data 
+                                    remain limited in Ethiopia due to high costs.
+                                    While large-scale LiDAR surveys may be financially challenging, making such data available for major cities could significantly enhance urban planning and development efforts.
+                                </span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                    <!-- Item 2 -->
+                    <div class="gallery-card">
+                        <img src="Mekelle_tree_patches.jpg" alt="Mekelle_tree_patches" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                Tree patches and green areas of Mekelle city.
+                                <span class="more-text" style="display: none;">
+                                    Urban trees play a vital role in regulating city temperatures, improving air quality, and enhancing residents’ well-being.              
+                                    Integrating trees and green spaces into urban planning is essential for fostering healthier and more sustainable cities. 
+                                    This map visualizes trees taller than one meter along with other green areas in Mekelle city, Tigray, Ethiopia.
+                                    Such high-resolution mapping provides valuable insights for urban planners, helping guide the development of
+                                    green infrastructure and optimize the distribution of vegetation across the city. Notably, the visualization highlights that
+                                    most of Mekelle’s trees are concentrated along waterways, underlining the relationship between urban greenery and natural watercourses.
+                                </span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                    <!-- Item 3 -->
+                    <div class="gallery-card">
+                        <img src="3d_land_cover_addis_2023.png" alt="Land Cover Addis Ababa 2023" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                2023 Land Cover Classification for Addis Ababa.
+                                <span class="more-text" style="display: none;">3D land cover maps offer a more realistic visualization of the study area compared to traditional 2D maps. 
+                                                                                While 3D representations may not yet be practical for routine quantitative analysis, they provide valuable 
+                                                                                insights into landform characteristics and the spatial distribution of land cover classes across varied terrain.
+                                                                                For 2023, the 3D land cover map of Addis Ababa and its surrounding districts shows that trees are largely confined to
+                                                                                mountainous areas, whereas cropland and built-up areas dominate flat and gently sloping landscapes. 
+                                                                                Built-up areas are noticeably expanding, often encroaching on croplands, while some rangelands have transitioned 
+                                                                                into cropland, tree cover, or built-up zones. The inclusion of a highway road network highlights the pattern of 
+                                                                                urban and suburban development along major roadways extending outward from the city. Incorporating 3D maps into 
+                                                                                land cover or elevation analyses enhances visualization and provides insights that are not fully captured in 2D representations.</span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                    <!-- Item 4 -->
+                    <div class="gallery-card">
+                        <img src="Addis_roads.png" alt="Road Network Addis Ababa" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                Road network map of Addis Ababa.
+                                <span class="more-text" style="display: none;">This map presents the road network of Addis Ababa, Ethiopia, generated using data from OpenStreetMap and processed in Jupyter Notebook. 
+                                    The visualization distinguishes between different types of roads: primary and major roads are depicted with greater width, emphasizing the main transport arteries, while 
+                                    residential and minor roads are shown thinner, highlighting the finer details of the city’s street layout. This representation provides a clear overview of Addis Ababa’s urban connectivity 
+                                    and infrastructure, supporting urban planning, transportation analysis, and spatial studies.</span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                    <!-- Item 5 -->
+                    <div class="gallery-card">
+                        <img src="Tigray_river.png" alt="River Network Tigray" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                3D River network of Tigray Region.
+                                <span class="more-text" style="display: none;">This 3D elevation map of Tigray, located in northern Ethiopia, showcases the region’s distinctive and rugged topography. 
+                                    The map highlights the intricate network of rivers that traverse the mountainous terrain, emphasizing how these natural features shape the landscape. 
+                                    By visualizing elevation in three dimensions, the map provides a deeper understanding of the region’s geographic complexity and scenic beauty, offering 
+                                    valuable insights for environmental studies, land-use planning, and geographic education.</span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                    <!-- Item 6 -->
+                    <div class="gallery-card">
+                        <img src="S_tigray_CH.png" alt="Canopy Height Southern Tigray" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                Canopy height model of Southern Tigray.
+                                <span class="more-text" style="display: none;">Canopy height is a fundamental parameter for understanding forest structure and biomass production, 
+                                    both of which are critical for environmental research. This map presents a detailed canopy height model of Southern Tigray, Ethiopia, at a 10-meter resolution, 
+                                    generated using Datashader. It prominently highlights the Hugumbrda Forest, one of Ethiopia’s dry Afromontane forests. 
+                                    The underlying dataset is globally available for the year 2020 at 10-meter resolution, providing a valuable resource for researchers studying 
+                                    forest vertical structure, biomass estimation, and related ecological processes.</span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                    <!-- Item 7 -->
+                    <div class="gallery-card">
+                        <img src="3d_southern_t_land_cover_1.png" alt="3D Land Cover Southern Tigray" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                3D land cover map of Southern Tigray.
+                                <span class="more-text" style="display: none;">Traditional land cover maps are typically limited to a horizontal view, overlooking the influence of terrain on land cover patterns. 
+                                    The 2023 3D land cover map of Southern Tigray, Ethiopia, combines elevation data to illustrate how terrain shapes the distribution of land cover.
+                                    The map shows that croplands and built-up areas are concentrated on flatter terrains, while trees and rangelands are more common in rugged landscapes.
+                                    Integrating 3D land cover maps into planning processes can support smarter, more sustainable decision-making. Such visualizations are valuable for land-use planners, 
+                                    policymakers, and other stakeholders pursuing environmentally responsible and climate-resilient development.</span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                    <!-- Item 8 -->
+                    <div class="gallery-card">
+                        <img src="Centeral_Tigray_Vegetation_map.jpg" alt="Central Tigray Vegetation Cover" class="gallery-item" onclick="openLightbox(this)">
+                        <div class="desc">
+                            <p>
+                                Central Tigray Vegetation Cover.
+                                <span class="more-text" style="display: none;">This map illustrates vegetation coverage in the Central Zone of Tigray, Ethiopia, based on unsupervised classification of Sentinel-2 imagery. 
+                                                                                Pixels were initially clustered into five classes and subsequently reclassified into vegetated and non-vegetated areas, providing a clear overview 
+                                                                                of the region’s green coverage</span>
+                            </p>
+                            <button class="read-more" onclick="toggleRead(this)">Read more</button>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img">
+    </div>
+</body>
+
+<script>
+    function openLightbox(img) {
+            document.getElementById("lightbox-img").src = img.src;
+            document.getElementById("lightbox").style.display = "flex";
+        }
+
+    function closeLightbox() {
+        document.getElementById("lightbox").style.display = "none";
+    }
+
+    function toggleRead(button) {
+            let moreText = button.previousElementSibling.querySelector(".more-text");
+            if (moreText.style.display === "inline") {
+                moreText.style.display = "none";
+                button.innerText = "Read more";
+            } else {
+                moreText.style.display = "inline";
+                button.innerText = "Read less";
+            }
+        }
+</script>
+</html>
