@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EGSH-Data</title>
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="styles1.css" />
+</head>
+
+<body>
+    <nav class="navbars1">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index1.html">EGSH</a>
+            </div>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="index1.html" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="maps1.html" class="nav-link">Maps</a></li>
+                    <li class="nav-item"><a href="data.html" class="nav-link active">Data</a></li>
+                    <li class="nav-item"><a href="gallery.html" class="nav-link">Gallery</a></li>
+                    <!-- <li class="nav-item"><a href="#contact" class="nav-link">Contact Us</a></li> -->
+                    <li class="nav-item"><a href="about.html" class="nav-link">About</a></li>
+                </ul>
+        </div>
+   </nav>
+
+    <div class="sub-contents">
+     <div id="data" class="tabcontent">
+        <p>
+            This section provides <b>administrative boundary datasets of Ethiopia</b> in GeoPackage format.
+            The datasets are organized into different administrative levels:
+        </p>
+        <ul class="data-levels">
+            <li><b>Level 0</b> – National boundary of Ethiopia</li>
+            <li><b>Level 1</b> – Regional boundaries</li>
+            <li><b>Level 2</b> – Zonal boundaries</li>
+            <li><b>Level 3</b> – Woreda (district) boundaries</li>
+            <li><b>Level 4</b> – Kebele (local administrative unit) boundaries</li> <!-- Uncommented to align with download links -->
+        </ul>
+        <p>
+            Each dataset is available in two coordinate reference systems:
+        </p>
+        <ul>
+            <li><b>Geographic Coordinate System (GCS)</b>: EPSG:4326 – WGS 84</li>
+            <li><b>Projected Coordinate System (PCS)</b>: EPSG:32637 – WGS 84 / UTM Zone 37N</li>
+        </ul>
+        <p>
+            The GCS version is useful for web mapping and global datasets, while the PCS version is recommended
+            for spatial analysis and distance/area measurements.
+            These datasets are suitable for GIS applications, research, and visualization projects related to
+            Ethiopia’s administrative divisions.
+        </p>
+        <p>
+            <b>GeoPackage Format</b>: GeoPackage (GPKG) is an open, internationally recognized format for storing and sharing geographic data.  
+            GeoPackage is supported by most modern GIS software including QGIS, ArcGIS, and GDAL. It allows users to organize multiple 
+            layers and their attributes efficiently in one file, making it straightforward to exchange and reuse data.  In geopackage format both 
+            vector and raster layers can be stored in a single, compact file. Using GeoPackage is a normal part of today’s geospatial workflows, offering 
+            a reliable and future-proof way to manage spatial information.
+        <p>
+        <p><i>Click the links below to download the data:</i></p>
+        <div class="data-grid">
+            <div>
+                <h4>GCS (EPSG:4326)</h4>
+                <ul class="admin-levels">
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.gpkg" target="_blank">Admin Level 0 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.gpkg" target="_blank">Admin Level 1 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.gpkg" target="_blank">Admin Level 2 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.gpkg" target="_blank">Admin Level 3 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.gpkg" target="_blank">Admin Level 4 (GCS)</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>PCS (EPSG:32637)</h4>
+                <ul class="admin-levels">
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.gpkg" target="_blank">Admin Level 0 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.gpkg" target="_blank">Admin Level 1 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.gpkg" target="_blank">Admin Level 2 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.gpkg" target="_blank">Admin Level 3 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.gpkg" target="_blank">Admin Level 4 (PCS)</a></li>
+                </ul>
+            </div>
+        </div>
+     </div>
+    </div>
+</body>
