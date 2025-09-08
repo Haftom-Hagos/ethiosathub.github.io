@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EGSH-Map</title>
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="styles1.css" />
+</head>
+<body>
+     <nav class="navbars1">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html">EGSH</a>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="maps.html" class="nav-link active">Maps</a>
+                </li>
+                <li class="nav-item">
+                    <a href="data.html" class="nav-link">Data</a>
+                </li>
+                <li class="nav-item">
+                    <a href="gallery.html" class="nav-link">Gallery</a>
+                <!-- </li>
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact Us</a>
+                </li> -->
+                <li class="nav-item">
+                    <a href="#about" class="nav-link">About</a>
+                </li>
+            </ul>
+        </div>
+   </nav>
+   
+<div class="sub-contents">
+    <div id="maps" class="tabcontent">
+        <h2>Map view</h2>
+        <p>Select an area on the map and download NDVI or Land Cover maps.</p>
+        <div id="map"></div>
+        <div class="filters">
+            <label for="yearSelect">Year</label>
+            <select id="yearSelect"></select>
+            <label for="monthStart">From</label>
+            <select id="monthStart"></select>
+            <label for="monthEnd">To</label>
+            <select id="monthEnd"></select>
+        </div>
+        <div class="button-container">
+            <button id="ndviBtn">Download NDVI Map</button>
+            <!-- <button id="landCoverBtn">Download Land Cover Map</button> -->
+            <button id="viewNdviBtn">View NDVI Map</button>
+            <!-- <button id="viewLandCoverBtn">View Land Cover Map</button> -->
+        </div>
+        <div>
+        <!-- Link to your GEE NDVI App -->
+            <a class="btn" href="https://ethiosathub-gee.projects.earthengine.app/view/ndviapp" target="_blank">
+                Open NDVI App
+            </a>
+        </div>
+    </div>
+</div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
