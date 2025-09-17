@@ -559,14 +559,8 @@ footer{
 
 
 /* -----DATA----- */
-.data p {
-    margin: 10px 0; /* Remove auto margins to prevent centering */
-    width: 80%; /* Full width for left-aligned text */
-    color: black;
-    font-size: 25px;
-    text-align: left; /* Explicitly align left */
-}
-data {
+
+.data {
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -575,23 +569,48 @@ data {
     text-align: left;
 }
 
+.data p {
+    margin: 10px 0;
+    width: 100%;
+    color: black;
+    font-size: 25px;
+    text-align: left;
+}
+
+.data ul:not(.data-levels):not(.download-columns ul) {
+    text-align: left;
+    width: 100%;
+    list-style: none;
+    padding: 0;
+}
+
+.data-levels {
+    text-align: left;
+    width: 100%;
+}
+
 .data-levels li {
     list-style: none;
     padding-bottom: 20px;
+}
+
+.data-descriptions h3 {
+    text-align: left;
+}
+
+.data-descriptions p {
     text-align: left;
 }
 
 .data-grid {
     display: flex;
-    gap: 30px; /* Reduced from 200px for better responsiveness */
+    gap: 30px;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start; /* Changed from center to left-align boxes */
 }
 
 .data-grid h4 {
     padding: 30px 0;
-}
-.data-descriptions p {
     text-align: left;
 }
 
@@ -620,6 +639,7 @@ data {
 .download-columns h5 {
     margin-bottom: 10px;
     font-size: 18px;
+    text-align: left; /* Explicitly left-align for consistency */
 }
 
 .download-columns ul {
@@ -788,6 +808,7 @@ data {
     }
     
 }
+
 
 
 
