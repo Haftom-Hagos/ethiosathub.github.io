@@ -44,99 +44,121 @@
             <li><b>Geographic Coordinate System (GCS)</b>: EPSG:4326 – WGS 84</li>
             <li><b>Projected Coordinate System (PCS)</b>: EPSG:32637 – WGS 84 / UTM Zone 37N</li>
         </ul>
-        <p><i>Click the links below to download the data:</i></p>
-
-        <!-- Shapefile Section -->
+      <!-- Description Section -->
+<div class="data-descriptions" style="margin-bottom: 20px;">
+    <div>
         <h3>Shapefile Format (Zipped)</h3>
         <p>
-            <b>Shapefile</b> is one of the most widely used vector formats in GIS. 
-            It consists of multiple files (.shp, .shx, .dbf, .prj, etc.), so here they are provided as 
-            <b>.zip</b> archives for easy download. Shapefiles are supported by almost all GIS software, but note that they have size and attribute limitations compared to newer formats.
+            Shapefile is one of the most widely used vector formats in GIS. 
+            It consists of multiple files (.shp, .shx, .dbf, .prj, etc.), 
+            so here they are provided as .zip archives for easy download. 
+            Widely supported by GIS software, but has size and attribute limitations.
         </p>
-        <div class="data-grid">
-            <div>
-                <h4>GCS (EPSG:4326)</h4>
-                <ul class="admin-levels">
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.zip" target="_blank">Admin Level 0 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.zip" target="_blank">Admin Level 1 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.zip" target="_blank">Admin Level 2 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.zip" target="_blank">Admin Level 3 (GCS)</a></li>
-                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.zip" target="_blank">Admin Level 4 (GCS)</a></li-->
-                </ul>
-            </div>
-            <div>
-                <h4>PCS (EPSG:32637)</h4>
-                <ul class="admin-levels">
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.zip" target="_blank">Admin Level 0 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.zip" target="_blank">Admin Level 1 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.zip" target="_blank">Admin Level 2 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.zip" target="_blank">Admin Level 3 (PCS)</a></li>
-                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.zip" target="_blank">Admin Level 4 (PCS)</a></li-->
-                </ul>
-            </div>
-        </div>
-
-        <!-- GeoJSON Section -->
+    </div>
+    <div>
         <h3>GeoJSON Format</h3>
         <p>
-            <b>GeoJSON</b> is a lightweight format based on JSON for representing geographic data. 
-            It is especially suitable for web mapping applications and APIs. GeoJSON supports encoding of geometry, features, and feature collections, 
-            making it ideal for visualization in web browsers and sharing over the internet.
+            GeoJSON is a lightweight JSON-based format for geographic data. 
+            Ideal for web mapping, APIs, and visualization in browsers. 
+            Supports geometry, features, and collections.
         </p>
-        <div class="data-grid">
-            <div>
-                <h4>GCS (EPSG:4326)</h4>
-                <ul class="admin-levels">
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.geojson" target="_blank">Admin Level 0 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.geojson" target="_blank">Admin Level 1 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.geojson" target="_blank">Admin Level 2 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.geojson" target="_blank">Admin Level 3 (GCS)</a></li>
-                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.geojson" target="_blank">Admin Level 4 (GCS)</a></li-->
-                </ul>
-            </div>
-            <div>
-                <h4>PCS (EPSG:32637)</h4>
-                <ul class="admin-levels">
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.geojson" target="_blank">Admin Level 0 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.geojson" target="_blank">Admin Level 1 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.geojson" target="_blank">Admin Level 2 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.geojson" target="_blank">Admin Level 3 (PCS)</a></li>
-                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.geojson" target="_blank">Admin Level 4 (PCS)</a></li-->
-                </ul>
-            </div>
-        </div>
-
-        <!-- GeoPackage Section -->
+    </div>
+    <div>
         <h3>GeoPackage Format</h3>
         <p>
-            <b>GeoPackage (GPKG)</b> is an open, internationally recognized format for storing and sharing geographic data.  
-            It supports both vector and raster layers in a single file, making it compact and efficient. 
-            GeoPackage is supported by modern GIS software including QGIS, ArcGIS, and GDAL, and is recommended for reliable, future-proof data exchange.
+            GeoPackage (GPKG) is an open, compact format for storing vector and raster layers in one file. 
+            Supported by modern GIS software like QGIS, ArcGIS, and GDAL. 
+            Recommended for reliable and future-proof data exchange.
         </p>
-        <div class="data-grid">
-            <div>
-                <h4>GCS (EPSG:4326)</h4>
-                <ul class="admin-levels">
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.gpkg" target="_blank">Admin Level 0 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.gpkg" target="_blank">Admin Level 1 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.gpkg" target="_blank">Admin Level 2 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.gpkg" target="_blank">Admin Level 3 (GCS)</a></li>
-                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.gpkg" target="_blank">Admin Level 4 (GCS)</a></li-->
+    </div>
+</div>
+
+<!-- Instruction Text -->
+<p><i>Click the links below to download the data:</i></p>
+
+<!-- Download Blocks Section -->
+<div class="data-grid" style="display: flex; gap: 20px;">
+    <!-- Shapefile Block -->
+    <div style="flex: 1; border: 1px solid #ccc; padding: 10px;">
+        <h4>Shapefile (Zipped)</h4>
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h5>GCS (EPSG:4326)</h5>
+                <ul>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.zip" target="_blank">Level 0</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.zip" target="_blank">Level 1</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.zip" target="_blank">Level 2</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.zip" target="_blank">Level 3</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.zip" target="_blank">Level 4</a></li-->
                 </ul>
             </div>
-            <div>
-                <h4>PCS (EPSG:32637)</h4>
-                <ul class="admin-levels">
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.gpkg" target="_blank">Admin Level 0 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.gpkg" target="_blank">Admin Level 1 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.gpkg" target="_blank">Admin Level 2 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.gpkg" target="_blank">Admin Level 3 (PCS)</a></li>
-                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.gpkg" target="_blank">Admin Level 4 (PCS)</a></li-->
+            <div style="flex: 1;">
+                <h5>PCS (EPSG:32637)</h5>
+                <ul>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.zip" target="_blank">Level 0</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.zip" target="_blank">Level 1</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.zip" target="_blank">Level 2</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.zip" target="_blank">Level 3</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.zip" target="_blank">Level 4</a></li-->
                 </ul>
             </div>
         </div>
-     </div>
     </div>
+
+    <!-- GeoJSON Block -->
+    <div style="flex: 1; border: 1px solid #ccc; padding: 10px;">
+        <h4>GeoJSON</h4>
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h5>GCS (EPSG:4326)</h5>
+                <ul>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.geojson" target="_blank">Level 0</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.geojson" target="_blank">Level 1</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.geojson" target="_blank">Level 2</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.geojson" target="_blank">Level 3</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.geojson" target="_blank">Level 4</a></li-->
+                </ul>
+            </div>
+            <div style="flex: 1;">
+                <h5>PCS (EPSG:32637)</h5>
+                <ul>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.geojson" target="_blank">Level 0</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.geojson" target="_blank">Level 1</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.geojson" target="_blank">Level 2</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.geojson" target="_blank">Level 3</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.geojson" target="_blank">Level 4</a></li-->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- GeoPackage Block -->
+    <div style="flex: 1; border: 1px solid #ccc; padding: 10px;">
+        <h4>GeoPackage</h4>
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h5>GCS (EPSG:4326)</h5>
+                <ul>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.gpkg" target="_blank">Level 0</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.gpkg" target="_blank">Level 1</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.gpkg" target="_blank">Level 2</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.gpkg" target="_blank">Level 3</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.gpkg" target="_blank">Level 4</a></li-->
+                </ul>
+            </div>
+            <div style="flex: 1;">
+                <h5>PCS (EPSG:32637)</h5>
+                <ul>
+                    <li><<a href="data/ethiopia_admin_level_0_gcs.gpkg" target="_blank">Level 0 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.gpkg" target="_blank">Level 1</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.gpkg" target="_blank">Level 2</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.gpkg" target="_blank">Level 3</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.gpkg" target="_blank">Level 4</a></li-->
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 <hr>
 <div class="data-source">
   <p><b>Data Source:</b> <a href="https://data.humdata.org/dataset/cod-ab-eth" target="_blank">Humanitarian Data Exchange (HDX)</a>  
