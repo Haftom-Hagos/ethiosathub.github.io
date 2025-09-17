@@ -559,6 +559,13 @@ footer{
 
 
 /* -----DATA----- */
+.data p {
+    margin: 10px 0; /* Remove auto margins to prevent centering */
+    width: 100%; /* Full width for left-aligned text */
+    color: black;
+    font-size: 25px;
+    text-align: left; /* Explicitly align left */
+}
 
 .data {
     display: flex;
@@ -779,6 +786,7 @@ footer{
     }
     
 }
+
 
 
 
