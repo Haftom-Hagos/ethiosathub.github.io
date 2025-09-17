@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>EGSH-Data</title>
    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    <link rel="stylesheet" href="../styles.css" />
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+   <link rel="stylesheet" href="../styles.css" />
 </head>
 
 <body>
@@ -14,21 +14,20 @@
             <div class="nav-logo">
                 <a href="/home">EGSH</a>
             </div>
-                <ul class="nav-menu">
-                    <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
-                    <li class="nav-item"><a href="/maps" class="nav-link">Maps</a></li>
-                    <li class="nav-item"><a href="/data" class="nav-link active">Data</a></li>
-                    <li class="nav-item"><a href="/gallery" class="nav-link">Gallery</a></li>
-                    <!-- <li class="nav-item"><a href="#contact" class="nav-link">Contact Us</a></li> -->
-                    <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
-                </ul>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/maps" class="nav-link">Maps</a></li>
+                <li class="nav-item"><a href="/data" class="nav-link active">Data</a></li>
+                <li class="nav-item"><a href="/gallery" class="nav-link">Gallery</a></li>
+                <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
+            </ul>
         </div>
    </nav>
 
     <div class="sub-contents">
      <div id="data" class="tabcontent">
         <p>
-            This section provides <b>administrative boundary datasets of Ethiopia</b> in GeoPackage format.
+            This section provides <b>administrative boundary datasets of Ethiopia</b> in Shapefile, GeoJSON, and GeoPackage formats.
             The datasets are organized into different administrative levels:
         </p>
         <ul class="data-levels">
@@ -36,7 +35,7 @@
             <li><b>Level 1</b> – Regional boundaries</li>
             <li><b>Level 2</b> – Zonal boundaries</li>
             <li><b>Level 3</b> – Woreda (district) boundaries</li>
-            <li><b>Level 4</b> – Kebele (local administrative unit) boundaries</li> <!-- Uncommented to align with download links -->
+            <!--li><b>Level 4</b> – Kebele (local administrative unit) boundaries</li-->
         </ul>
         <p>
             Each dataset is available in two coordinate reference systems:
@@ -45,20 +44,75 @@
             <li><b>Geographic Coordinate System (GCS)</b>: EPSG:4326 – WGS 84</li>
             <li><b>Projected Coordinate System (PCS)</b>: EPSG:32637 – WGS 84 / UTM Zone 37N</li>
         </ul>
-        <p>
-            The GCS version is useful for web mapping and global datasets, while the PCS version is recommended
-            for spatial analysis and distance/area measurements.
-            These datasets are suitable for GIS applications, research, and visualization projects related to
-            Ethiopia’s administrative divisions.
-        </p>
-        <p>
-            <b>GeoPackage Format</b>: GeoPackage (GPKG) is an open, internationally recognized format for storing and sharing geographic data.  
-            GeoPackage is supported by most modern GIS software including QGIS, ArcGIS, and GDAL. It allows users to organize multiple 
-            layers and their attributes efficiently in one file, making it straightforward to exchange and reuse data.  In geopackage format both 
-            vector and raster layers can be stored in a single, compact file. Using GeoPackage is a normal part of today’s geospatial workflows, offering 
-            a reliable and future-proof way to manage spatial information.
-        <p>
         <p><i>Click the links below to download the data:</i></p>
+
+        <!-- Shapefile Section -->
+        <h3>Shapefile Format (Zipped)</h3>
+        <p>
+            <b>Shapefile</b> is one of the most widely used vector formats in GIS. 
+            It consists of multiple files (.shp, .shx, .dbf, .prj, etc.), so here they are provided as 
+            <b>.zip</b> archives for easy download. Shapefiles are supported by almost all GIS software, but note that they have size and attribute limitations compared to newer formats.
+        </p>
+        <div class="data-grid">
+            <div>
+                <h4>GCS (EPSG:4326)</h4>
+                <ul class="admin-levels">
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.zip" target="_blank">Admin Level 0 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.zip" target="_blank">Admin Level 1 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.zip" target="_blank">Admin Level 2 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.zip" target="_blank">Admin Level 3 (GCS)</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.zip" target="_blank">Admin Level 4 (GCS)</a></li-->
+                </ul>
+            </div>
+            <div>
+                <h4>PCS (EPSG:32637)</h4>
+                <ul class="admin-levels">
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.zip" target="_blank">Admin Level 0 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.zip" target="_blank">Admin Level 1 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.zip" target="_blank">Admin Level 2 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.zip" target="_blank">Admin Level 3 (PCS)</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.zip" target="_blank">Admin Level 4 (PCS)</a></li-->
+                </ul>
+            </div>
+        </div>
+
+        <!-- GeoJSON Section -->
+        <h3>GeoJSON Format</h3>
+        <p>
+            <b>GeoJSON</b> is a lightweight format based on JSON for representing geographic data. 
+            It is especially suitable for web mapping applications and APIs. GeoJSON supports encoding of geometry, features, and feature collections, 
+            making it ideal for visualization in web browsers and sharing over the internet.
+        </p>
+        <div class="data-grid">
+            <div>
+                <h4>GCS (EPSG:4326)</h4>
+                <ul class="admin-levels">
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_gcs.geojson" target="_blank">Admin Level 0 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.geojson" target="_blank">Admin Level 1 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.geojson" target="_blank">Admin Level 2 (GCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.geojson" target="_blank">Admin Level 3 (GCS)</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.geojson" target="_blank">Admin Level 4 (GCS)</a></li-->
+                </ul>
+            </div>
+            <div>
+                <h4>PCS (EPSG:32637)</h4>
+                <ul class="admin-levels">
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_0_pcs.geojson" target="_blank">Admin Level 0 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.geojson" target="_blank">Admin Level 1 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.geojson" target="_blank">Admin Level 2 (PCS)</a></li>
+                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.geojson" target="_blank">Admin Level 3 (PCS)</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.geojson" target="_blank">Admin Level 4 (PCS)</a></li-->
+                </ul>
+            </div>
+        </div>
+
+        <!-- GeoPackage Section -->
+        <h3>GeoPackage Format</h3>
+        <p>
+            <b>GeoPackage (GPKG)</b> is an open, internationally recognized format for storing and sharing geographic data.  
+            It supports both vector and raster layers in a single file, making it compact and efficient. 
+            GeoPackage is supported by modern GIS software including QGIS, ArcGIS, and GDAL, and is recommended for reliable, future-proof data exchange.
+        </p>
         <div class="data-grid">
             <div>
                 <h4>GCS (EPSG:4326)</h4>
@@ -67,7 +121,7 @@
                     <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_gcs.gpkg" target="_blank">Admin Level 1 (GCS)</a></li>
                     <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_gcs.gpkg" target="_blank">Admin Level 2 (GCS)</a></li>
                     <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_gcs.gpkg" target="_blank">Admin Level 3 (GCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.gpkg" target="_blank">Admin Level 4 (GCS)</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_gcs.gpkg" target="_blank">Admin Level 4 (GCS)</a></li-->
                 </ul>
             </div>
             <div>
@@ -77,10 +131,16 @@
                     <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_1_pcs.gpkg" target="_blank">Admin Level 1 (PCS)</a></li>
                     <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_2_pcs.gpkg" target="_blank">Admin Level 2 (PCS)</a></li>
                     <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_3_pcs.gpkg" target="_blank">Admin Level 3 (PCS)</a></li>
-                    <li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.gpkg" target="_blank">Admin Level 4 (PCS)</a></li>
+                    <!--li><a href="https://ethiosathub.github.io/data/ethiopia_admin_level_4_pcs.gpkg" target="_blank">Admin Level 4 (PCS)</a></li-->
                 </ul>
             </div>
         </div>
      </div>
     </div>
+<hr>
+<div class="data-source">
+  <p><b>Data Source:</b> <a href="https://data.humdata.org/dataset/cod-ab-eth" target="_blank">Humanitarian Data Exchange (HDX)</a>  
+  Processed and published by <a href="https://ethiosathub.github.io" target="_blank">EGSH</a>.</p>
+</div>
 </body>
+</html>
