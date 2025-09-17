@@ -772,3 +772,39 @@ footer{
     
 }
 
+.download-box {
+    flex: 1;
+    min-width: 300px;
+    background-color: whitesmoke;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.download-columns {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.download-columns div {
+    flex: 1;
+    min-width: 150px;
+}
+
+.download-columns h5 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.download-columns ul {
+    list-style: none;
+    padding: 0;
+}
+
+.download-columns ul li {
+    margin-bottom: 10px;
+}
+
