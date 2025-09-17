@@ -564,7 +564,7 @@ footer{
     flex-direction: column;
     gap: 20px;
     color: black;
-    padding: 20px 0 50px;
+    padding: 20px 200px 50px;
     text-align: left;
 }
 
@@ -781,6 +781,7 @@ footer{
     }
     
 }
+
 
 
 
