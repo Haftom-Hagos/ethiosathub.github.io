@@ -3,162 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <title>EGSH-Data</title>
-   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-   <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  <link rel="stylesheet" href="../styles.css" />
 </head>
 
 <body>
-    <nav class="navbars1">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <a href="/home">EGSH</a>
-            </div>
-            <ul class="nav-menu">
-                <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
-                <li class="nav-item"><a href="/maps" class="nav-link">Maps</a></li>
-                <li class="nav-item"><a href="/data" class="nav-link active">Data</a></li>
-                <li class="nav-item"><a href="/gallery" class="nav-link">Gallery</a></li>
-                <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
-            </ul>
-        </div>
-   </nav>
+  <nav class="navbars1">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <a href="/home">EGSH</a>
+      </div>
+      <ul class="nav-menu">
+        <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="/maps" class="nav-link">Maps</a></li>
+        <li class="nav-item"><a href="/data" class="nav-link active">Data</a></li>
+        <li class="nav-item"><a href="/gallery" class="nav-link">Gallery</a></li>
+        <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
+      </ul>
+    </div>
+  </nav>
 
-    <div class="sub-contents">
-     <div id="data" class="tabcontent">
-        <p>
-            This section provides <b>administrative boundary datasets of Ethiopia</b> in Shapefile, GeoJSON, and GeoPackage formats.
-            The datasets are organized into different administrative levels:
-        </p>
-        <ul class="data-levels">
-            <li><b>Level 0</b> – National boundary of Ethiopia</li>
-            <li><b>Level 1</b> – Regional boundaries</li>
-            <li><b>Level 2</b> – Zonal boundaries</li>
-            <li><b>Level 3</b> – Woreda (district) boundaries</li>
-            <!--li><b>Level 4</b> – Kebele (local administrative unit) boundaries</li-->
-        </ul>
-        <p>
-            Each dataset is available in two coordinate reference systems:
-        </p>
-        <ul>
-            <li><b>Geographic Coordinate System (GCS)</b>: EPSG:4326 – WGS 84</li>
-            <li><b>Projected Coordinate System (PCS)</b>: EPSG:32637 – WGS 84 / UTM Zone 37N</li>
-        </ul>
+  <div class="sub-contents">
+    <div id="data" class="tabcontent">
+      <p>
+        This section provides <b>administrative boundary datasets of Ethiopia</b> in Shapefile, GeoJSON, and GeoPackage formats.
+        The datasets are organized into different administrative levels:
+      </p>
+      <ul class="data-levels">
+        <li><b>Level 0</b> – National boundary of Ethiopia</li>
+        <li><b>Level 1</b> – Regional boundaries</li>
+        <li><b>Level 2</b> – Zonal boundaries</li>
+        <li><b>Level 3</b> – Woreda (district) boundaries</li>
+      </ul>
+      <p>
+        Each dataset is available in two coordinate reference systems:
+      </p>
+      <ul>
+        <li><b>Geographic Coordinate System (GCS)</b>: EPSG:4326 – WGS 84</li>
+        <li><b>Projected Coordinate System (PCS)</b>: EPSG:32637 – WGS 84 / UTM Zone 37N</li>
+      </ul>
+
       <!-- Description Section -->
-<div class="data-descriptions" style="margin-bottom: 20px;">
-    <div>
-        <h3>Shapefile Format (Zipped)</h3>
-        <p>
+      <div class="data-descriptions">
+        <div>
+          <h3>Shapefile Format (Zipped)</h3>
+          <p>
             Shapefile is one of the most widely used vector formats in GIS. 
             It consists of multiple files (.shp, .shx, .dbf, .prj, etc.), 
             so here they are provided as .zip archives for easy download. 
             Widely supported by GIS software, but has size and attribute limitations.
-        </p>
-    </div>
-  
-    <div>
-        <h3>GeoJSON Format</h3>
-        <p>
+          </p>
+        </div>
+
+        <div>
+          <h3>GeoJSON Format</h3>
+          <p>
             GeoJSON is a lightweight JSON-based format for geographic data. 
             Ideal for web mapping, APIs, and visualization in browsers. 
             Supports geometry, features, and collections.
-        </p>
-    </div>
-  
-    <div>
-        <h3>GeoPackage Format</h3>
-        <p>
+          </p>
+        </div>
+
+        <div>
+          <h3>GeoPackage Format</h3>
+          <p>
             GeoPackage (GPKG) is an open, compact format for storing vector and raster layers in one file. 
             Supported by modern GIS software like QGIS, ArcGIS, and GDAL. 
             Recommended for reliable and future-proof data exchange.
-        </p>
-    </div>
-</div>
-
-<!-- Instruction Text -->
-<p><i>Click the links below to download the data:</i></p>
-
-<!-- Download Blocks Section -->
-<div class="data-grid">
-    <!-- Shapefile Block -->
-    <div class="download-box">
-        <h4>Shapefile (Zipped)</h4>
-        <div class="download-columns">
-            <div>
-                <h5>GCS (EPSG:4326)</h5>
-                <ul>
-                    <li><a href="ethiopia_admin_level_0_gcs.zip" target="_blank">Level 0</a></li>
-                    <li><a href="ethiopia_admin_level_1_gcs.zip" target="_blank">Level 1</a></li>
-                    <li><a href="ethiopia_admin_level_2_gcs.zip" target="_blank">Level 2</a></li>
-                    <li><a href="ethiopia_admin_level_3_gcs.zip" target="_blank">Level 3</a></li>
-                </ul>
-            </div>
-            <div>
-                <h5>PCS (EPSG:32637)</h5>
-                <ul>
-                    <li><a href="ethiopia_admin_level_0_pcs.zip" target="_blank">Level 0</a></li>
-                    <li><a href="ethiopia_admin_level_1_pcs.zip" target="_blank">Level 1</a></li>
-                    <li><a href="ethiopia_admin_level_2_pcs.zip" target="_blank">Level 2</a></li>
-                    <li><a href="ethiopia_admin_level_3_pcs.zip" target="_blank">Level 3</a></li>
-                </ul>
-            </div>
+          </p>
         </div>
-    </div>
+      </div>
 
-    <!-- GeoJSON Block -->
-    <div class="download-box">
-        <h4>GeoJSON</h4>
-        <div class="download-columns">
-            <div>
-                <h5>GCS (EPSG:4326)</h5>
-                <ul>
-                    <li><a href="ethiopia_admin_level_0_gcs.geojson" target="_blank">Level 0</a></li>
-                    <li><a href="ethiopia_admin_level_1_gcs.geojson" target="_blank">Level 1</a></li>
-                    <li><a href="ethiopia_admin_level_2_gcs.geojson" target="_blank">Level 2</a></li>
-                    <li><a href="ethiopia_admin_level_3_gcs.geojson" target="_blank">Level 3</a></li>
-                </ul>
-            </div>
-            <div>
-                <h5>PCS (EPSG:32637)</h5>
-                <ul>
-                    <li><a href="ethiopia_admin_level_0_pcs.geojson" target="_blank">Level 0</a></li>
-                    <li><a href="ethiopia_admin_level_1_pcs.geojson" target="_blank">Level 1</a></li>
-                    <li><a href="ethiopia_admin_level_2_pcs.geojson" target="_blank">Level 2</a></li>
-                    <li><a href="ethiopia_admin_level_3_pcs.geojson" target="_blank">Level 3</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+      <!-- Instruction Text -->
+      <p><i>Click the links below to download the data:</i></p>
 
-    <!-- GeoPackage Block -->
-    <div class="download-box">
-        <h4>GeoPackage</h4>
-        <div class="download-columns">
+      <!-- Download Blocks Section -->
+      <div class="data-grid">
+        <!-- Shapefile Block -->
+        <div class="download-box">
+          <h4>Shapefile (Zipped)</h4>
+          <div class="download-columns stacked">
             <div>
-                <h5>GCS (EPSG:4326)</h5>
-                <ul>
-                    <li><a href="ethiopia_admin_level_0_gcs.gpkg" target="_blank">Level 0</a></li>
-                    <li><a href="ethiopia_admin_level_1_gcs.gpkg" target="_blank">Level 1</a></li>
-                    <li><a href="ethiopia_admin_level_2_gcs.gpkg" target="_blank">Level 2</a></li>
-                    <li><a href="ethiopia_admin_level_3_gcs.gpkg" target="_blank">Level 3</a></li>
-                </ul>
+              <h5>GCS (EPSG:4326)</h5>
+              <ul>
+                <li><a href="ethiopia_admin_level_0_gcs.zip" target="_blank">Level 0</a></li>
+                <li><a href="ethiopia_admin_level_1_gcs.zip" target="_blank">Level 1</a></li>
+                <li><a href="ethiopia_admin_level_2_gcs.zip" target="_blank">Level 2</a></li>
+                <li><a href="ethiopia_admin_level_3_gcs.zip" target="_blank">Level 3</a></li>
+              </ul>
             </div>
             <div>
-                <h5>PCS (EPSG:32637)</h5>
-                <ul>
-                    <li><a href="ethiopia_admin_level_0_pcs.gpkg" target="_blank">Level 0</a></li>
-                    <li><a href="ethiopia_admin_level_1_pcs.gpkg" target="_blank">Level 1</a></li>
-                    <li><a href="ethiopia_admin_level_2_pcs.gpkg" target="_blank">Level 2</a></li>
-                    <li><a href="ethiopia_admin_level_3_pcs.gpkg" target="_blank">Level 3</a></li>
-                </ul>
+              <h5>PCS (EPSG:32637)</h5>
+              <ul>
+                <li><a href="ethiopia_admin_level_0_pcs.zip" target="_blank">Level 0</a></li>
+                <li><a href="ethiopia_admin_level_1_pcs.zip" target="_blank">Level 1</a></li>
+                <li><a href="ethiopia_admin_level_2_pcs.zip" target="_blank">Level 2</a></li>
+                <li><a href="ethiopia_admin_level_3_pcs.zip" target="_blank">Level 3</a></li>
+              </ul>
             </div>
+          </div>
         </div>
+
+        <!-- GeoJSON Block -->
+        <div class="download-box">
+          <h4>GeoJSON</h4>
+          <div class="download-columns stacked">
+            <div>
+              <h5>GCS (EPSG:4326)</h5>
+              <ul>
+                <li><a href="ethiopia_admin_level_0_gcs.geojson" target="_blank">Level 0</a></li>
+                <li><a href="ethiopia_admin_level_1_gcs.geojson" target="_blank">Level 1</a></li>
+                <li><a href="ethiopia_admin_level_2_gcs.geojson" target="_blank">Level 2</a></li>
+                <li><a href="ethiopia_admin_level_3_gcs.geojson" target="_blank">Level 3</a></li>
+              </ul>
+            </div>
+            <div>
+              <h5>PCS (EPSG:32637)</h5>
+              <ul>
+                <li><a href="ethiopia_admin_level_0_pcs.geojson" target="_blank">Level 0</a></li>
+                <li><a href="ethiopia_admin_level_1_pcs.geojson" target="_blank">Level 1</a></li>
+                <li><a href="ethiopia_admin_level_2_pcs.geojson" target="_blank">Level 2</a></li>
+                <li><a href="ethiopia_admin_level_3_pcs.geojson" target="_blank">Level 3</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- GeoPackage Block -->
+        <div class="download-box">
+          <h4>GeoPackage</h4>
+          <div class="download-columns stacked">
+            <div>
+              <h5>GCS (EPSG:4326)</h5>
+              <ul>
+                <li><a href="ethiopia_admin_level_0_gcs.gpkg" target="_blank">Level 0</a></li>
+                <li><a href="ethiopia_admin_level_1_gcs.gpkg" target="_blank">Level 1</a></li>
+                <li><a href="ethiopia_admin_level_2_gcs.gpkg" target="_blank">Level 2</a></li>
+                <li><a href="ethiopia_admin_level_3_gcs.gpkg" target="_blank">Level 3</a></li>
+              </ul>
+            </div>
+            <div>
+              <h5>PCS (EPSG:32637)</h5>
+              <ul>
+                <li><a href="ethiopia_admin_level_0_pcs.gpkg" target="_blank">Level 0</a></li>
+                <li><a href="ethiopia_admin_level_1_pcs.gpkg" target="_blank">Level 1</a></li>
+                <li><a href="ethiopia_admin_level_2_pcs.gpkg" target="_blank">Level 2</a></li>
+                <li><a href="ethiopia_admin_level_3_pcs.gpkg" target="_blank">Level 3</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+      <div class="data-source">
+        <p><b>Data Source:</b> <a href="https://data.humdata.org/dataset/cod-ab-eth" target="_blank">Humanitarian Data Exchange (HDX)</a>  
+        Processed and published by <a href="https://ethiosathub.github.io" target="_blank">EGSH</a>.</p>
+      </div>
     </div>
-</div>
-<hr>
-<div class="data-source">
-  <p><b>Data Source:</b> <a href="https://data.humdata.org/dataset/cod-ab-eth" target="_blank">Humanitarian Data Exchange (HDX)</a>  
-  Processed and published by <a href="https://ethiosathub.github.io" target="_blank">EGSH</a>.</p>
-</div>
+  </div>
 </body>
 </html>
