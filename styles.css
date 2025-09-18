@@ -599,17 +599,18 @@ footer{
 .data ul:not(.data-levels):not(.download-columns ul) {
     text-align: left;
     width: 100%;
-    list-style: none;
-    padding: 0;
+    list-style-type: disc; /* Add bullet points */
+    padding-left: 20px; /* Space for bullets */
 }
 
 .data-levels {
     text-align: left;
     width: 100%;
+    list-style-type: disc; /* Add bullet points */
+    padding-left: 20px; /* Space for bullets */
 }
 
 .data-levels li {
-    list-style: none;
     padding-bottom: 20px;
 }
 
@@ -670,23 +671,30 @@ footer{
     margin-bottom: 10px;
 }
 
+.data-source p {
+    font-size: 14px;
+    margin: 10px 0;
+    width: 100%;
+    color: black;
+    text-align: left;
+}
+
 .data-source a {
-    color: #0000EE; /* Standard blue for hyperlinks */
-    text-decoration: underline; /* Standard underline for hyperlinks */
-    font-size: 14px; /* Smaller font size for footnote style */
-    display: inline; /* Remove button-like block styling */
-    margin: 0; /* Remove margin to integrate with text */
-    padding: 0; /* Remove padding to remove button appearance */
-    box-shadow: none; /* Remove box shadow */
-    transition: none; /* Remove hover transitions */
+    color: #0000EE;
+    text-decoration: underline;
+    font-size: 14px;
+    display: inline;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    transition: none;
 }
 
 .data-source a:hover {
-    color: #551A8B; /* Standard visited link color on hover */
-    background: none; /* Remove background color */
-    transform: none; /* Remove scaling effect */
+    color: #551A8B;
+    background: none;
+    transform: none;
 }
-
 
 
    /* -----gallery-css----- */
@@ -844,6 +852,7 @@ footer{
     }
     
 }
+
 
 
 
