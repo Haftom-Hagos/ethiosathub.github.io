@@ -14,26 +14,18 @@ body {
 }
 
 
-/* .navbars {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 10;
-    width: 100%;
-    border: 2px 2px black;
-    /* box-shadow: 0px 1px whitesmoke; */
-    /* color: rgb(255, 255, 255); */
-    /* background-color: rgb(39, 38, 38); */ 
-} */
-
 .navbars {
     position: absolute;
     top: 0;
     left: 0;
     z-index: 10;
     width: 100%;
-    background-color: rgb(69, 69, 69); /* Match .navbars1 */
+    border: 2px 2px black;
+    box-shadow: 0px 1px whitesmoke;
+    color: rgb(255, 255, 255);
+    background-color: rgb(39, 38, 38); 
 }
+
 
 .nav-container{
     margin:0 5%;
@@ -103,19 +95,6 @@ body {
     width: 100%;
     
 }
-
-/* Ensure .sub-contents is applied to Home tab */
-.sub-contents {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: black;
-    padding: 100px 80px 20px; /* Consistent padding */
-    background: whitesmoke; /* Consistent background */
-}
-
 
 .landing-page {
     display: flex;
@@ -469,6 +448,7 @@ footer{
     padding: 50px 0 0;
     
 }
+
 
 /* ------ MAP-CSS-----  */
 
@@ -872,4 +852,5 @@ footer{
     }
     
 }
+
 
