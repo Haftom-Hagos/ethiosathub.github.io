@@ -104,6 +104,19 @@ body {
     
 }
 
+/* Ensure .sub-contents is applied to Home tab */
+.sub-contents {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    padding: 100px 80px 20px; /* Consistent padding */
+    background: whitesmoke; /* Consistent background */
+}
+
+
 .landing-page {
     display: flex;
     flex-direction: column;
@@ -859,3 +872,4 @@ footer{
     }
     
 }
+
