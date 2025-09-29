@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>
             About EGSH
         </title>
@@ -9,7 +11,7 @@
     </head>
 
     <body>
-         <nav class="navbars1">
+         <nav class="navbars">
          <div class="nav-container">
             <div class="nav-logo">
                 <a href="/home">EGSH</a>
@@ -68,5 +70,17 @@
                 </div>
             </div>
         </div>
+        <script>
+        const hamburger = document.getElementById("hamburger");
+        const navmenu = document.querySelector(".nav-menu");
+        hamburger.addEventListener("click", () => {
+        navmenu.classList.toggle("show");
+
+        if (hamburger.textContent === "☰") {
+            hamburger.textContent = "✖"; // change to X
+        } else {
+            hamburger.textContent = "☰"; // change back
+        }})
+    </script>
     </body>
 </html>
