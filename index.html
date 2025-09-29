@@ -15,6 +15,7 @@
         <div class="nav-container">
             <div class="nav-logo">
                 <a href="/home">EGSH</a>
+                <div class="hamburger" id="hamburger">☰</div>
             </div>
                 <ul class="nav-menu">
                     <li class="nav-item"> <a href="/home" class="nav-link active">Home</a></li>
@@ -142,8 +143,20 @@
             </div>
         </div>
    </footer>
-   
+   <script>
+        const hamburger = document.getElementById("hamburger");
+        const navmenu = document.querySelector(".nav-menu");
+        hamburger.addEventListener("click", () => {
+        navmenu.classList.toggle("show");
+
+        if (hamburger.textContent === "☰") {
+            hamburger.textContent = "✖"; // change to X
+        } else {
+            hamburger.textContent = "☰"; // change back
+        }})
+    </script>
 </body>
+
 
 
 
