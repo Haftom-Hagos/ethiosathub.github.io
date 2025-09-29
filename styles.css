@@ -594,7 +594,7 @@ footer{
     transition: transform 0.3s, background-color 0.3s;
 }
 
-.data ul:not(.data-levels):not(.download-columns ul) {
+#data ul:not(.data-levels):not(.download-columns ul) {
     text-align: left;
     width: 100%;
     list-style-type: disc; /* Add bullet points */
@@ -881,6 +881,7 @@ footer{
     color: gray;
     } 
 }
+
 
 
 
