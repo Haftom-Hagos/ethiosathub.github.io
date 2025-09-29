@@ -16,6 +16,7 @@
             <div class="nav-logo">
                 <a href="/home">EGSH</a>
             </div>
+            <div class="hamburger" id="hamburger">☰</div>
                 <ul class="nav-menu">
                     <li class="nav-item"> <a href="/home" class="nav-link active">Home</a></li>
                     <li class="nav-item"><a href="/maps" class="nav-link">Maps</a></li>
@@ -66,7 +67,7 @@
 
         </section>
 
-        <section >
+        <section>
             <div class="map">
                 <h2> Downloadable Maps and Data</h2>
                 <p>Explore our collection of downloadable maps and datasets for Ethiopia. 
@@ -76,8 +77,7 @@
                 <a href="/maps" class="explore-anchor">Explore NDVI maps</a>
                 <div class="map-image">
                     <img src="../images/eth.png" alt="Download Icon" width="200" height="200">
-                        <a href="/maps" class="map-btn">Explore NDVI maps</a>
-                
+                    <a href="/maps" class="map-btn">Explore NDVI maps</a>
                 <!--a href="maps.html" class="explore-anchor">Explore NDVI maps</a>
                 <div class="map-image">
                     <img src="images/eth.png" alt="Download Icon" width="200" height="200">
@@ -107,7 +107,6 @@
                     analysis, and visualization, helping you make informed decisions with confidence.
                 </p>
                 <div class="nav-links">
-
                         <a href="/home" class="nav-link active">Home</a>
                         <a href="/maps" class="nav-link">Maps</a>
                         <a href="/data" class="nav-link">Data</a>
@@ -125,7 +124,6 @@
 
                 <h2>Contact us</h2>
                 <div class="social-icons">
-                    
                     <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
                     <a href="https://twitter.com" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
                     <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
@@ -140,8 +138,22 @@
             </div>
         </div>
    </footer>
-   
+    <script>
+    const hamburger = document.getElementById("hamburger");
+    const navmenu = document.getElementById("nav-menu");
+
+    hamburger.addEventListener("click", () => {
+      navmenu.classList.toggle("show");
+
+      if (hamburger.textContent === "☰") {
+        hamburger.textContent = "✖"; // change to X
+    } else {
+        hamburger.textContent = "☰"; // change back
+    }
+    });
+  </script>
 </body>
+</html>
 
 
 
