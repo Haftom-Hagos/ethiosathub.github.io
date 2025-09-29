@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EGSH-Data</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
@@ -9,11 +10,12 @@
 </head>
 
 <body>
-  <nav class="navbars1">
+  <nav class="navbars">
     <div class="nav-container">
       <div class="nav-logo">
         <a href="/home">EGSH</a>
       </div>
+      <div class="hamburger" id="hamburger">☰</div>
       <ul class="nav-menu">
         <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
         <li class="nav-item"><a href="/maps" class="nav-link">Maps</a></li>
@@ -162,5 +164,17 @@
       </div>
     </div>
   </div>
+  <script>
+        const hamburger = document.getElementById("hamburger");
+        const navmenu = document.querySelector(".nav-menu");
+        hamburger.addEventListener("click", () => {
+        navmenu.classList.toggle("show");
+
+        if (hamburger.textContent === "☰") {
+            hamburger.textContent = "✖"; // change to X
+        } else {
+            hamburger.textContent = "☰"; // change back
+        }})
+    </script>
 </body>
 </html>
