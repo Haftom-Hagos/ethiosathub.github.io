@@ -168,12 +168,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- View Selection button ---
     document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
+        const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
-        const isLandCover = yearLC && document.getElementById('districtSelect').value;
-        const isNDVI = selectedArea || selectedDistrict;
+        const isLandCover = datasetSelect === 'landcover' && yearLC && document.getElementById('districtSelect').value;
+        const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
 
         if (!isLandCover && !isNDVI) {
-            alert('Please select a district or draw an area first!');
+            alert('Please select a dataset and a district or draw an area!');
             return;
         }
 
@@ -195,15 +196,27 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (isLandCover) {
-            if (landcoverLayer) map.removeLayer(landcoverLayer);
-            landcoverLayer = L.esri.imageMapLayer({
-                url: `https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover_${yearLC}/ImageServer`,
-                attribution: "Esri, Impact Observatory, Microsoft",
-                maxZoom: 19,
-                bounds: [[bbox.south, bbox.west], [bbox.north, bbox.east]]
-            }).addTo(map);
-            map.fitBounds(bounds);
-            alert('Land Cover visualized on the map!');
+            try {
+                if (landcoverLayer) {
+                    map.removeLayer(landcoverLayer);
+                    landcoverLayer = null;
+                }
+                // Use DynamicMapLayer instead of imageMapLayer for better rendering control
+                landcoverLayer = L.esri.dynamicMapLayer({
+                    url: `https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover_${yearLC}/MapServer`,
+                    attribution: "Esri, Impact Observatory, Microsoft",
+                    maxZoom: 19,
+                    opacity: 1.0,
+                    f: 'image',
+                    bbox: [[bbox.south, bbox.west], [bbox.north, bbox.east]]
+                });
+                landcoverLayer.addTo(map);
+                map.fitBounds(bounds);
+                alert('Land Cover visualized on the map!');
+            } catch (err) {
+                console.error('Land Cover visualization error:', err);
+                alert('Failed to visualize Land Cover: ' + err.message);
+            }
         } else if (isNDVI) {
             const dateRange = getSelectedDateRange();
             if (!dateRange) {
@@ -223,8 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
-                if (ndviLayer) map.removeLayer(ndviLayer);
-                ndviLayer = L.imageOverlay(url, bounds).addTo(map);
+                if (ndviLayer) {
+                    map.removeLayer(ndviLayer);
+                    ndviLayer = null;
+                }
+                ndviLayer = L.imageOverlay(url, [[bbox.south, bbox.west], [bbox.north, bbox.east]], {
+                    opacity: 1.0
+                }).addTo(map);
                 map.fitBounds(bounds);
                 alert('NDVI visualized on the map!');
             } catch (err) {
@@ -236,12 +254,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Download Selection button ---
     document.getElementById('downloadSelectionBtn').addEventListener('click', async () => {
+        const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
-        const isLandCover = yearLC && document.getElementById('districtSelect').value;
-        const isNDVI = selectedArea || selectedDistrict;
+        const isLandCover = datasetSelect === 'landcover' && yearLC && document.getElementById('districtSelect').value;
+        const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
 
         if (!isLandCover && !isNDVI) {
-            alert('Please select a district or draw an area first!');
+            alert('Please select a dataset and a district or draw an area!');
             return;
         }
 
