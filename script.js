@@ -1,4 +1,4 @@
-let map, drawnItems, selectedArea, ndviLayer;
+let map, drawnItems, selectedArea, ndviLayer, landcoverLayer, districtLayer, highlighted;
 
 const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL
 
@@ -31,67 +31,64 @@ function downloadBlob(blob, filename) {
     link.click();
 }
 
-
-// function initializeMap() {
-//     if (map) return;
-
-//     map = L.map('map').setView([9.145, 40.4897], 6);
-//     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-//         maxZoom: 19,
-//         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-//     }).addTo(map);
-
-//     drawnItems = new L.FeatureGroup();
-//     map.addLayer(drawnItems);
-
-//     const drawControl = new L.Control.Draw({
-//         draw: { rectangle: true, polygon: false, circle: false, marker: false, polyline: false },
-//         edit: { featureGroup: drawnItems }
-//     });
-//     map.addControl(drawControl);
-
-//     map.on('draw:created', (e) => {
-//         drawnItems.clearLayers();
-//         selectedArea = e.layer;
-//         drawnItems.addLayer(selectedArea);
-//         if (ndviLayer) map.removeLayer(ndviLayer);
-//         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
-//     });
-// }
-
-
 function initializeMap() {
     if (map) return;
 
     map = L.map('map', {
         center: [9.145, 40.4897],
         zoom: 6,
-        layers: [] // Initialize without a default layer
+        layers: []
     });
 
-    // Define base maps
+    // Base maps
     const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    });
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-    const satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    });
+    const satelliteMap = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 19, attribution: 'Esri & contributors' }
+    );
 
-    // Add street map as default
-    streetMap.addTo(map);
-
-    // Define base layers for control
     const baseMaps = {
         "Street Map": streetMap,
         "Satellite Map": satelliteMap
     };
 
-    // Add layer control with checkboxes
-    L.control.layers(baseMaps, null, { collapsed: false }).addTo(map);
+    // --- District boundaries (ADM3) ---
+    fetch("image/ethiopia_adm3.geojson") // adjust filename if needed
+        .then(res => res.json())
+        .then(data => {
+            districtLayer = L.geoJSON(data, {
+                style: { color: "#555", weight: 1, fillOpacity: 0 },
+                onEachFeature: function (feature, layer) {
+                    layer.bindPopup(feature.properties.NAME_3);
+                    layer.on('click', () => {
+                        if (highlighted) {
+                            districtLayer.resetStyle(highlighted);
+                        }
+                        highlighted = layer;
+                        layer.setStyle({
+                            color: "red",
+                            weight: 3,
+                            fillOpacity: 0.2
+                        });
+                        selectedArea = layer; // now the district is the selected area
+                        map.fitBounds(layer.getBounds());
+                        alert(`District selected: ${feature.properties.NAME_3}`);
+                    });
+                }
+            }).addTo(map);
+        });
 
+    // --- Land Cover layer (Esri ImageServer) ---
+    landcoverLayer = L.esri.imageMapLayer({
+        url: "https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer",
+        attribution: "Esri, Impact Observatory, Microsoft"
+    });
+
+    // --- Drawing tools (still allow manual draw) ---
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -109,46 +106,26 @@ function initializeMap() {
         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
     });
 
+    // --- Layer control ---
+    const overlayMaps = {
+        "Land Cover (Sentinel-2)": landcoverLayer
+        // NDVI layer will be added dynamically after request
+    };
 
-// function initializeMap() {
-//     if (map) return;
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
-//     map = L.map('map').setView([9.145, 40.4897], 6);
-//     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-//         maxZoom: 19,
-//         attribution: '© OpenStreetMap'
-//     }).addTo(map);
-
-//     drawnItems = new L.FeatureGroup();
-//     map.addLayer(drawnItems);
-
-//     const drawControl = new L.Control.Draw({
-//         draw: { rectangle: true, polygon: false, circle: false, marker: false, polyline: false },
-//         edit: { featureGroup: drawnItems }
-//     });
-//     map.addControl(drawControl);
-
-//     map.on('draw:created', (e) => {
-//         drawnItems.clearLayers();
-//         selectedArea = e.layer;
-//         drawnItems.addLayer(selectedArea);
-//         if (ndviLayer) map.removeLayer(ndviLayer);
-//         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
-//     });
-
-    // View NDVI
+    // --- NDVI button (visualize) ---
     document.getElementById('viewNdviBtn').addEventListener('click', async () => {
         if (!selectedArea) {
-            alert('Please draw an area on the map first!');
-            console.error('No area selected');
+            alert('Please select a district or draw an area first!');
             return;
         }
         const dateRange = getSelectedDateRange();
         if (!dateRange) {
             alert('Invalid date range');
-            console.error('Invalid date range');
             return;
         }
+
         const bounds = selectedArea.getBounds();
         const bbox = {
             west: bounds.getWest(),
@@ -156,7 +133,6 @@ function initializeMap() {
             east: bounds.getEast(),
             north: bounds.getNorth()
         };
-        console.log('Sending NDVI request:', { bbox, ...dateRange });
 
         try {
             const res = await fetch(`${BACKEND_URL}/ndvi`, {
@@ -166,14 +142,12 @@ function initializeMap() {
             });
             if (!res.ok) {
                 const errorText = await res.text();
-                console.error('NDVI request failed:', res.status, errorText);
                 throw new Error(errorText || `HTTP ${res.status}`);
             }
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
             if (ndviLayer) map.removeLayer(ndviLayer);
             ndviLayer = L.imageOverlay(url, bounds).addTo(map);
-            console.log('NDVI image displayed');
             alert('NDVI visualized on the map!');
         } catch (err) {
             console.error('NDVI fetch error:', err);
@@ -181,19 +155,18 @@ function initializeMap() {
         }
     });
 
-    // Download NDVI
+    // --- NDVI button (download) ---
     document.getElementById('ndviBtn').addEventListener('click', async () => {
         if (!selectedArea) {
-            alert('Please draw an area on the map first!');
-            console.error('No area selected');
+            alert('Please select a district or draw an area first!');
             return;
         }
         const dateRange = getSelectedDateRange();
         if (!dateRange) {
             alert('Invalid date range');
-            console.error('Invalid date range');
             return;
         }
+
         const bounds = selectedArea.getBounds();
         const bbox = {
             west: bounds.getWest(),
@@ -201,12 +174,11 @@ function initializeMap() {
             east: bounds.getEast(),
             north: bounds.getNorth()
         };
+
         if (bbox.east - bbox.west > 2 || bbox.north - bbox.south > 2) {
             alert('Please draw a smaller area (max 2°x2°).');
-            console.error('Area too large:', bbox);
             return;
         }
-        console.log('Sending NDVI download request:', { bbox, ...dateRange });
 
         try {
             const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
@@ -216,12 +188,10 @@ function initializeMap() {
             });
             if (!res.ok) {
                 const errorText = await res.text();
-                console.error('NDVI download failed:', res.status, errorText);
                 throw new Error(errorText || `HTTP ${res.status}`);
             }
             const blob = await res.blob();
             downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
-            console.log('NDVI downloaded');
         } catch (err) {
             console.error('NDVI download error:', err);
             alert('Failed to download NDVI: ' + err.message);
@@ -243,7 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
             yearSelect.appendChild(opt);
         }
 
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         for (let m = 1; m <= 12; m++) {
             const opt1 = document.createElement('option');
             opt1.value = String(m);
@@ -255,10 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
         yearSelect.value = String(currentYear);
         monthStart.value = '1';
         monthEnd.value = '12';
-    } else {
-        console.error('Date selection elements not found in DOM');
     }
     initializeMap();
-    console.log('Map initialized');
 });
-
