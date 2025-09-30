@@ -57,7 +57,7 @@ function initializeMap() {
     };
 
     // --- District boundaries (ADM3) ---
-    fetch("image/ethiopia_adm3.geojson") // adjust filename if needed
+    fetch("data/ethiopia_admin_level_3_gcs_simplified.geojson") // adjust filename if needed
         .then(res => res.json())
         .then(data => {
             districtLayer = L.geoJSON(data, {
@@ -229,3 +229,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initializeMap();
 });
+
