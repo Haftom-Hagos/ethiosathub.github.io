@@ -78,11 +78,11 @@ function initializeMap() {
 
               // Optional: popup with district name
               if (feature.properties) {
-                layer.bindPopup(`<b>${feature.properties.NAME_3}</b>`).openPopup();
+                layer.bindPopup(`<b>${feature.properties.ADM3_EN}</b>`).openPopup();
               }
 
               // Here you can call your NDVI or land cover function for this polygon
-              console.log("Clicked district:", feature.properties.NAME_3);
+              console.log("Clicked district:", feature.properties.ADM3_EN);
             });
           }
         }).addTo(map);
@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initializeMap();
 });
+
 
 
 
