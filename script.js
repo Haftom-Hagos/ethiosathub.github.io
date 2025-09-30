@@ -24,10 +24,19 @@ function getSelectedDateRange() {
     return { startDate, endDate };
 }
 
-function getYearTimeRange(year) {
-    const start = new Date(year, 0, 1).getTime();
-    const end = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
-    return `${start},${end}`;
+function toEsriGeometry(geoJsonGeom) {
+    let rings = [];
+    if (geoJsonGeom.type === 'Polygon') {
+        rings = geoJsonGeom.coordinates;
+    } else if (geoJsonGeom.type === 'MultiPolygon') {
+        geoJsonGeom.coordinates.forEach(polygon => {
+            rings.push(...polygon);
+        });
+    }
+    return {
+        rings: rings,
+        spatialReference: { wkid: 4326 }
+    };
 }
 
 function downloadBlob(blob, filename) {
@@ -202,18 +211,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isLandCover) {
             try {
-                const time = getYearTimeRange(yearLC);
+                const mosaicRule = JSON.stringify({ where: `Year = ${yearLC}` });
+                const renderingRule = JSON.stringify({ rasterFunction: "Cartographic Renderer for Visualization and Analysis" });
                 const params = new URLSearchParams({
                     bbox: bboxStr,
+                    bboxSR: '4326',
+                    imageSR: '4326',
                     size: '1024,1024',
                     format: 'png',
+                    transparent: true,
                     f: 'image',
-                    time: time,
-                    transparent: true
+                    mosaicRule: mosaicRule,
+                    renderingRule: renderingRule
                 });
 
                 if (selectedDistrict && selectedDistrictGeoJSON) {
-                    params.append('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
+                    const esriGeom = JSON.stringify(toEsriGeometry(selectedDistrictGeoJSON.geometry));
+                    params.append('geometry', esriGeom);
+                    params.append('geometryType', 'esriGeometryPolygon');
                 }
 
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
@@ -303,17 +318,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isLandCover) {
             try {
-                const time = getYearTimeRange(yearLC);
+                const mosaicRule = JSON.stringify({ where: `Year = ${yearLC}` });
                 const params = new URLSearchParams({
                     bbox: bboxStr,
+                    bboxSR: '4326',
+                    imageSR: '4326',
                     size: '2048,2048',
                     format: 'tiff',
                     f: 'image',
-                    time: time
+                    mosaicRule: mosaicRule
                 });
 
                 if (selectedDistrict && selectedDistrictGeoJSON) {
-                    params.append('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
+                    const esriGeom = JSON.stringify(toEsriGeometry(selectedDistrictGeoJSON.geometry));
+                    params.append('geometry', esriGeom);
+                    params.append('geometryType', 'esriGeometryPolygon');
                 }
 
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
