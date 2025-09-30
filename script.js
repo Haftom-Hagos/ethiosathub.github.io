@@ -1,6 +1,6 @@
 const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL 
 
-let map, landcoverLayer, ndviLayer, drawnItems, selectedArea, selectedDistrict;
+let map, landcoverLayer, ndviLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
 
 function getSelectedDateRange() {
     const yearEl = document.getElementById('yearSelect');
@@ -86,6 +86,7 @@ function initializeMap() {
               if (feature.properties) {
                 layer.bindPopup(`<b>${feature.properties.ADM3_EN}</b>`).openPopup();
                 selectedDistrict = layer;
+                selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
                 document.getElementById('districtSelect').value = feature.properties.ADM3_EN;
               }
             });
@@ -115,6 +116,7 @@ function initializeMap() {
         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
         document.getElementById('districtSelect').value = '';
         selectedDistrict = null;
+        selectedDistrictGeoJSON = null;
     });
 
     // --- Layer control ---
@@ -201,16 +203,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     map.removeLayer(landcoverLayer);
                     landcoverLayer = null;
                 }
-                // Use DynamicMapLayer instead of imageMapLayer for better rendering control
-                landcoverLayer = L.esri.dynamicMapLayer({
-                    url: `https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover_${yearLC}/MapServer`,
-                    attribution: "Esri, Impact Observatory, Microsoft",
+                // Use the correct Land Cover service with time parameter
+                const time = `${yearLC}-01-01T00:00:00Z/${yearLC}-12-31T23:59:59Z`;
+                landcoverLayer = L.esri.imageMapLayer({
+                    url: 'https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer',
+                    attribution: 'Esri, Impact Observatory, Microsoft',
                     maxZoom: 19,
                     opacity: 1.0,
-                    f: 'image',
-                    bbox: [[bbox.south, bbox.west], [bbox.north, bbox.east]]
-                });
-                landcoverLayer.addTo(map);
+                    time: time
+                }).addTo(map);
                 map.fitBounds(bounds);
                 alert('Land Cover visualized on the map!');
             } catch (err) {
@@ -225,10 +226,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
+                const body = { bbox, ...dateRange };
+                // If a district is selected, include its geometry for clipping
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    body.geometry = selectedDistrictGeoJSON.geometry;
+                }
                 const res = await fetch(`${BACKEND_URL}/ndvi`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bbox, ...dateRange })
+                    body: JSON.stringify(body)
                 });
                 if (!res.ok) {
                     const errorText = await res.text();
@@ -288,13 +294,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isLandCover) {
             try {
-                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover_${yearLC}/ImageServer/exportImage`, {
+                const time = `${yearLC}-01-01T00:00:00Z/${yearLC}-12-31T23:59:59Z`;
+                const res = await fetch('https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
                         bbox: `${bbox.west},${bbox.south},${bbox.east},${bbox.north}`,
                         format: 'tiff',
-                        f: 'image'
+                        f: 'image',
+                        time: time
                     })
                 });
                 if (!res.ok) {
@@ -315,10 +323,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
+                const body = { bbox, ...dateRange };
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    body.geometry = selectedDistrictGeoJSON.geometry;
+                }
                 const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bbox, ...dateRange })
+                    body: JSON.stringify(body)
                 });
                 if (!res.ok) {
                     const errorText = await res.text();
@@ -351,6 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 fillOpacity: 0.1
                             }
                         }).addTo(map);
+                        selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
                         map.fitBounds(selectedDistrict.getBounds());
                     }
                 });
@@ -358,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedDistrict) {
                 map.removeLayer(selectedDistrict);
                 selectedDistrict = null;
+                selectedDistrictGeoJSON = null;
             }
         }
     });
