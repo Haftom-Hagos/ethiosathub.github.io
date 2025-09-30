@@ -24,19 +24,29 @@ function getSelectedDateRange() {
     return { startDate, endDate };
 }
 
-function toEsriGeometry(geoJsonGeom) {
-    let rings = [];
-    if (geoJsonGeom.type === 'Polygon') {
-        rings = geoJsonGeom.coordinates;
-    } else if (geoJsonGeom.type === 'MultiPolygon') {
-        geoJsonGeom.coordinates.forEach(polygon => {
-            rings.push(...polygon);
-        });
+function getYearTimeRange(year) {
+    const start = new Date(year, 0, 1).getTime();
+    const end = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
+    return `${start},${end}`;
+}
+
+function calculateNativePixelSize(bounds) {
+    const lat = (bounds.getSouth() + bounds.getNorth()) / 2;
+    const cosLat = Math.cos(lat * Math.PI / 180);
+    const width_deg = bounds.getEast() - bounds.getWest();
+    const height_deg = bounds.getNorth() - bounds.getSouth();
+    const width_m = width_deg * 111319.9 * cosLat;
+    const height_m = height_deg * 111319.9;
+    const resolution = 10; // meters per pixel
+    let width_px = Math.ceil(width_m / resolution);
+    let height_px = Math.ceil(height_m / resolution);
+    const max = 10000; // service limit
+    if (width_px > max || height_px > max) {
+        const scale = Math.max(width_px / max, height_px / max);
+        width_px = Math.ceil(width_px / scale);
+        height_px = Math.ceil(height_px / scale);
     }
-    return {
-        rings: rings,
-        spatialReference: { wkid: 4326 }
-    };
+    return `${width_px},${height_px}`;
 }
 
 function downloadBlob(blob, filename) {
@@ -44,18 +54,6 @@ function downloadBlob(blob, filename) {
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
-}
-
-function estimateResolution(bounds, width_px, height_px) {
-    const lat = (bounds.getSouth() + bounds.getNorth()) / 2;
-    const cosLat = Math.cos(lat * Math.PI / 180);
-    const width_deg = bounds.getEast() - bounds.getWest();
-    const height_deg = bounds.getNorth() - bounds.getSouth();
-    const width_m = width_deg * 111319.9 * cosLat;
-    const height_m = height_deg * 111319.9;
-    const res_x = width_m / width_px;
-    const res_y = height_m / height_px;
-    return { res_x, res_y };
 }
 
 function initializeMap() {
@@ -223,8 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isLandCover) {
             try {
-                const mosaicRule = JSON.stringify({ where: `Year = ${yearLC}` });
-                const renderingRule = JSON.stringify({ rasterFunction: "Cartographic Renderer for Visualization and Analysis" });
+                const time = getYearTimeRange(yearLC);
+                const renderingRule = JSON.stringify({rasterFunction: "Cartographic Renderer for Visualization and Analysis"});
                 const params = new URLSearchParams({
                     bbox: bboxStr,
                     bboxSR: '4326',
@@ -233,15 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     format: 'png',
                     transparent: true,
                     f: 'image',
-                    mosaicRule: mosaicRule,
+                    time: time,
                     renderingRule: renderingRule
                 });
-
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    const esriGeom = JSON.stringify(toEsriGeometry(selectedDistrictGeoJSON.geometry));
-                    params.append('geometry', esriGeom);
-                    params.append('geometryType', 'esriGeometryPolygon');
-                }
 
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 if (!res.ok) {
@@ -329,43 +321,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isLandCover) {
             try {
-                const mosaicRule = JSON.stringify({ where: `Year = ${yearLC}` });
+                const time = getYearTimeRange(yearLC);
+                const size = calculateNativePixelSize(bounds);
                 const params = new URLSearchParams({
                     bbox: bboxStr,
                     bboxSR: '4326',
-                    imageSR: '32637', // UTM zone 37N for native 10m resolution
-                    pixelSizeX: '10',
-                    pixelSizeY: '10',
+                    imageSR: '4326',
+                    size: size,
                     format: 'tiff',
                     pixelType: 'U8',
-                    compression: 'LZW',
-                    noDataInterpretation: 'esriNoDataMatchAny',
-                    interpolation: 'RSP_NearestNeighbor',
-                    f: 'json' // Request JSON to get metadata
+                    compression: 'lzw',
+                    f: 'image',
+                    time: time
                 });
 
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    const esriGeom = JSON.stringify(toEsriGeometry(selectedDistrictGeoJSON.geometry));
-                    params.append('geometry', esriGeom);
-                    params.append('geometryType', 'esriGeometryPolygon');
-                }
-
-                // First request to get metadata (extent and pixel dimensions)
-                const metadataRes = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
-                if (!metadataRes.ok) {
-                    const errorText = await metadataRes.text();
-                    throw new Error(errorText || `HTTP ${metadataRes.status}`);
-                }
-                const metadata = await metadataRes.json();
-                
-                // Estimate resolution from metadata
-                const width_px = metadata.width;
-                const height_px = metadata.height;
-                const { res_x, res_y } = estimateResolution(bounds, width_px, height_px);
-                console.log(`Estimated resolution: X=${res_x.toFixed(2)}m, Y=${res_y.toFixed(2)}m, Pixels: ${width_px}x${height_px}`);
-
-                // Proceed with image download
-                params.set('f', 'image');
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 if (!res.ok) {
                     const errorText = await res.text();
@@ -373,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const blob = await res.blob();
                 downloadBlob(blob, `LandCover_${yearLC}_${districtValue || 'area'}.tif`);
-                alert(`Downloaded Land Cover TIFF. Estimated resolution: ${res_x.toFixed(2)}m x ${res_y.toFixed(2)}m`);
             } catch (err) {
                 console.error('Land Cover download error:', err);
                 alert('Failed to download Land Cover: ' + err.message);
