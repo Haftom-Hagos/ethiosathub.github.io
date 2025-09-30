@@ -1,246 +1,159 @@
-let map, drawnItems, selectedArea, ndviLayer, landcoverLayer, districtLayer, highlighted;
+// script.js
 
-const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL
+// --------------------- MAP INIT ---------------------
+const map = L.map('map').setView([9.145, 40.489673], 6); // Center on Ethiopia
 
-function getSelectedDateRange() {
-    const yearEl = document.getElementById('yearSelect');
-    const mStartEl = document.getElementById('monthStart');
-    const mEndEl = document.getElementById('monthEnd');
-    if (!yearEl || !mStartEl || !mEndEl) {
-        console.error('Date selection elements not found');
-        return null;
+// Base layer
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// Layer holders
+let landCoverLayer;
+let districtLayer;
+let drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+// --------------------- DISTRICT GEOJSON ---------------------
+const districtSelect = document.getElementById('districtSelect');
+let districtsData;
+
+// Load districts from GitHub (GCS)
+fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
+.then(res => res.json())
+.then(data => {
+    districtsData = data;
+    // Populate dropdown
+    data.features.forEach(f => {
+        let option = document.createElement('option');
+        option.value = f.properties.ADM3_EN;
+        option.textContent = f.properties.ADM3_EN;
+        districtSelect.appendChild(option);
+    });
+
+    // Add district boundaries to map
+    districtLayer = L.geoJSON(districtsData, {
+        style: { color: "#000", weight: 1, fill: false }
+    }).addTo(map);
+});
+
+// --------------------- YEAR DROPDOWN ---------------------
+const yearSelect = document.getElementById('yearSelect');
+const landCoverYears = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]; // example years
+landCoverYears.forEach(y => {
+    let option = document.createElement('option');
+    option.value = y;
+    option.textContent = y;
+    yearSelect.appendChild(option);
+});
+
+// --------------------- DRAW CONTROL ---------------------
+const drawControl = new L.Control.Draw({
+    draw: {
+        polygon: true,
+        rectangle: true,
+        circle: false,
+        polyline: false,
+        marker: false,
+        circlemarker: false
+    },
+    edit: {
+        featureGroup: drawnItems
     }
+});
+map.addControl(drawControl);
 
-    const year = parseInt(yearEl.value, 10);
-    const ms = parseInt(mStartEl.value, 10);
-    const me = parseInt(mEndEl.value, 10);
-    const mStart = Math.min(ms, me);
-    const mEnd = Math.max(ms, me);
+map.on(L.Draw.Event.CREATED, function (e) {
+    drawnItems.clearLayers();
+    drawnItems.addLayer(e.layer);
+});
 
-    const startDate = `${year}-${String(mStart).padStart(2, '0')}-01`;
-    const lastDay = new Date(year, mEnd, 0).getDate();
-    const endDate = `${year}-${String(mEnd).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+// --------------------- VIEW & DOWNLOAD SELECTION ---------------------
+const viewBtn = document.getElementById('viewSelectionBtn');
+const downloadBtn = document.getElementById('downloadSelectionBtn');
 
-    return { startDate, endDate };
+viewBtn.addEventListener('click', () => {
+    // Clear previous layers
+    if (landCoverLayer) map.removeLayer(landCoverLayer);
+
+    // Determine if user drew polygon or selected district
+    if (drawnItems.getLayers().length > 0) {
+        // NDVI for drawn polygon
+        const drawnGeoJSON = drawnItems.toGeoJSON();
+        viewNDVI(drawnGeoJSON);
+    } else if (districtSelect.value) {
+        // Land Cover or NDVI for selected district
+        const districtFeature = districtsData.features.find(f => f.properties.ADM3_EN === districtSelect.value);
+        const selectedYear = yearSelect.value;
+
+        if (selectedYear) {
+            // LAND COVER
+            viewLandCover(districtFeature, selectedYear);
+        } else {
+            // NDVI
+            viewNDVI(districtFeature);
+        }
+    } else {
+        alert("Please draw an area or select a district to view.");
+    }
+});
+
+downloadBtn.addEventListener('click', () => {
+    if (drawnItems.getLayers().length > 0) {
+        const drawnGeoJSON = drawnItems.toGeoJSON();
+        downloadNDVI(drawnGeoJSON);
+    } else if (districtSelect.value) {
+        const districtFeature = districtsData.features.find(f => f.properties.ADM3_EN === districtSelect.value);
+        const selectedYear = yearSelect.value;
+
+        if (selectedYear) {
+            downloadLandCover(districtFeature, selectedYear);
+        } else {
+            downloadNDVI(districtFeature);
+        }
+    } else {
+        alert("Please draw an area or select a district to download.");
+    }
+});
+
+// --------------------- LAND COVER FUNCTIONS ---------------------
+function viewLandCover(districtFeature, year) {
+    // Remove previous land cover layer
+    if (landCoverLayer) map.removeLayer(landCoverLayer);
+
+    // Example: Construct GeoTIFF URL based on year
+    const url = `https://your-server.com/landcover/${year}.tif`; // replace with actual path
+
+    // Use a tile layer or GeoTIFF plugin to show only district
+    // For demo, we just highlight the district
+    landCoverLayer = L.geoJSON(districtFeature, {
+        style: { color: 'green', weight: 2, fillOpacity: 0.3 }
+    }).addTo(map);
+
+    map.fitBounds(landCoverLayer.getBounds());
 }
 
-function downloadBlob(blob, filename) {
+function downloadLandCover(districtFeature, year) {
+    const url = `https://your-server.com/landcover/${year}.tif`; // replace with actual path
+    // Simple download by opening link (can be improved)
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
+    link.href = url;
+    link.download = `landcover_${year}_${districtFeature.properties.ADM3_EN}.tif`;
     link.click();
 }
 
-function initializeMap() {
-    if (map) return;
-
-    map = L.map('map', {
-        center: [9.145, 40.4897],
-        zoom: 6,
-        layers: []
-    });
-
-    // Base maps
-    const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
+// --------------------- NDVI FUNCTIONS ---------------------
+function viewNDVI(areaFeature) {
+    // Here, connect to NDVI service (like your GEE app)
+    // For demo: highlight area
+    if (landCoverLayer) map.removeLayer(landCoverLayer);
+    landCoverLayer = L.geoJSON(areaFeature, {
+        style: { color: 'red', weight: 2, fillOpacity: 0.3 }
     }).addTo(map);
-
-    const satelliteMap = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19, attribution: 'Esri & contributors' }
-    );
-
-    const baseMaps = {
-        "Street Map": streetMap,
-        "Satellite Map": satelliteMap
-    };
-
-    // Add Admin Level-3 boundaries
-    fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
-      .then(res => res.json())
-      .then(data => {
-        const boundaryLayer = L.geoJSON(data, {
-          style: {
-            color: "#3388ff",
-            weight: 1,
-            fillOpacity: 0
-          },
-          onEachFeature: (feature, layer) => {
-            layer.on('click', () => {
-              // Highlight clicked district
-              boundaryLayer.resetStyle();
-              layer.setStyle({
-                color: "red",
-                weight: 2,
-                fillOpacity: 0.1
-              });
-
-              // Optional: popup with district name
-              if (feature.properties) {
-                layer.bindPopup(`<b>${feature.properties.ADM3_EN}</b>`).openPopup();
-              }
-
-              // Here you can call your NDVI or land cover function for this polygon
-              console.log("Clicked district:", feature.properties.ADM3_EN);
-            });
-          }
-        }).addTo(map);
-
-    // Zoom map to Ethiopia boundary
-    map.fitBounds(boundaryLayer.getBounds());
-  })
-  .catch(err => console.error("Failed to load boundaries:", err));
-
-
-    // --- Land Cover layer (Esri ImageServer) ---
-    landcoverLayer = L.esri.imageMapLayer({
-        url: "https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer",
-        attribution: "Esri, Impact Observatory, Microsoft"
-    });
-
-    // --- Drawing tools (still allow manual draw) ---
-    drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    const drawControl = new L.Control.Draw({
-        draw: { rectangle: true, polygon: false, circle: false, marker: false, polyline: false },
-        edit: { featureGroup: drawnItems }
-    });
-    map.addControl(drawControl);
-
-    map.on('draw:created', (e) => {
-        drawnItems.clearLayers();
-        selectedArea = e.layer;
-        drawnItems.addLayer(selectedArea);
-        if (ndviLayer) map.removeLayer(ndviLayer);
-        console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
-    });
-
-    // --- Layer control ---
-    const overlayMaps = {
-        "Land Cover (Sentinel-2)": landcoverLayer
-        // NDVI layer will be added dynamically after request
-    };
-
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
-    // --- NDVI button (visualize) ---
-    document.getElementById('viewNdviBtn').addEventListener('click', async () => {
-        if (!selectedArea) {
-            alert('Please select a district or draw an area first!');
-            return;
-        }
-        const dateRange = getSelectedDateRange();
-        if (!dateRange) {
-            alert('Invalid date range');
-            return;
-        }
-
-        const bounds = selectedArea.getBounds();
-        const bbox = {
-            west: bounds.getWest(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            north: bounds.getNorth()
-        };
-
-        try {
-            const res = await fetch(`${BACKEND_URL}/ndvi`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bbox, ...dateRange })
-            });
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(errorText || `HTTP ${res.status}`);
-            }
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            if (ndviLayer) map.removeLayer(ndviLayer);
-            ndviLayer = L.imageOverlay(url, bounds).addTo(map);
-            alert('NDVI visualized on the map!');
-        } catch (err) {
-            console.error('NDVI fetch error:', err);
-            alert('Failed to fetch NDVI: ' + err.message);
-        }
-    });
-
-    // --- NDVI button (download) ---
-    document.getElementById('ndviBtn').addEventListener('click', async () => {
-        if (!selectedArea) {
-            alert('Please select a district or draw an area first!');
-            return;
-        }
-        const dateRange = getSelectedDateRange();
-        if (!dateRange) {
-            alert('Invalid date range');
-            return;
-        }
-
-        const bounds = selectedArea.getBounds();
-        const bbox = {
-            west: bounds.getWest(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            north: bounds.getNorth()
-        };
-
-        if (bbox.east - bbox.west > 2 || bbox.north - bbox.south > 2) {
-            alert('Please draw a smaller area (max 2°x2°).');
-            return;
-        }
-
-        try {
-            const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bbox, ...dateRange })
-            });
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(errorText || `HTTP ${res.status}`);
-            }
-            const blob = await res.blob();
-            downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
-        } catch (err) {
-            console.error('NDVI download error:', err);
-            alert('Failed to download NDVI: ' + err.message);
-        }
-    });
+    map.fitBounds(landCoverLayer.getBounds());
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const yearSelect = document.getElementById('yearSelect');
-    const monthStart = document.getElementById('monthStart');
-    const monthEnd = document.getElementById('monthEnd');
-
-    if (yearSelect && monthStart && monthEnd) {
-        const currentYear = new Date().getFullYear();
-        for (let y = currentYear; y >= 2016; y--) {
-            const opt = document.createElement('option');
-            opt.value = String(y);
-            opt.textContent = String(y);
-            yearSelect.appendChild(opt);
-        }
-
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        for (let m = 1; m <= 12; m++) {
-            const opt1 = document.createElement('option');
-            opt1.value = String(m);
-            opt1.textContent = `${String(m).padStart(2, '0')} (${monthNames[m - 1]})`;
-            monthStart.appendChild(opt1);
-            monthEnd.appendChild(opt1.cloneNode(true));
-        }
-
-        yearSelect.value = String(currentYear);
-        monthStart.value = '1';
-        monthEnd.value = '12';
-    }
-    initializeMap();
-});
-
-
-
-
+function downloadNDVI(areaFeature) {
+    // Here, connect to NDVI download endpoint
+    alert("NDVI download for selected area is not implemented yet."); 
+}
