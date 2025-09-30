@@ -289,12 +289,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Land Cover visualization: Sending geometry', esriGeom);
                 }
 
+                console.log('Land Cover visualization URL:', `https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 if (!res.ok) {
                     const errorText = await res.text();
                     throw new Error(errorText || `HTTP ${res.status}`);
                 }
                 const blob = await res.blob();
+                if (blob.size < 1024) {
+                    console.error('Land Cover visualization: PNG is too small or empty');
+                    throw new Error('Empty PNG received');
+                }
                 const url = URL.createObjectURL(blob);
 
                 if (landcoverLayer) {
@@ -304,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.fitBounds(bounds);
                 let alertMsg = 'Land Cover visualized on the map!';
                 if (selectedDistrict && selectedDistrictGeoJSON) {
-                    alertMsg += '\nShould be clipped to district boundary.';
+                    alertMsg += '\nNote: May not be clipped to district boundary due to server limitations.';
                 }
                 alert(alertMsg);
             } catch (err) {
@@ -347,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.fitBounds(bounds);
                 let alertMsg = 'NDVI visualized on the map!';
                 if (selectedDistrict && selectedDistrictGeoJSON) {
-                    alertMsg += '\nShould be clipped to district boundary.';
+                    alertMsg += '\nNote: May not be clipped to district boundary due to server limitations.';
                 }
                 alert(alertMsg);
             } catch (err) {
@@ -402,101 +407,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     compression: 'LZW',
                     noDataInterpretation: 'esriNoDataMatchAny',
                     interpolation: 'RSP_NearestNeighbor',
-                    f: 'json',
+                    f: 'image',
                     time: time
                 });
 
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    const esriGeom = JSON.stringify(toEsriGeometry(selectedDistrictGeoJSON.geometry));
-                    params.append('geometry', esriGeom);
-                    params.append('geometryType', 'esriGeometryPolygon');
-                    console.log('Land Cover download: Sending geometry', esriGeom);
-                }
-
-                // Get metadata
-                const metadataRes = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
-                if (!metadataRes.ok) {
-                    const errorText = await metadataRes.text();
-                    throw new Error(errorText || `HTTP ${metadataRes.status}`);
-                }
-                const metadata = await metadataRes.json();
-                console.log('Server metadata:', metadata);
-
-                const server_width_px = metadata.width;
-                const server_height_px = metadata.height;
-                const { res_x: server_res_x, res_y: server_res_y } = estimateResolution(bounds, server_width_px, server_height_px);
-                console.log(`Server output resolution: X=${server_res_x.toFixed(2)}m, Y=${server_res_y.toFixed(2)}m, Pixels: ${server_width_px}x${server_height_px}`);
-
-                // Download image
-                params.set('f', 'image');
+                console.log('Land Cover download URL:', `https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 if (!res.ok) {
                     const errorText = await res.text();
+                    console.error('Land Cover download error response:', errorText);
                     throw new Error(errorText || `HTTP ${res.status}`);
                 }
                 const blob = await res.blob();
                 if (blob.size < 1024) {
-                    console.error('Land Cover download: TIFF is too small or empty');
-                    // Retry without geometry
-                    params.delete('geometry');
-                    params.delete('geometryType');
-                    console.log('Retrying Land Cover download without geometry');
-                    const retryRes = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
-                    if (!retryRes.ok) {
-                        const errorText = await retryRes.text();
-                        throw new Error(errorText || `HTTP ${retryRes.status}`);
-                    }
-                    const retryBlob = await retryRes.blob();
-                    if (retryBlob.size < 1024) {
-                        console.error('Land Cover retry: TIFF is still too small or empty');
-                        throw new Error('Land Cover TIFF is empty');
-                    }
-                    downloadBlob(retryBlob, `LandCover_${yearLC}_${districtValue}.tif`);
-                    let alertMsg = `Downloaded Land Cover TIFF (unclipped due to server issue). Estimated resolution: ${server_res_x.toFixed(2)}m x ${server_res_y.toFixed(2)}m`;
-                    if (is_scaled) {
-                        alertMsg += '\nNote: Area is large, resolution may be coarser than 10m due to server limits. Try a smaller area.';
-                    }
-                    alert(alertMsg);
-                    return;
+                    console.error('Land Cover download: TIFF is too small or empty, size:', blob.size);
+                    throw new Error('Land Cover TIFF is empty');
                 }
 
-                // Fallback: Post-process Land Cover TIFF
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    const formData = new FormData();
-                    formData.append('tiff', blob, 'temp.tif');
-                    formData.append('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
-                    console.log('Land Cover: Sending TIFF to /mask_tiff for clipping', selectedDistrictGeoJSON.geometry);
-                    const maskRes = await fetch(`${BACKEND_URL}/mask_tiff`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (!maskRes.ok) {
-                        console.warn('Backend masking failed, using server output:', await maskRes.text());
-                        downloadBlob(blob, `LandCover_${yearLC}_${districtValue}.tif`);
-                        alert(`Downloaded Land Cover TIFF (server clipping may not have worked). Estimated resolution: ${server_res_x.toFixed(2)}m x ${server_res_y.toFixed(2)}m`);
-                    } else {
-                        const maskedBlob = await maskRes.blob();
-                        if (maskedBlob.size < 1024) {
-                            console.error('Land Cover: Masked TIFF is too small or empty');
-                            downloadBlob(blob, `LandCover_${yearLC}_${districtValue}.tif`);
-                            alert(`Downloaded Land Cover TIFF (clipping failed). Estimated resolution: ${server_res_x.toFixed(2)}m x ${server_res_y.toFixed(2)}m`);
-                        } else {
-                            downloadBlob(maskedBlob, `LandCover_${yearLC}_${districtValue}.tif`);
-                            let alertMsg = `Downloaded Land Cover TIFF, clipped to district boundary. Estimated resolution: ${server_res_x.toFixed(2)}m x ${server_res_y.toFixed(2)}m`;
-                            if (is_scaled) {
-                                alertMsg += '\nNote: Area is large, resolution may be coarser than 10m due to server limits. Try a smaller area.';
-                            }
-                            alert(alertMsg);
-                        }
-                    }
-                } else {
-                    downloadBlob(blob, `LandCover_${yearLC}_${districtValue || 'area'}.tif`);
-                    let alertMsg = `Downloaded Land Cover TIFF. Estimated resolution: ${server_res_x.toFixed(2)}m x ${server_res_y.toFixed(2)}m`;
-                    if (is_scaled) {
-                        alertMsg += '\nNote: Area is large, resolution may be coarser than 10m due to server limits. Try a smaller area.';
-                    }
-                    alert(alertMsg);
+                downloadBlob(blob, `LandCover_${yearLC}_${districtValue || 'area'}.tif`);
+                let alertMsg = `Downloaded Land Cover TIFF for bounding box. Estimated resolution: ${res_x.toFixed(2)}m x ${res_y.toFixed(2)}m`;
+                if (is_scaled) {
+                    alertMsg += '\nNote: Area is large, resolution may be coarser than 10m due to server limits. Try a smaller area.';
                 }
+                alert(alertMsg);
             } catch (err) {
                 console.error('Land Cover download error:', err);
                 alert('Failed to download Land Cover: ' + err.message);
@@ -532,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
                 let alertMsg = `Downloaded NDVI TIFF.`;
                 if (selectedDistrict && selectedDistrictGeoJSON) {
-                    alertMsg += '\nShould be clipped to district boundary.';
+                    alertMsg += '\nNote: May not be clipped to district boundary due to server limitations.';
                 }
                 alert(alertMsg);
             } catch (err) {
@@ -573,3 +506,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
