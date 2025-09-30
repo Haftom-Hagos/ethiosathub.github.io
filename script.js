@@ -24,12 +24,6 @@ function getSelectedDateRange() {
     return { startDate, endDate };
 }
 
-function getYearTimeRange(year) {
-    const start = new Date(year, 0, 1).getTime();
-    const end = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
-    return `${start},${end}`;
-}
-
 function toEsriGeometry(geoJsonGeom) {
     let rings = [];
     if (geoJsonGeom.type === 'Polygon') {
@@ -327,12 +321,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const params = new URLSearchParams({
                     bbox: bboxStr,
                     bboxSR: '4326',
-                    imageSR: '3857', // Web Mercator for precise 10m resolution
+                    imageSR: '32637', // UTM zone 37N for native 10m resolution
                     pixelSizeX: '10',
                     pixelSizeY: '10',
                     format: 'tiff',
                     pixelType: 'U8',
-                    compression: 'lzw',
+                    compression: 'LZW',
                     noDataInterpretation: 'esriNoDataMatchAny',
                     interpolation: 'RSP_NearestNeighbor',
                     f: 'image',
@@ -417,4 +411,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
