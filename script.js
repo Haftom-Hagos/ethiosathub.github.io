@@ -1,4 +1,4 @@
-```javascript
+
 const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL 
 
 let map, landcoverLayer, ndviLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
@@ -497,4 +497,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-```
+
+
