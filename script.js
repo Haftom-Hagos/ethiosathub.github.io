@@ -56,31 +56,42 @@ function initializeMap() {
         "Satellite Map": satelliteMap
     };
 
-    // --- District boundaries (ADM3) ---
-    fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson') // adjust filename if needed
-        .then(res => res.json())
-        .then(data => {
-            districtLayer = L.geoJSON(data, {
-                style: { color: "#555", weight: 1, fillOpacity: 0 },
-                onEachFeature: function (feature, layer) {
-                    layer.bindPopup(feature.properties.NAME_3);
-                    layer.on('click', () => {
-                        if (highlighted) {
-                            districtLayer.resetStyle(highlighted);
-                        }
-                        highlighted = layer;
-                        layer.setStyle({
-                            color: "red",
-                            weight: 3,
-                            fillOpacity: 0.2
-                        });
-                        selectedArea = layer; // now the district is the selected area
-                        map.fitBounds(layer.getBounds());
-                        alert(`District selected: ${feature.properties.NAME_3}`);
-                    });
-                }
-            }).addTo(map);
-        });
+    // Add Admin Level-3 boundaries
+    fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
+      .then(res => res.json())
+      .then(data => {
+        const boundaryLayer = L.geoJSON(data, {
+          style: {
+            color: "#3388ff",
+            weight: 1,
+            fillOpacity: 0
+          },
+          onEachFeature: (feature, layer) => {
+            layer.on('click', () => {
+              // Highlight clicked district
+              boundaryLayer.resetStyle();
+              layer.setStyle({
+                color: "red",
+                weight: 2,
+                fillOpacity: 0.1
+              });
+
+              // Optional: popup with district name
+              if (feature.properties) {
+                layer.bindPopup(`<b>${feature.properties.NAME_3}</b>`).openPopup();
+              }
+
+              // Here you can call your NDVI or land cover function for this polygon
+              console.log("Clicked district:", feature.properties.NAME_3);
+            });
+          }
+        }).addTo(map);
+
+    // Zoom map to Ethiopia boundary
+    map.fitBounds(boundaryLayer.getBounds());
+  })
+  .catch(err => console.error("Failed to load boundaries:", err));
+
 
     // --- Land Cover layer (Esri ImageServer) ---
     landcoverLayer = L.esri.imageMapLayer({
@@ -229,5 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initializeMap();
 });
+
 
 
