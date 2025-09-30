@@ -99,7 +99,6 @@ function initializeMap() {
             districtSelect.appendChild(opt);
 
             layer.on('click', () => {
-              // Highlight clicked district
               boundaryLayer.resetStyle();
               layer.setStyle({
                 color: "red",
@@ -107,23 +106,21 @@ function initializeMap() {
                 fillOpacity: 0.1
               });
 
-              // Optional: popup with district name
               if (feature.properties) {
                 layer.bindPopup(`<b>${feature.properties.ADM3_EN}</b>`).openPopup();
                 selectedDistrict = layer;
-                selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
+                selectedDistrictGeoJSON = feature; 
                 document.getElementById('districtSelect').value = feature.properties.ADM3_EN;
               }
             });
           }
         }).addTo(map);
 
-        // Zoom map to Ethiopia boundary
         map.fitBounds(boundaryLayer.getBounds());
       })
       .catch(err => console.error("Failed to load boundaries:", err));
 
-    // --- Drawing tools (still allow manual draw) ---
+    // Drawing tools
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -144,9 +141,7 @@ function initializeMap() {
         selectedDistrictGeoJSON = null;
     });
 
-    // --- Layer control ---
-    const overlayMaps = {};
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+    L.control.layers(baseMaps, {}, { collapsed: false }).addTo(map);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -179,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 
-    // Populate land cover year dropdown
     if (yearSelectLC) {
         const lcYears = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
         lcYears.forEach(year => {
@@ -193,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeMap();
 
-    // --- View Selection button ---
+    // --- View Selection ---
     document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
@@ -235,17 +229,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderingRule: renderingRule
                 });
 
-                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(errorText || `HTTP ${res.status}`);
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    params.set('geometryType', 'esriGeometryPolygon');
+                    params.set('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
                 }
+
+                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
+                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
 
-                if (landcoverLayer) {
-                    map.removeLayer(landcoverLayer);
-                }
+                if (landcoverLayer) map.removeLayer(landcoverLayer);
                 landcoverLayer = L.imageOverlay(url, imageBounds, { opacity: 0.8 }).addTo(map);
                 map.fitBounds(bounds);
                 alert('Land Cover visualized on the map!');
@@ -261,24 +255,34 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const body = { bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() }, ...dateRange };
+                const body = { ...dateRange };
                 if (selectedDistrict && selectedDistrictGeoJSON) {
                     body.geometry = selectedDistrictGeoJSON.geometry;
+                    body.bbox = {
+                        west: bounds.getWest(),
+                        south: bounds.getSouth(),
+                        east: bounds.getEast(),
+                        north: bounds.getNorth()
+                    };
+                } else {
+                    body.bbox = {
+                        west: bounds.getWest(),
+                        south: bounds.getSouth(),
+                        east: bounds.getEast(),
+                        north: bounds.getNorth()
+                    };
                 }
+
                 const res = await fetch(`${BACKEND_URL}/ndvi`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(errorText || `HTTP ${res.status}`);
-                }
+                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
-                if (ndviLayer) {
-                    map.removeLayer(ndviLayer);
-                }
+
+                if (ndviLayer) map.removeLayer(ndviLayer);
                 ndviLayer = L.imageOverlay(url, imageBounds, { opacity: 1.0 }).addTo(map);
                 map.fitBounds(bounds);
                 alert('NDVI visualized on the map!');
@@ -289,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Download Selection button ---
+    // --- Download Selection ---
     document.getElementById('downloadSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
@@ -335,11 +339,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     time: time
                 });
 
-                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(errorText || `HTTP ${res.status}`);
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    params.set('geometryType', 'esriGeometryPolygon');
+                    params.set('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
                 }
+
+                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
+                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
                 const blob = await res.blob();
                 downloadBlob(blob, `LandCover_${yearLC}_${districtValue || 'area'}.tif`);
             } catch (err) {
@@ -356,9 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const body = { ...dateRange };
                 if (selectedDistrict && selectedDistrictGeoJSON) {
-                    // Use full polygon, not just bounding box
                     body.geometry = selectedDistrictGeoJSON.geometry;
-                    // Still include bbox (performance hint), but main mask is geometry
                     body.bbox = {
                         west: bounds.getWest(),
                         south: bounds.getSouth(),
@@ -366,7 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         north: bounds.getNorth()
                     };
                 } else {
-                    // If manually drawn, fallback to bbox
                     body.bbox = {
                         west: bounds.getWest(),
                         south: bounds.getSouth(),
@@ -380,10 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(errorText || `HTTP ${res.status}`);
-                }
+                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
                 const blob = await res.blob();
                 downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
             } catch (err) {
@@ -393,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // District selection from dropdown
+    // District dropdown selection
     document.getElementById('districtSelect').addEventListener('change', (e) => {
         if (e.target.value) {
             drawnItems.clearLayers();
@@ -405,13 +405,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (feature) {
                         if (selectedDistrict) map.removeLayer(selectedDistrict);
                         selectedDistrict = L.geoJSON(feature, {
-                            style: {
-                                color: "red",
-                                weight: 2,
-                                fillOpacity: 0.1
-                            }
+                            style: { color: "red", weight: 2, fillOpacity: 0.1 }
                         }).addTo(map);
-                        selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
+                        selectedDistrictGeoJSON = feature; 
                         map.fitBounds(selectedDistrict.getBounds());
                     }
                 });
@@ -424,4 +420,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
