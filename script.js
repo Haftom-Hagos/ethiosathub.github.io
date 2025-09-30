@@ -1,13 +1,6 @@
-
 const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL 
 
 let map, landcoverLayer, ndviLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
-
-// Proj4js for coordinate transformation
-const proj4 = window.proj4;
-proj4.defs('EPSG:32636', '+proj=utm +zone=36 +datum=WGS84 +units=m +no_defs');
-proj4.defs('EPSG:32637', '+proj=utm +zone=37 +datum=WGS84 +units=m +no_defs');
-proj4.defs('EPSG:32638', '+proj=utm +zone=38 +datum=WGS84 +units=m +no_defs');
 
 function getSelectedDateRange() {
     const yearEl = document.getElementById('yearSelect');
@@ -37,59 +30,23 @@ function getYearTimeRange(year) {
     return `${start},${end}`;
 }
 
-function getUTMZone(longitude) {
-    const zone = Math.floor((longitude + 180) / 6) + 1;
-    if (zone <= 36) return '32636'; // UTM zone 36N
-    else if (zone >= 38) return '32638'; // UTM zone 38N
-    return '32637'; // UTM zone 37N (default)
-}
-
-function calculateUTMPixelSize(bounds) {
-    const centroid_lon = (bounds.getWest() + bounds.getEast()) / 2;
-    const utmSR = `EPSG:${getUTMZone(centroid_lon)}`;
-    const sw = proj4('EPSG:4326', utmSR, [bounds.getWest(), bounds.getSouth()]);
-    const ne = proj4('EPSG:4326', utmSR, [bounds.getEast(), bounds.getNorth()]);
-    
-    const width_m = ne[0] - sw[0];
-    const height_m = ne[1] - sw[1];
-    const resolution = 10;
+function calculateNativePixelSize(bounds) {
+    const lat = (bounds.getSouth() + bounds.getNorth()) / 2;
+    const cosLat = Math.cos(lat * Math.PI / 180);
+    const width_deg = bounds.getEast() - bounds.getWest();
+    const height_deg = bounds.getNorth() - bounds.getSouth();
+    const width_m = width_deg * 111319.9 * cosLat;
+    const height_m = height_deg * 111319.9;
+    const resolution = 10; // meters per pixel
     let width_px = Math.ceil(width_m / resolution);
     let height_px = Math.ceil(height_m / resolution);
-    const max_pixels = 10000;
-    let is_scaled = false;
-
-    if (width_px > max_pixels || height_px > max_pixels) {
-        is_scaled = true;
-        const scale = Math.max(width_px / max_pixels, height_px / max_pixels);
+    const max = 10000; // service limit
+    if (width_px > max || height_px > max) {
+        const scale = Math.max(width_px / max, height_px / max);
         width_px = Math.ceil(width_px / scale);
         height_px = Math.ceil(height_px / scale);
     }
-
-    const res_x = width_m / width_px;
-    const res_y = height_m / height_px;
-    return { size: `${width_px},${height_px}`, res_x, res_y, is_scaled, utmSR };
-}
-
-function toEsriGeometry(geoJsonGeom) {
-    let rings = [];
-    if (geoJsonGeom.type === 'Polygon') {
-        rings = geoJsonGeom.coordinates;
-    } else if (geoJsonGeom.type === 'MultiPolygon') {
-        geoJsonGeom.coordinates.forEach(polygon => {
-            rings.push(...polygon);
-        });
-    }
-    rings = rings.map(ring => {
-        const area = ring.reduce((sum, pt, i, arr) => {
-            const next = arr[(i + 1) % arr.length];
-            return sum + (pt[0] * next[1] - next[0] * pt[1]);
-        }, 0);
-        return area < 0 ? ring.reverse() : ring;
-    });
-    return {
-        rings: rings,
-        spatialReference: { wkid: 4326 }
-    };
+    return `${width_px},${height_px}`;
 }
 
 function downloadBlob(blob, filename) {
@@ -97,18 +54,6 @@ function downloadBlob(blob, filename) {
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
-}
-
-function estimateResolution(bounds, width_px, height_px) {
-    const lat = (bounds.getSouth() + bounds.getNorth()) / 2;
-    const cosLat = Math.cos(lat * Math.PI / 180);
-    const width_deg = bounds.getEast() - bounds.getWest();
-    const height_deg = bounds.getNorth() - bounds.getSouth();
-    const width_m = width_deg * 111319.9 * cosLat;
-    const height_m = height_deg * 111319.9;
-    const res_x = width_m / width_px;
-    const res_y = height_m / height_px;
-    return { res_x, res_y };
 }
 
 function initializeMap() {
@@ -120,6 +65,7 @@ function initializeMap() {
         layers: []
     });
 
+    // Base maps
     const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap'
@@ -135,6 +81,7 @@ function initializeMap() {
         "Satellite Map": satelliteMap
     };
 
+    // Add Admin Level-3 boundaries
     fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
       .then(res => res.json())
       .then(data => {
@@ -152,6 +99,7 @@ function initializeMap() {
             districtSelect.appendChild(opt);
 
             layer.on('click', () => {
+              // Highlight clicked district
               boundaryLayer.resetStyle();
               layer.setStyle({
                 color: "red",
@@ -159,21 +107,23 @@ function initializeMap() {
                 fillOpacity: 0.1
               });
 
+              // Optional: popup with district name
               if (feature.properties) {
                 layer.bindPopup(`<b>${feature.properties.ADM3_EN}</b>`).openPopup();
                 selectedDistrict = layer;
-                selectedDistrictGeoJSON = feature;
+                selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
                 document.getElementById('districtSelect').value = feature.properties.ADM3_EN;
-                console.log('Selected district geometry:', feature.geometry);
               }
             });
           }
         }).addTo(map);
 
+        // Zoom map to Ethiopia boundary
         map.fitBounds(boundaryLayer.getBounds());
       })
       .catch(err => console.error("Failed to load boundaries:", err));
 
+    // --- Drawing tools (still allow manual draw) ---
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -194,6 +144,7 @@ function initializeMap() {
         selectedDistrictGeoJSON = null;
     });
 
+    // --- Layer control ---
     const overlayMaps = {};
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 }
@@ -228,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 
+    // Populate land cover year dropdown
     if (yearSelectLC) {
         const lcYears = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
         lcYears.forEach(year => {
@@ -241,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeMap();
 
+    // --- View Selection button ---
     document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
@@ -282,24 +235,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderingRule: renderingRule
                 });
 
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    const esriGeom = JSON.stringify(toEsriGeometry(selectedDistrictGeoJSON.geometry));
-                    params.append('geometry', esriGeom);
-                    params.append('geometryType', 'esriGeometryPolygon');
-                    console.log('Land Cover visualization: Sending geometry', esriGeom);
-                }
-
-                console.log('Land Cover visualization URL:', `https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 if (!res.ok) {
                     const errorText = await res.text();
                     throw new Error(errorText || `HTTP ${res.status}`);
                 }
                 const blob = await res.blob();
-                if (blob.size < 1024) {
-                    console.error('Land Cover visualization: PNG is too small or empty');
-                    throw new Error('Empty PNG received');
-                }
                 const url = URL.createObjectURL(blob);
 
                 if (landcoverLayer) {
@@ -307,11 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 landcoverLayer = L.imageOverlay(url, imageBounds, { opacity: 0.8 }).addTo(map);
                 map.fitBounds(bounds);
-                let alertMsg = 'Land Cover visualized on the map!';
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    alertMsg += '\nNote: May not be clipped to district boundary due to server limitations.';
-                }
-                alert(alertMsg);
+                alert('Land Cover visualized on the map!');
             } catch (err) {
                 console.error('Land Cover visualization error:', err);
                 alert('Failed to visualize Land Cover: ' + err.message);
@@ -327,9 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const body = { bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() }, ...dateRange };
                 if (selectedDistrict && selectedDistrictGeoJSON) {
                     body.geometry = selectedDistrictGeoJSON.geometry;
-                    console.log('NDVI visualization: Sending geometry', body.geometry);
                 }
-                console.log('NDVI request body:', JSON.stringify(body));
                 const res = await fetch(`${BACKEND_URL}/ndvi`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -340,21 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(errorText || `HTTP ${res.status}`);
                 }
                 const blob = await res.blob();
-                if (blob.size === 0) {
-                    console.error('NDVI visualization: Empty PNG received');
-                    throw new Error('Empty PNG received');
-                }
                 const url = URL.createObjectURL(blob);
                 if (ndviLayer) {
                     map.removeLayer(ndviLayer);
                 }
                 ndviLayer = L.imageOverlay(url, imageBounds, { opacity: 1.0 }).addTo(map);
                 map.fitBounds(bounds);
-                let alertMsg = 'NDVI visualized on the map!';
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    alertMsg += '\nNote: May not be clipped to district boundary due to server limitations.';
-                }
-                alert(alertMsg);
+                alert('NDVI visualized on the map!');
             } catch (err) {
                 console.error('NDVI fetch error:', err);
                 alert('Failed to fetch NDVI: ' + err.message);
@@ -362,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Download Selection button ---
     document.getElementById('downloadSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
@@ -394,42 +322,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isLandCover) {
             try {
                 const time = getYearTimeRange(yearLC);
-                const { size, res_x, res_y, is_scaled, utmSR } = calculateUTMPixelSize(bounds);
-                console.log(`Calculated pixels: ${size}, Estimated resolution: X=${res_x.toFixed(2)}m, Y=${res_y.toFixed(2)}m, UTM SR: ${utmSR}, Scaled: ${is_scaled}`);
-                
+                const size = calculateNativePixelSize(bounds);
                 const params = new URLSearchParams({
                     bbox: bboxStr,
                     bboxSR: '4326',
-                    imageSR: utmSR,
+                    imageSR: '4326',
                     size: size,
                     format: 'tiff',
                     pixelType: 'U8',
-                    compression: 'LZW',
-                    noDataInterpretation: 'esriNoDataMatchAny',
-                    interpolation: 'RSP_NearestNeighbor',
+                    compression: 'lzw',
                     f: 'image',
                     time: time
                 });
 
-                console.log('Land Cover download URL:', `https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 if (!res.ok) {
                     const errorText = await res.text();
-                    console.error('Land Cover download error response:', errorText);
                     throw new Error(errorText || `HTTP ${res.status}`);
                 }
                 const blob = await res.blob();
-                if (blob.size < 1024) {
-                    console.error('Land Cover download: TIFF is too small or empty, size:', blob.size);
-                    throw new Error('Land Cover TIFF is empty');
-                }
-
                 downloadBlob(blob, `LandCover_${yearLC}_${districtValue || 'area'}.tif`);
-                let alertMsg = `Downloaded Land Cover TIFF for bounding box. Estimated resolution: ${res_x.toFixed(2)}m x ${res_y.toFixed(2)}m`;
-                if (is_scaled) {
-                    alertMsg += '\nNote: Area is large, resolution may be coarser than 10m due to server limits. Try a smaller area.';
-                }
-                alert(alertMsg);
             } catch (err) {
                 console.error('Land Cover download error:', err);
                 alert('Failed to download Land Cover: ' + err.message);
@@ -445,9 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const body = { bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() }, ...dateRange };
                 if (selectedDistrict && selectedDistrictGeoJSON) {
                     body.geometry = selectedDistrictGeoJSON.geometry;
-                    console.log('NDVI download: Sending geometry', body.geometry);
                 }
-                console.log('NDVI download request body:', JSON.stringify(body));
                 const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -458,16 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(errorText || `HTTP ${res.status}`);
                 }
                 const blob = await res.blob();
-                if (blob.size < 1024) {
-                    console.error('NDVI download: TIFF is too small or empty');
-                    throw new Error('NDVI TIFF is empty');
-                }
                 downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
-                let alertMsg = `Downloaded NDVI TIFF.`;
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    alertMsg += '\nNote: May not be clipped to district boundary due to server limitations.';
-                }
-                alert(alertMsg);
             } catch (err) {
                 console.error('NDVI download error:', err);
                 alert('Failed to download NDVI: ' + err.message);
@@ -475,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // District selection from dropdown
     document.getElementById('districtSelect').addEventListener('change', (e) => {
         if (e.target.value) {
             drawnItems.clearLayers();
@@ -492,9 +394,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 fillOpacity: 0.1
                             }
                         }).addTo(map);
-                        selectedDistrictGeoJSON = feature;
+                        selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
                         map.fitBounds(selectedDistrict.getBounds());
-                        console.log('Selected district geometry:', feature.geometry);
                     }
                 });
         } else {
@@ -506,4 +407,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
