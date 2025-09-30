@@ -24,6 +24,12 @@ function getSelectedDateRange() {
     return { startDate, endDate };
 }
 
+function getYearTimeRange(year) {
+    const start = new Date(year, 0, 1).getTime();
+    const end = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
+    return `${start},${end}`;
+}
+
 function downloadBlob(blob, filename) {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -156,14 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Populate land cover year dropdown
     if (yearSelectLC) {
-        const lcYears = [2020, 2021, 2022, 2023];
+        const lcYears = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
         lcYears.forEach(year => {
             const opt = document.createElement('option');
             opt.value = year;
             opt.textContent = year;
             yearSelectLC.appendChild(opt);
         });
-        yearSelectLC.value = '2023';
+        yearSelectLC.value = '2024';
     }
 
     initializeMap();
@@ -172,7 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
-        const isLandCover = datasetSelect === 'landcover' && yearLC && document.getElementById('districtSelect').value;
+        const districtValue = document.getElementById('districtSelect').value;
+        const isLandCover = datasetSelect === 'landcover' && yearLC && districtValue;
         const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
 
         if (!isLandCover && !isNDVI) {
@@ -190,28 +197,37 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const bbox = {
-            west: bounds.getWest(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            north: bounds.getNorth()
-        };
+        const bboxStr = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+        const imageBounds = [[bounds.getSouth(), bounds.getWest()], [bounds.getNorth(), bounds.getEast()]];
 
         if (isLandCover) {
             try {
+                const time = getYearTimeRange(yearLC);
+                const params = new URLSearchParams({
+                    bbox: bboxStr,
+                    size: '1024,1024',
+                    format: 'png',
+                    f: 'image',
+                    time: time,
+                    transparent: true
+                });
+
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    params.append('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
+                }
+
+                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(errorText || `HTTP ${res.status}`);
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+
                 if (landcoverLayer) {
                     map.removeLayer(landcoverLayer);
-                    landcoverLayer = null;
                 }
-                // Use the correct Land Cover service with time parameter
-                const time = `${yearLC}-01-01T00:00:00Z/${yearLC}-12-31T23:59:59Z`;
-                landcoverLayer = L.esri.imageMapLayer({
-                    url: 'https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer',
-                    attribution: 'Esri, Impact Observatory, Microsoft',
-                    maxZoom: 19,
-                    opacity: 1.0,
-                    time: time
-                }).addTo(map);
+                landcoverLayer = L.imageOverlay(url, imageBounds, { opacity: 0.8 }).addTo(map);
                 map.fitBounds(bounds);
                 alert('Land Cover visualized on the map!');
             } catch (err) {
@@ -226,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const body = { bbox, ...dateRange };
+                const body = { bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() }, ...dateRange };
                 // If a district is selected, include its geometry for clipping
                 if (selectedDistrict && selectedDistrictGeoJSON) {
                     body.geometry = selectedDistrictGeoJSON.geometry;
@@ -244,11 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const url = URL.createObjectURL(blob);
                 if (ndviLayer) {
                     map.removeLayer(ndviLayer);
-                    ndviLayer = null;
                 }
-                ndviLayer = L.imageOverlay(url, [[bbox.south, bbox.west], [bbox.north, bbox.east]], {
-                    opacity: 1.0
-                }).addTo(map);
+                ndviLayer = L.imageOverlay(url, imageBounds, { opacity: 1.0 }).addTo(map);
                 map.fitBounds(bounds);
                 alert('NDVI visualized on the map!');
             } catch (err) {
@@ -262,7 +275,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('downloadSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
-        const isLandCover = datasetSelect === 'landcover' && yearLC && document.getElementById('districtSelect').value;
+        const districtValue = document.getElementById('districtSelect').value;
+        const isLandCover = datasetSelect === 'landcover' && yearLC && districtValue;
         const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
 
         if (!isLandCover && !isNDVI) {
@@ -280,37 +294,35 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const bbox = {
-            west: bounds.getWest(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            north: bounds.getNorth()
-        };
+        const bboxStr = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
 
-        if (bbox.east - bbox.west > 2 || bbox.north - bbox.south > 2) {
+        if (bounds.getEast() - bounds.getWest() > 2 || bounds.getNorth() - bounds.getSouth() > 2) {
             alert('Please select a smaller area (max 2°x2°).');
             return;
         }
 
         if (isLandCover) {
             try {
-                const time = `${yearLC}-01-01T00:00:00Z/${yearLC}-12-31T23:59:59Z`;
-                const res = await fetch('https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        bbox: `${bbox.west},${bbox.south},${bbox.east},${bbox.north}`,
-                        format: 'tiff',
-                        f: 'image',
-                        time: time
-                    })
+                const time = getYearTimeRange(yearLC);
+                const params = new URLSearchParams({
+                    bbox: bboxStr,
+                    size: '2048,2048',
+                    format: 'tiff',
+                    f: 'image',
+                    time: time
                 });
+
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    params.append('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
+                }
+
+                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
                 if (!res.ok) {
                     const errorText = await res.text();
                     throw new Error(errorText || `HTTP ${res.status}`);
                 }
                 const blob = await res.blob();
-                downloadBlob(blob, `LandCover_${yearLC}_${document.getElementById('districtSelect').value}.tif`);
+                downloadBlob(blob, `LandCover_${yearLC}_${districtValue || 'area'}.tif`);
             } catch (err) {
                 console.error('Land Cover download error:', err);
                 alert('Failed to download Land Cover: ' + err.message);
@@ -323,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const body = { bbox, ...dateRange };
+                const body = { bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() }, ...dateRange };
                 if (selectedDistrict && selectedDistrictGeoJSON) {
                     body.geometry = selectedDistrictGeoJSON.geometry;
                 }
