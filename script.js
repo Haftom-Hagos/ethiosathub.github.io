@@ -354,10 +354,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const body = { bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() }, ...dateRange };
+                const body = { ...dateRange };
                 if (selectedDistrict && selectedDistrictGeoJSON) {
+                    // Use full polygon, not just bounding box
                     body.geometry = selectedDistrictGeoJSON.geometry;
+                    // Still include bbox (performance hint), but main mask is geometry
+                    body.bbox = {
+                        west: bounds.getWest(),
+                        south: bounds.getSouth(),
+                        east: bounds.getEast(),
+                        north: bounds.getNorth()
+                    };
+                } else {
+                    // If manually drawn, fallback to bbox
+                    body.bbox = {
+                        west: bounds.getWest(),
+                        south: bounds.getSouth(),
+                        east: bounds.getEast(),
+                        north: bounds.getNorth()
+                    };
                 }
+
                 const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -407,3 +424,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
