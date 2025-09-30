@@ -1,4 +1,4 @@
-
+```javascript
 const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL 
 
 let map, landcoverLayer, ndviLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
@@ -38,28 +38,24 @@ function getYearTimeRange(year) {
 }
 
 function getUTMZone(longitude) {
-    // Calculate UTM zone based on longitude (6° per zone, starting at -180°)
     const zone = Math.floor((longitude + 180) / 6) + 1;
     if (zone <= 36) return '32636'; // UTM zone 36N
     else if (zone >= 38) return '32638'; // UTM zone 38N
-    return '32637'; // UTM zone 37N (default for most of Ethiopia)
+    return '32637'; // UTM zone 37N (default)
 }
 
 function calculateUTMPixelSize(bounds) {
-    // Get centroid longitude to determine UTM zone
     const centroid_lon = (bounds.getWest() + bounds.getEast()) / 2;
     const utmSR = `EPSG:${getUTMZone(centroid_lon)}`;
-
-    // Transform bounds to UTM
     const sw = proj4('EPSG:4326', utmSR, [bounds.getWest(), bounds.getSouth()]);
     const ne = proj4('EPSG:4326', utmSR, [bounds.getEast(), bounds.getNorth()]);
     
-    const width_m = ne[0] - sw[0]; // Width in meters
-    const height_m = ne[1] - sw[1]; // Height in meters
-    const resolution = 10; // Desired 10m resolution
+    const width_m = ne[0] - sw[0];
+    const height_m = ne[1] - sw[1];
+    const resolution = 10;
     let width_px = Math.ceil(width_m / resolution);
     let height_px = Math.ceil(height_m / resolution);
-    const max_pixels = 10000; // Server limit
+    const max_pixels = 10000;
     let is_scaled = false;
 
     if (width_px > max_pixels || height_px > max_pixels) {
@@ -83,6 +79,14 @@ function toEsriGeometry(geoJsonGeom) {
             rings.push(...polygon);
         });
     }
+    // Ensure clockwise exterior rings for valid Esri polygon
+    rings = rings.map(ring => {
+        const area = ring.reduce((sum, pt, i, arr) => {
+            const next = arr[(i + 1) % arr.length];
+            return sum + (pt[0] * next[1] - next[0] * pt[1]);
+        }, 0);
+        return area < 0 ? ring.reverse() : ring;
+    });
     return {
         rings: rings,
         spatialReference: { wkid: 4326 }
@@ -96,6 +100,18 @@ function downloadBlob(blob, filename) {
     link.click();
 }
 
+function estimateResolution(bounds, width_px, height_px) {
+    const lat = (bounds.getSouth() + bounds.getNorth()) / 2;
+    const cosLat = Math.cos(lat * Math.PI / 180);
+    const width_deg = bounds.getEast() - bounds.getWest();
+    const height_deg = bounds.getNorth() - bounds.getSouth();
+    const width_m = width_deg * 111319.9 * cosLat;
+    const height_m = height_deg * 111319.9;
+    const res_x = width_m / width_px;
+    const res_y = height_m / height_px;
+    return { res_x, res_y };
+}
+
 function initializeMap() {
     if (map) return;
 
@@ -105,7 +121,6 @@ function initializeMap() {
         layers: []
     });
 
-    // Base maps
     const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap'
@@ -121,7 +136,6 @@ function initializeMap() {
         "Satellite Map": satelliteMap
     };
 
-    // Add Admin Level-3 boundaries
     fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
       .then(res => res.json())
       .then(data => {
@@ -139,7 +153,6 @@ function initializeMap() {
             districtSelect.appendChild(opt);
 
             layer.on('click', () => {
-              // Highlight clicked district
               boundaryLayer.resetStyle();
               layer.setStyle({
                 color: "red",
@@ -147,23 +160,20 @@ function initializeMap() {
                 fillOpacity: 0.1
               });
 
-              // Optional: popup with district name
               if (feature.properties) {
                 layer.bindPopup(`<b>${feature.properties.ADM3_EN}</b>`).openPopup();
                 selectedDistrict = layer;
-                selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
+                selectedDistrictGeoJSON = feature;
                 document.getElementById('districtSelect').value = feature.properties.ADM3_EN;
               }
             });
           }
         }).addTo(map);
 
-        // Zoom map to Ethiopia boundary
         map.fitBounds(boundaryLayer.getBounds());
       })
       .catch(err => console.error("Failed to load boundaries:", err));
 
-    // --- Drawing tools (still allow manual draw) ---
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -184,7 +194,6 @@ function initializeMap() {
         selectedDistrictGeoJSON = null;
     });
 
-    // --- Layer control ---
     const overlayMaps = {};
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 }
@@ -219,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 
-    // Populate land cover year dropdown
     if (yearSelectLC) {
         const lcYears = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
         lcYears.forEach(year => {
@@ -233,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeMap();
 
-    // --- View Selection button ---
     document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
@@ -335,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Download Selection button ---
     document.getElementById('downloadSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
@@ -374,14 +380,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const params = new URLSearchParams({
                     bbox: bboxStr,
                     bboxSR: '4326',
-                    imageSR: utmSR, // Dynamic UTM zone
+                    imageSR: utmSR,
                     size: size,
                     format: 'tiff',
                     pixelType: 'U8',
                     compression: 'LZW',
                     noDataInterpretation: 'esriNoDataMatchAny',
                     interpolation: 'RSP_NearestNeighbor',
-                    f: 'json', // First request for metadata
+                    f: 'json',
                     time: time
                 });
 
@@ -400,17 +406,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const metadata = await metadataRes.json();
                 console.log('Server metadata:', metadata);
 
-                // Estimate resolution from metadata
                 const server_width_px = metadata.width;
                 const server_height_px = metadata.height;
-                const lat = (bounds.getSouth() + bounds.getNorth()) / 2;
-                const cosLat = Math.cos(lat * Math.PI / 180);
-                const width_deg = bounds.getEast() - bounds.getWest();
-                const height_deg = bounds.getNorth() - bounds.getSouth();
-                const width_m = width_deg * 111319.9 * cosLat;
-                const height_m = height_deg * 111319.9;
-                const server_res_x = width_m / server_width_px;
-                const server_res_y = height_m / server_height_px;
+                const { res_x: server_res_x, res_y: server_res_y } = estimateResolution(bounds, server_width_px, server_height_px);
                 console.log(`Server output resolution: X=${server_res_x.toFixed(2)}m, Y=${server_res_y.toFixed(2)}m, Pixels: ${server_width_px}x${server_height_px}`);
 
                 // Download image
@@ -425,6 +423,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 let alertMsg = `Downloaded Land Cover TIFF. Estimated resolution: ${server_res_x.toFixed(2)}m x ${server_res_y.toFixed(2)}m`;
                 if (is_scaled) {
                     alertMsg += '\nNote: Area is large, resolution may be coarser than 10m due to server limits. Try a smaller area.';
+                }
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    alertMsg += '\nClipped to district boundary.';
                 }
                 alert(alertMsg);
             } catch (err) {
@@ -454,6 +455,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const blob = await res.blob();
                 downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
+                let alertMsg = `Downloaded NDVI TIFF.`;
+                if (selectedDistrict && selectedDistrictGeoJSON) {
+                    alertMsg += '\nClipped to district boundary.';
+                }
+                alert(alertMsg);
             } catch (err) {
                 console.error('NDVI download error:', err);
                 alert('Failed to download NDVI: ' + err.message);
@@ -461,7 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // District selection from dropdown
     document.getElementById('districtSelect').addEventListener('change', (e) => {
         if (e.target.value) {
             drawnItems.clearLayers();
@@ -479,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 fillOpacity: 0.1
                             }
                         }).addTo(map);
-                        selectedDistrictGeoJSON = feature; // Store GeoJSON for clipping
+                        selectedDistrictGeoJSON = feature;
                         map.fitBounds(selectedDistrict.getBounds());
                     }
                 });
@@ -492,3 +497,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+```
