@@ -7,38 +7,49 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
   <link rel="stylesheet" href="../styles.css" />
-  <style>
-    /* Legend styling for DW */
-    #legend {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: white;
-      padding: 10px;
-      z-index: 1000;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 12px;
-      max-width: 200px;
+ <style>
+  /* Legend styling for DW */
+  #legend {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: white;
+    padding: 10px;
+    z-index: 1000;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+    max-width: 200px;
+  }
+  #legend h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+  }
+  #legend div {
+    margin-bottom: 2px;
+  }
+  #layer-toggles {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 4px;
+  }
+  #layer-toggles label {
+    margin-right: 15px;
+    font-size: 14px;
+  }
+  /* Fixed: Explicit sizing for map */
+  #map {
+    height: 600px;  /* Adjust as needed (e.g., 100vh for full viewport) */
+    width: 100%;
+    border: 1px solid #ccc;  /* Optional: Temp border for visibility */
+  }
+  @media (max-width: 768px) {
+    #map {
+      height: 400px;  /* Responsive for mobile */
     }
-    #legend h4 {
-      margin: 0 0 5px 0;
-      font-size: 14px;
-    }
-    #legend div {
-      margin-bottom: 2px;
-    }
-    #layer-toggles {
-      margin-top: 10px;
-      padding: 10px;
-      background: #f9f9f9;
-      border-radius: 4px;
-    }
-    #layer-toggles label {
-      margin-right: 15px;
-      font-size: 14px;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <nav class="navbars">
