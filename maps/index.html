@@ -7,6 +7,38 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
   <link rel="stylesheet" href="../styles.css" />
+  <style>
+    /* Legend styling for DW */
+    #legend {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: white;
+      padding: 10px;
+      z-index: 1000;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 12px;
+      max-width: 200px;
+    }
+    #legend h4 {
+      margin: 0 0 5px 0;
+      font-size: 14px;
+    }
+    #legend div {
+      margin-bottom: 2px;
+    }
+    #layer-toggles {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+    #layer-toggles label {
+      margin-right: 15px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbars">
@@ -38,14 +70,15 @@
   <div class="sub-contents">
     <div id="maps" class="tabcontent">
       <h2>Map view</h2>
-      <p>Select a dataset, year, and district (or draw an area for NDVI) to visualize and download. Currently, this service works for small areas. For larger areas, access to more satellite sources, and additional vegetation indices, please use the Vegetation Indices app.</p>
+      <p>Select a dataset, year, and district (or draw an area for NDVI/DW) to visualize and download. Currently, this service works for small areas. For larger areas, access to more satellite sources, and additional vegetation indices, please use the Vegetation Indices app.</p>
       <div id="map"></div>
       <div class="filters">
         <label for="datasetSelect">Dataset:</label>
         <select id="datasetSelect">
           <option value="">Select Dataset</option>
           <option value="landcover">Land Cover</option>
-          <option value="ndvi">NDVI</option>
+          <option value="ndvi">NDVI (GEE)</option>
+          <option value="dw">Dynamic World (GEE)</option>
         </select>
         <div id="landcoverOptions" style="display: none;">
           <label for="yearSelectLC">Year:</label>
@@ -61,7 +94,7 @@
             <option value="2024">2024</option>
           </select>
         </div>
-        <div id="ndviOptions" style="display: none;">
+        <div id="geeOptions" style="display: none;"> <!-- Renamed from ndviOptions to geeOptions for shared NDVI/DW -->
           <label for="yearSelect">Year:</label>
           <select id="yearSelect"></select>
           <label for="monthStart">From:</label>
@@ -74,10 +107,16 @@
           <option value="">Select a district</option>
         </select>
       </div>
+      <div id="layer-toggles" style="display: none;"> <!-- Toggles for GEE layers -->
+        <label><input type="checkbox" id="ndvi-toggle" checked> NDVI</label>
+        <label><input type="checkbox" id="dw-mode-toggle"> DW Mode</label>
+        <label><input type="checkbox" id="dw-prob-toggle"> DW Prob</label>
+      </div>
       <div class="button-container">
         <button id="viewSelectionBtn">View Selection</button>
         <button id="downloadSelectionBtn">Download Selection</button>
       </div>
+      <div id="legend"></div> <!-- DW legend container -->
       <div>
         <a class="btn" href="https://ethiosathub-gee.projects.earthengine.app/view/vegind" target="_blank">
           Open Vegetation Indices App
@@ -103,14 +142,20 @@
       }
     });
 
-    // Toggle visibility of land cover and NDVI options based on dataset selection
+    // Toggle visibility of options based on dataset selection
     const datasetSelect = document.getElementById('datasetSelect');
     const landcoverOptions = document.getElementById('landcoverOptions');
-    const ndviOptions = document.getElementById('ndviOptions');
+    const geeOptions = document.getElementById('geeOptions');
+    const layerToggles = document.getElementById('layer-toggles');
 
     datasetSelect.addEventListener('change', () => {
-      landcoverOptions.style.display = datasetSelect.value === 'landcover' ? 'inline-block' : 'none';
-      ndviOptions.style.display = datasetSelect.value === 'ndvi' ? 'inline-block' : 'none';
+      const value = datasetSelect.value;
+      landcoverOptions.style.display = value === 'landcover' ? 'inline-block' : 'none';
+      geeOptions.style.display = (value === 'ndvi' || value === 'dw') ? 'inline-block' : 'none';
+      layerToggles.style.display = (value === 'ndvi' || value === 'dw') ? 'block' : 'none';
+      if (value !== 'dw') {
+        document.getElementById('legend').innerHTML = ''; // Clear legend for non-DW
+      }
     });
   </script>
 </body>
