@@ -465,6 +465,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
+
+    } else if (datasetSelect === 'dw') {
+    const dateRange = getSelectedDateRange();
+    if (!dateRange) {
+        alert('Invalid date range');
+        return;
+    }
+    try {
+        const body = { ...dateRange, bbox: { ... } };  // Same as view
+        if (selectedDistrict && selectedDistrictGeoJSON) {
+            body.geometry = selectedDistrictGeoJSON.geometry;
+        }
+        body.layer_type = document.getElementById('dw-mode-toggle').checked ? 'mode' : 'prob';  // Toggle-based
+        const res = await fetch(`${BACKEND_URL}/dw_download`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const blob = await res.blob();
+        const layerType = body.layer_type === 'prob' ? 'Prob' : 'Mode';
+        downloadBlob(blob, `DynamicWorld_${layerType}_${dateRange.startDate}_to_${dateRange.endDate}.png`);
+    } catch (err) {
+        console.error('DW download error:', err);
+        alert('Failed to download DW: ' + err.message);
+    }
+
+    
+
     // District dropdown selection
     document.getElementById('districtSelect').addEventListener('change', (e) => {
         if (e.target.value) {
@@ -496,3 +526,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
