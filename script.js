@@ -1,6 +1,8 @@
 const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL 
 
-let map, landcoverLayer, ndviLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
+let map, landcoverLayer, ndviLayer, dwModeLayer, dwProbLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
+let currentLayers = {}; // Store layer refs for toggling
+let dwLegend = null;
 
 function getSelectedDateRange() {
     const yearEl = document.getElementById('yearSelect');
@@ -54,6 +56,37 @@ function downloadBlob(blob, filename) {
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
+}
+
+function updateLayerToggles() {
+    // Toggle NDVI
+    const ndviToggle = document.getElementById('ndvi-toggle');
+    if (ndviToggle && currentLayers.ndvi) {
+        currentLayers.ndvi.setOpacity(ndviToggle.checked ? 1 : 0);
+    }
+
+    // Toggle DW Mode
+    const dwModeToggle = document.getElementById('dw-mode-toggle');
+    if (dwModeToggle && currentLayers['dw-mode']) {
+        currentLayers['dw-mode'].setOpacity(dwModeToggle.checked ? 0.8 : 0);
+    }
+
+    // Toggle DW Prob
+    const dwProbToggle = document.getElementById('dw-prob-toggle');
+    if (dwProbToggle && currentLayers['dw-prob']) {
+        currentLayers['dw-prob'].setOpacity(dwProbToggle.checked ? 0.8 : 0);
+    }
+}
+
+function updateLegend(legendData) {
+    if (!legendData || !document.getElementById('legend')) return;
+
+    const legendDiv = document.getElementById('legend');
+    legendDiv.innerHTML = '<h4>Land Cover Classes</h4>' + 
+        legendData.classes.map((cls, i) => 
+            `<div style="display: flex; align-items: center;"><span style="display: inline-block; width: 20px; height: 20px; background: #${legendData.colors[i]}; margin-right: 5px;"></span>${cls}</div>`
+        ).join('');
+    dwLegend = legendData; // Cache for later use
 }
 
 function initializeMap() {
@@ -135,6 +168,10 @@ function initializeMap() {
         selectedArea = e.layer;
         drawnItems.addLayer(selectedArea);
         if (ndviLayer) map.removeLayer(ndviLayer);
+        // Clear GEE layers on draw
+        Object.values(currentLayers).forEach(layer => map.removeLayer(layer));
+        currentLayers = {};
+        updateLayerToggles();
         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
         document.getElementById('districtSelect').value = '';
         selectedDistrict = null;
@@ -187,15 +224,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeMap();
 
+    // Layer toggles event listeners (add these if checkboxes exist in HTML)
+    ['ndvi-toggle', 'dw-mode-toggle', 'dw-prob-toggle'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', updateLayerToggles);
+        }
+    });
+
     // --- View Selection ---
     document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
         const yearLC = document.getElementById('yearSelectLC').value;
         const districtValue = document.getElementById('districtSelect').value;
         const isLandCover = datasetSelect === 'landcover' && yearLC && districtValue;
+        const isGEE = datasetSelect === 'ndvi' || datasetSelect === 'dw'; // New: 'ndvi' or 'dw' for GEE layers
         const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
 
-        if (!isLandCover && !isNDVI) {
+        if (!isLandCover && !isGEE) {
             alert('Please select a dataset and a district or draw an area!');
             return;
         }
@@ -210,15 +256,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const bboxStr = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
         const imageBounds = [[bounds.getSouth(), bounds.getWest()], [bounds.getNorth(), bounds.getEast()]];
 
         if (isLandCover) {
+            // Existing Land Cover logic (unchanged)
             try {
                 const time = getYearTimeRange(yearLC);
                 const renderingRule = JSON.stringify({rasterFunction: "Cartographic Renderer for Visualization and Analysis"});
                 const params = new URLSearchParams({
-                    bbox: bboxStr,
+                    bbox: `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`,
                     bboxSR: '4326',
                     imageSR: '4326',
                     size: '1024,1024',
@@ -247,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Land Cover visualization error:', err);
                 alert('Failed to visualize Land Cover: ' + err.message);
             }
-        } else if (isNDVI) {
+        } else if (isGEE) {
             const dateRange = getSelectedDateRange();
             if (!dateRange) {
                 alert('Invalid date range');
@@ -255,40 +301,65 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const body = { ...dateRange };
+                // Prepare body for /gee_layers (same as NDVI but no separate geometry handling)
+                const body = { ...dateRange, bbox: {
+                    west: bounds.getWest(),
+                    south: bounds.getSouth(),
+                    east: bounds.getEast(),
+                    north: bounds.getNorth()
+                }};
                 if (selectedDistrict && selectedDistrictGeoJSON) {
                     body.geometry = selectedDistrictGeoJSON.geometry;
-                    body.bbox = {
-                        west: bounds.getWest(),
-                        south: bounds.getSouth(),
-                        east: bounds.getEast(),
-                        north: bounds.getNorth()
-                    };
-                } else {
-                    body.bbox = {
-                        west: bounds.getWest(),
-                        south: bounds.getSouth(),
-                        east: bounds.getEast(),
-                        north: bounds.getNorth()
-                    };
                 }
 
-                const res = await fetch(`${BACKEND_URL}/ndvi`, {
+                const res = await fetch(`${BACKEND_URL}/gee_layers`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
                 if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
+                const data = await res.json();
 
-                if (ndviLayer) map.removeLayer(ndviLayer);
-                ndviLayer = L.imageOverlay(url, imageBounds, { opacity: 1.0 }).addTo(map);
+                // Remove old layers
+                Object.values(currentLayers).forEach(layer => map.removeLayer(layer));
+                currentLayers = {};
+
+                // Add NDVI if requested
+                if (datasetSelect === 'ndvi' && data.ndvi && data.ndvi.tiles) {
+                    currentLayers.ndvi = L.tileLayer(data.ndvi.tiles, { 
+                        opacity: 1.0,
+                        attribution: 'NDVI from GEE'
+                    }).addTo(map);
+                }
+
+                // Add DW layers if 'dw' selected
+                if (datasetSelect === 'dw' && data.dw) {
+                    if (data.dw.mode_tiles) {
+                        currentLayers['dw-mode'] = L.tileLayer(data.dw.mode_tiles, { 
+                            opacity: 0.8,
+                            attribution: 'DW Mode from GEE'
+                        }).addTo(map);
+                    }
+                    if (data.dw.prob_tiles) {
+                        currentLayers['dw-prob'] = L.tileLayer(data.dw.prob_tiles, { 
+                            opacity: 0.8,
+                            attribution: 'DW Prob from GEE'
+                        }).addTo(map);
+                    }
+                    updateLegend(data.dw.legend);
+                }
+
+                // Default toggles: Show NDVI if added, hide DW initially
+                if (document.getElementById('ndvi-toggle')) document.getElementById('ndvi-toggle').checked = !!currentLayers.ndvi;
+                if (document.getElementById('dw-mode-toggle')) document.getElementById('dw-mode-toggle').checked = false;
+                if (document.getElementById('dw-prob-toggle')) document.getElementById('dw-prob-toggle').checked = false;
+                updateLayerToggles();
+
                 map.fitBounds(bounds);
-                alert('NDVI visualized on the map!');
+                alert(`${datasetSelect.toUpperCase()} layers visualized on the map! Use toggles to switch.`);
             } catch (err) {
-                console.error('NDVI fetch error:', err);
-                alert('Failed to fetch NDVI: ' + err.message);
+                console.error('GEE layers fetch error:', err);
+                alert('Failed to fetch GEE layers: ' + err.message);
             }
         }
     });
@@ -300,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const districtValue = document.getElementById('districtSelect').value;
         const isLandCover = datasetSelect === 'landcover' && yearLC && districtValue;
         const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
+        // Note: No download for DW yet—extend backend later
 
         if (!isLandCover && !isNDVI) {
             alert('Please select a dataset and a district or draw an area!');
@@ -316,19 +388,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const bboxStr = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-
         if (bounds.getEast() - bounds.getWest() > 2 || bounds.getNorth() - bounds.getSouth() > 2) {
             alert('Please select a smaller area (max 2°x2°).');
             return;
         }
 
         if (isLandCover) {
+            // Existing Land Cover download (unchanged)
             try {
                 const time = getYearTimeRange(yearLC);
                 const size = calculateNativePixelSize(bounds);
                 const params = new URLSearchParams({
-                    bbox: bboxStr,
+                    bbox: `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`,
                     bboxSR: '4326',
                     imageSR: '4326',
                     size: size,
@@ -353,6 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Failed to download Land Cover: ' + err.message);
             }
         } else if (isNDVI) {
+            // Existing NDVI download (unchanged)
             const dateRange = getSelectedDateRange();
             if (!dateRange) {
                 alert('Invalid date range');
@@ -398,6 +470,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.value) {
             drawnItems.clearLayers();
             selectedArea = null;
+            // Clear GEE layers on district change
+            Object.values(currentLayers).forEach(layer => map.removeLayer(layer));
+            currentLayers = {};
+            updateLayerToggles();
             fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
                 .then(res => res.json())
                 .then(data => {
