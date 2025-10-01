@@ -1,8 +1,9 @@
 const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // Render backend URL 
 
-let map, landcoverLayer, ndviLayer, dwModeLayer, dwProbLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
+let map, ndviLayer, dwLayer, drawnItems, selectedArea, selectedDistrict, selectedDistrictGeoJSON;
 let currentLayers = {}; // Store layer refs for toggling
-let dwLegend = null;
+let currentDataset = null; // Track current visualized dataset ('ndvi' or 'dw')
+let overlayGroup; // Group for overlays to preserve on basemap switch
 
 function getSelectedDateRange() {
     const yearEl = document.getElementById('yearSelect');
@@ -26,31 +27,6 @@ function getSelectedDateRange() {
     return { startDate, endDate };
 }
 
-function getYearTimeRange(year) {
-    const start = new Date(year, 0, 1).getTime();
-    const end = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
-    return `${start},${end}`;
-}
-
-function calculateNativePixelSize(bounds) {
-    const lat = (bounds.getSouth() + bounds.getNorth()) / 2;
-    const cosLat = Math.cos(lat * Math.PI / 180);
-    const width_deg = bounds.getEast() - bounds.getWest();
-    const height_deg = bounds.getNorth() - bounds.getSouth();
-    const width_m = width_deg * 111319.9 * cosLat;
-    const height_m = height_deg * 111319.9;
-    const resolution = 10; // meters per pixel
-    let width_px = Math.ceil(width_m / resolution);
-    let height_px = Math.ceil(height_m / resolution);
-    const max = 10000; // service limit
-    if (width_px > max || height_px > max) {
-        const scale = Math.max(width_px / max, height_px / max);
-        width_px = Math.ceil(width_px / scale);
-        height_px = Math.ceil(height_px / scale);
-    }
-    return `${width_px},${height_px}`;
-}
-
 function downloadBlob(blob, filename) {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -58,35 +34,38 @@ function downloadBlob(blob, filename) {
     link.click();
 }
 
-function updateLayerToggles() {
-    // Toggle NDVI
-    const ndviToggle = document.getElementById('ndvi-toggle');
-    if (ndviToggle && currentLayers.ndvi) {
-        currentLayers.ndvi.setOpacity(ndviToggle.checked ? 1 : 0);
-    }
-
-    // Toggle DW Mode
-    const dwModeToggle = document.getElementById('dw-mode-toggle');
-    if (dwModeToggle && currentLayers['dw-mode']) {
-        currentLayers['dw-mode'].setOpacity(dwModeToggle.checked ? 0.8 : 0);
-    }
-
-    // Toggle DW Prob
-    const dwProbToggle = document.getElementById('dw-prob-toggle');
-    if (dwProbToggle && currentLayers['dw-prob']) {
-        currentLayers['dw-prob'].setOpacity(dwProbToggle.checked ? 0.8 : 0);
+function updateOverlayToggle() {
+    const overlayToggle = document.getElementById('overlay-toggle');
+    if (overlayToggle && currentLayers[currentDataset]) {
+        currentLayers[currentDataset].setOpacity(overlayToggle.checked ? 1 : 0);
     }
 }
 
-function updateLegend(legendData) {
-    if (!legendData || !document.getElementById('legend')) return;
+function updateNDLegend() {
+    const legendDiv = document.getElementById('ndvi-legend');
+    if (!legendDiv) return;
+    legendDiv.innerHTML = `
+        <h4>NDVI Legend</h4>
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+            <span style="display: inline-block; width: 20px; height: 20px; background: red; margin-right: 5px;"></span> Low (-1)
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+            <span style="display: inline-block; width: 20px; height: 20px; background: yellow; margin-right: 5px;"></span> Medium (0)
+        </div>
+        <div style="display: flex; align-items: center;">
+            <span style="display: inline-block; width: 20px; height: 20px; background: green; margin-right: 5px;"></span> High (1)
+        </div>
+    `;
+}
 
-    const legendDiv = document.getElementById('legend');
+function updateDWLegend(legendData) {
+    if (!legendData || !document.getElementById('dw-legend')) return;
+
+    const legendDiv = document.getElementById('dw-legend');
     legendDiv.innerHTML = '<h4>Land Cover Classes</h4>' + 
         legendData.classes.map((cls, i) => 
             `<div style="display: flex; align-items: center;"><span style="display: inline-block; width: 20px; height: 20px; background: #${legendData.colors[i]}; margin-right: 5px;"></span>${cls}</div>`
         ).join('');
-    dwLegend = legendData; // Cache for later use
 }
 
 function initializeMap() {
@@ -117,10 +96,16 @@ function initializeMap() {
         { maxZoom: 19, attribution: 'Esri & contributors' }
     );
 
+    // Overlay group for visualized layers (preserved on basemap switch)
+    overlayGroup = L.layerGroup().addTo(map);
+
     const baseMaps = {
         "Street Map": streetMap,
         "Satellite Map": satelliteMap
     };
+
+    // Layer control with overlays
+    L.control.layers(baseMaps, { "Overlay": overlayGroup }, { collapsed: false }).addTo(map);
 
     // Add Admin Level-3 boundaries
     fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
@@ -175,18 +160,17 @@ function initializeMap() {
         drawnItems.clearLayers();
         selectedArea = e.layer;
         drawnItems.addLayer(selectedArea);
-        if (ndviLayer) map.removeLayer(ndviLayer);
-        // Clear GEE layers on draw
-        Object.values(currentLayers).forEach(layer => map.removeLayer(layer));
+        // Clear visualized layers on draw
+        overlayGroup.clearLayers();
         currentLayers = {};
-        updateLayerToggles();
+        currentDataset = null;
+        updateOverlayToggle();
         console.log('Area drawn:', selectedArea.getBounds().toBBoxString());
         document.getElementById('districtSelect').value = '';
         selectedDistrict = null;
         selectedDistrictGeoJSON = null;
     });
 
-    L.control.layers(baseMaps, {}, { collapsed: false }).addTo(map);
     map.invalidateSize();  // Force resize check
 }
 
@@ -194,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearSelect = document.getElementById('yearSelect');
     const monthStart = document.getElementById('monthStart');
     const monthEnd = document.getElementById('monthEnd');
-    const yearSelectLC = document.getElementById('yearSelectLC');
 
     if (yearSelect && monthStart && monthEnd) {
         const currentYear = new Date().getFullYear();
@@ -220,17 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
         monthEnd.value = '12';
     }
 
-    if (yearSelectLC) {
-        const lcYears = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024];
-        lcYears.forEach(year => {
-            const opt = document.createElement('option');
-            opt.value = year;
-            opt.textContent = year;
-            yearSelectLC.appendChild(opt);
-        });
-        yearSelectLC.value = '2024';
-    }
-
     try {
         initializeMap();
     } catch (err) {
@@ -239,25 +211,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mapDiv) mapDiv.innerHTML = '<p style="color:red;">Map failed to load—check console.</p>';
     }
 
-    // Layer toggles event listeners (add these if checkboxes exist in HTML)
-    ['ndvi-toggle', 'dw-mode-toggle', 'dw-prob-toggle'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('change', updateLayerToggles);
-        }
-    });
+    // Overlay toggle event listener
+    const overlayToggle = document.getElementById('overlay-toggle');
+    if (overlayToggle) {
+        overlayToggle.addEventListener('change', updateOverlayToggle);
+    }
 
     // --- View Selection ---
     document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
-        const yearLC = document.getElementById('yearSelectLC').value;
-        const districtValue = document.getElementById('districtSelect').value;
-        const isLandCover = datasetSelect === 'landcover' && yearLC && districtValue;
-        const isGEE = datasetSelect === 'ndvi' || datasetSelect === 'dw'; // New: 'ndvi' or 'dw' for GEE layers
-        const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
+        const isGEE = datasetSelect === 'ndvi' || datasetSelect === 'dw';
 
-        if (!isLandCover && !isGEE) {
-            alert('Please select a dataset and a district or draw an area!');
+        if (!isGEE) {
+            alert('Please select NDVI or Dynamic World and a district or draw an area!');
             return;
         }
 
@@ -271,125 +237,77 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const imageBounds = [[bounds.getSouth(), bounds.getWest()], [bounds.getNorth(), bounds.getEast()]];
+        const dateRange = getSelectedDateRange();
+        if (!dateRange) {
+            alert('Invalid date range');
+            return;
+        }
 
-        if (isLandCover) {
-            // Existing Land Cover logic (unchanged)
-            try {
-                const time = getYearTimeRange(yearLC);
-                const renderingRule = JSON.stringify({rasterFunction: "Cartographic Renderer for Visualization and Analysis"});
-                const params = new URLSearchParams({
-                    bbox: `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`,
-                    bboxSR: '4326',
-                    imageSR: '4326',
-                    size: '1024,1024',
-                    format: 'png',
-                    transparent: true,
-                    f: 'image',
-                    time: time,
-                    renderingRule: renderingRule
+        try {
+            // Prepare body for /gee_layers
+            const body = { ...dateRange, bbox: {
+                west: bounds.getWest(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                north: bounds.getNorth()
+            }};
+            if (selectedDistrict && selectedDistrictGeoJSON) {
+                body.geometry = selectedDistrictGeoJSON.geometry;
+            }
+
+            const res = await fetch(`${BACKEND_URL}/gee_layers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+            const data = await res.json();
+
+            // Clear previous
+            overlayGroup.clearLayers();
+            currentLayers = {};
+            currentDataset = datasetSelect;
+
+            // Add layer based on dataset
+            if (datasetSelect === 'ndvi' && data.ndvi && data.ndvi.tiles) {
+                currentLayers.ndvi = L.tileLayer(data.ndvi.tiles, { 
+                    opacity: 1.0,
+                    attribution: 'NDVI from GEE'
                 });
-
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    params.set('geometryType', 'esriGeometryPolygon');
-                    params.set('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
-                }
-
-                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
-                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
-                const blob = await res.blob();
-                const url = URL.createObjectURL(blob);
-
-                if (landcoverLayer) map.removeLayer(landcoverLayer);
-                landcoverLayer = L.imageOverlay(url, imageBounds, { opacity: 0.8 }).addTo(map);
-                map.fitBounds(bounds);
-                alert('Land Cover visualized on the map!');
-            } catch (err) {
-                console.error('Land Cover visualization error:', err);
-                alert('Failed to visualize Land Cover: ' + err.message);
-            }
-        } else if (isGEE) {
-            const dateRange = getSelectedDateRange();
-            if (!dateRange) {
-                alert('Invalid date range');
-                return;
-            }
-
-            try {
-                // Prepare body for /gee_layers (same as NDVI but no separate geometry handling)
-                const body = { ...dateRange, bbox: {
-                    west: bounds.getWest(),
-                    south: bounds.getSouth(),
-                    east: bounds.getEast(),
-                    north: bounds.getNorth()
-                }};
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    body.geometry = selectedDistrictGeoJSON.geometry;
-                }
-
-                const res = await fetch(`${BACKEND_URL}/gee_layers`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)  // Fixed: Ensured balanced parens here
+                currentLayers.ndvi.addTo(overlayGroup);
+                updateNDLegend();
+                document.getElementById('ndvi-legend').style.display = 'block';
+                document.getElementById('dw-legend').style.display = 'none';
+            } else if (datasetSelect === 'dw' && data.dw && data.dw.mode_tiles) {
+                currentLayers.dw = L.tileLayer(data.dw.mode_tiles, { 
+                    opacity: 0.8,
+                    attribution: 'DW Mode from GEE'
                 });
-                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
-                const data = await res.json();
-
-                // Remove old layers
-                Object.values(currentLayers).forEach(layer => map.removeLayer(layer));
-                currentLayers = {};
-
-                // Add NDVI if requested
-                if (datasetSelect === 'ndvi' && data.ndvi && data.ndvi.tiles) {
-                    currentLayers.ndvi = L.tileLayer(data.ndvi.tiles, { 
-                        opacity: 1.0,
-                        attribution: 'NDVI from GEE'
-                    }).addTo(map);
-                }
-
-                // Add DW layers if 'dw' selected
-                if (datasetSelect === 'dw' && data.dw) {
-                    if (data.dw.mode_tiles) {
-                        currentLayers['dw-mode'] = L.tileLayer(data.dw.mode_tiles, { 
-                            opacity: 0.8,
-                            attribution: 'DW Mode from GEE'
-                        }).addTo(map);
-                    }
-                    if (data.dw.prob_tiles) {
-                        currentLayers['dw-prob'] = L.tileLayer(data.dw.prob_tiles, { 
-                            opacity: 0.8,
-                            attribution: 'DW Prob from GEE'
-                        }).addTo(map);
-                    }
-                    updateLegend(data.dw.legend);
-                }
-
-                // Default toggles: Show NDVI if added, hide DW initially
-                if (document.getElementById('ndvi-toggle')) document.getElementById('ndvi-toggle').checked = !!currentLayers.ndvi;
-                if (document.getElementById('dw-mode-toggle')) document.getElementById('dw-mode-toggle').checked = false;
-                if (document.getElementById('dw-prob-toggle')) document.getElementById('dw-prob-toggle').checked = false;
-                updateLayerToggles();
-
-                map.fitBounds(bounds);
-                alert(`${datasetSelect.toUpperCase()} layers visualized on the map! Use toggles to switch.`);
-            } catch (err) {
-                console.error('GEE layers fetch error:', err);
-                alert('Failed to fetch GEE layers: ' + err.message);
+                currentLayers.dw.addTo(overlayGroup);
+                updateDWLegend(data.dw.legend);
+                document.getElementById('ndvi-legend').style.display = 'none';
+                document.getElementById('dw-legend').style.display = 'block';
             }
+
+            // Default toggle on
+            if (document.getElementById('overlay-toggle')) document.getElementById('overlay-toggle').checked = true;
+            updateOverlayToggle();
+
+            map.fitBounds(bounds);
+            alert(`${datasetSelect.toUpperCase()} layer visualized on the map! Use toggle to show/hide.`);
+        } catch (err) {
+            console.error('GEE layers fetch error:', err);
+            alert('Failed to fetch layers: ' + err.message);
         }
     });
 
     // --- Download Selection ---
     document.getElementById('downloadSelectionBtn').addEventListener('click', async () => {
         const datasetSelect = document.getElementById('datasetSelect').value;
-        const yearLC = document.getElementById('yearSelectLC').value;
-        const districtValue = document.getElementById('districtSelect').value;
-        const isLandCover = datasetSelect === 'landcover' && yearLC && districtValue;
         const isNDVI = datasetSelect === 'ndvi' && (selectedArea || selectedDistrict);
-        // Note: No download for DW yet—extend backend later
 
-        if (!isLandCover && !isNDVI) {
-            alert('Please select a dataset and a district or draw an area!');
+        if (!isNDVI) {
+            alert('Please select NDVI and a district or draw an area for download!');
             return;
         }
 
@@ -408,75 +326,42 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (isLandCover) {
-            // Existing Land Cover download (unchanged)
-            try {
-                const time = getYearTimeRange(yearLC);
-                const size = calculateNativePixelSize(bounds);
-                const params = new URLSearchParams({
-                    bbox: `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`,
-                    bboxSR: '4326',
-                    imageSR: '4326',
-                    size: size,
-                    format: 'tiff',
-                    pixelType: 'U8',
-                    compression: 'lzw',
-                    f: 'image',
-                    time: time
-                });
+        const dateRange = getSelectedDateRange();
+        if (!dateRange) {
+            alert('Invalid date range');
+            return;
+        }
 
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    params.set('geometryType', 'esriGeometryPolygon');
-                    params.set('geometry', JSON.stringify(selectedDistrictGeoJSON.geometry));
-                }
-
-                const res = await fetch(`https://ic.imagery1.arcgis.com/arcgis/rest/services/Sentinel2_10m_LandCover/ImageServer/exportImage?${params.toString()}`);
-                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
-                const blob = await res.blob();
-                downloadBlob(blob, `LandCover_${yearLC}_${districtValue || 'area'}.tif`);
-            } catch (err) {
-                console.error('Land Cover download error:', err);
-                alert('Failed to download Land Cover: ' + err.message);
-            }
-        } else if (isNDVI) {
-            // Existing NDVI download (unchanged)
-            const dateRange = getSelectedDateRange();
-            if (!dateRange) {
-                alert('Invalid date range');
-                return;
+        try {
+            const body = { ...dateRange };
+            if (selectedDistrict && selectedDistrictGeoJSON) {
+                body.geometry = selectedDistrictGeoJSON.geometry;
+                body.bbox = {
+                    west: bounds.getWest(),
+                    south: bounds.getSouth(),
+                    east: bounds.getEast(),
+                    north: bounds.getNorth()
+                };
+            } else {
+                body.bbox = {
+                    west: bounds.getWest(),
+                    south: bounds.getSouth(),
+                    east: bounds.getEast(),
+                    north: bounds.getNorth()
+                };
             }
 
-            try {
-                const body = { ...dateRange };
-                if (selectedDistrict && selectedDistrictGeoJSON) {
-                    body.geometry = selectedDistrictGeoJSON.geometry;
-                    body.bbox = {
-                        west: bounds.getWest(),
-                        south: bounds.getSouth(),
-                        east: bounds.getEast(),
-                        north: bounds.getNorth()
-                    };
-                } else {
-                    body.bbox = {
-                        west: bounds.getWest(),
-                        south: bounds.getSouth(),
-                        east: bounds.getEast(),
-                        north: bounds.getNorth()
-                    };
-                }
-
-                const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)  // Fixed: Ensured balanced parens here
-                });
-                if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
-                const blob = await res.blob();
-                downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
-            } catch (err) {
-                console.error('NDVI download error:', err);
-                alert('Failed to download NDVI: ' + err.message);
-            }
+            const res = await fetch(`${BACKEND_URL}/ndvi/download`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+            const blob = await res.blob();
+            downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
+        } catch (err) {
+            console.error('NDVI download error:', err);
+            alert('Failed to download NDVI: ' + err.message);
         }
     });
 
@@ -485,10 +370,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.value) {
             drawnItems.clearLayers();
             selectedArea = null;
-            // Clear GEE layers on district change
-            Object.values(currentLayers).forEach(layer => map.removeLayer(layer));
+            // Clear visualized layers on district change
+            overlayGroup.clearLayers();
             currentLayers = {};
-            updateLayerToggles();
+            currentDataset = null;
+            updateOverlayToggle();
             fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
                 .then(res => res.json())
                 .then(data => {
