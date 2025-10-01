@@ -155,19 +155,25 @@
 
     // Toggle visibility of options based on dataset selection
     const datasetSelect = document.getElementById('datasetSelect');
-    const landcoverOptions = document.getElementById('landcoverOptions');
     const geeOptions = document.getElementById('geeOptions');
     const layerToggles = document.getElementById('layer-toggles');
+    const ndviLegend = document.getElementById('ndvi-legend');
+    const dwLegend = document.getElementById('dw-legend');
 
     datasetSelect.addEventListener('change', () => {
       const value = datasetSelect.value;
-      landcoverOptions.style.display = value === 'landcover' ? 'inline-block' : 'none';
       geeOptions.style.display = (value === 'ndvi' || value === 'dw') ? 'inline-block' : 'none';
       layerToggles.style.display = (value === 'ndvi' || value === 'dw') ? 'block' : 'none';
-      if (value !== 'dw') {
-        document.getElementById('legend').innerHTML = ''; // Clear legend for non-DW
-      }
+  
+      // Handle legends: Show relevant one, hide others
+      if (ndviLegend) ndviLegend.style.display = value === 'ndvi' ? 'block' : 'none';
+      if (dwLegend) dwLegend.style.display = value === 'dw' ? 'block' : 'none';
+  
+      // Clear legends if switching away
+      if (value !== 'ndvi' && ndviLegend) ndviLegend.innerHTML = '';
+      if (value !== 'dw' && dwLegend) dwLegend.innerHTML = '';
     });
+
   </script>
 </body>
 </html>
