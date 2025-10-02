@@ -13,7 +13,7 @@ const DATASET_CONFIG = {
     label: "Land cover",
     indicesLabel: "Select land cover",
     indices: [{ v: 'dynamic_world', t: 'Dynamic World (10m)' }],
-    yearRange: [2020, new Date().getFullYear()]
+    yearRange: [2015, new Date().getFullYear()]
   },
   sentinel2: {
     label: "Sentinel-2",
@@ -105,15 +105,14 @@ function initMap() {
 // UI populators
 function populateIndexOptions(datasetKey) {
   const sel = document.getElementById('indexSelect');
-  const label = document.getElementById('indexLabel');
   sel.innerHTML = '';
   if (!datasetKey) {
-    label.textContent = "Select option";
-    sel.innerHTML = '<option value="">-- choose --</option>';
+    sel.innerHTML = '<option value="">Select sub dataset</option>';
     return;
   }
   const cfg = DATASET_CONFIG[datasetKey];
-  label.textContent = cfg.indicesLabel;
+  const defaultText = cfg.indicesLabel;
+  sel.innerHTML = `<option value="">${defaultText}</option>`;
   cfg.indices.forEach(opt => {
     const o = document.createElement('option');
     o.value = opt.v; o.textContent = opt.t;
@@ -132,9 +131,13 @@ function populateYearMonthDay(prefix, yearRange) {
     ySel.appendChild(o);
   }
   mSel.innerHTML = '';
+  const monthNames = [
+    '01 (Jan)', '02 (Feb)', '03 (Mar)', '04 (Apr)', '05 (May)', '06 (Jun)',
+    '07 (Jul)', '08 (Aug)', '09 (Sep)', '10 (Oct)', '11 (Nov)', '12 (Dec)'
+  ];
   for (let m = 1; m <= 12; m++) {
     let o = document.createElement('option');
-    o.value = m; o.textContent = String(m).padStart(2, '0');
+    o.value = m; o.textContent = monthNames[m-1];
     mSel.appendChild(o);
   }
   updateDays(prefix);
@@ -148,7 +151,7 @@ function updateDays(prefix) {
   const last = new Date(y, m, 0).getDate();
   for (let d = 1; d <= last; d++) {
     let o = document.createElement('option');
-    o.value = d; o.textContent = String(d).padStart(2, '0');
+    o.value = d; o.textContent = d;
     dSel.appendChild(o);
   }
 }
@@ -276,6 +279,17 @@ async function downloadSelection() {
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
 
+  // Initial setup for time range
+  const initialYrRange = [2025, 2025];
+  populateYearMonthDay("from", initialYrRange);
+  populateYearMonthDay("to", initialYrRange);
+  document.getElementById('fromMonth').value = '10';
+  document.getElementById('toMonth').value = '10';
+  updateDays("from");
+  updateDays("to");
+  document.getElementById('fromDay').value = '1';
+  document.getElementById('toDay').value = '31';
+
   document.getElementById('datasetSelect').addEventListener('change', e => {
     const ds = e.target.value;
     populateIndexOptions(ds);
@@ -283,6 +297,25 @@ document.addEventListener("DOMContentLoaded", () => {
       const yr = DATASET_CONFIG[ds].yearRange;
       populateYearMonthDay("from", yr);
       populateYearMonthDay("to", yr);
+      // Reset to first available year
+      document.getElementById('fromYear').value = yr[1];
+      document.getElementById('toYear').value = yr[1];
+      document.getElementById('fromMonth').value = '10';
+      document.getElementById('toMonth').value = '10';
+      updateDays("from");
+      updateDays("to");
+      document.getElementById('fromDay').value = '1';
+      document.getElementById('toDay').value = '31';
+    } else {
+      // Reset to initial
+      populateYearMonthDay("from", initialYrRange);
+      populateYearMonthDay("to", initialYrRange);
+      document.getElementById('fromMonth').value = '10';
+      document.getElementById('toMonth').value = '10';
+      updateDays("from");
+      updateDays("to");
+      document.getElementById('fromDay').value = '1';
+      document.getElementById('toDay').value = '31';
     }
   });
 
