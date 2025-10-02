@@ -7,6 +7,31 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
   <link rel="stylesheet" href="../styles.css" />
+  <style>
+    /* Position legend inside bottom-left of the map */
+    .map-legend {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: white;
+      padding: 8px 10px;
+      border-radius: 5px;
+      font-size: 13px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      z-index: 1000;
+    }
+    .map-legend h4 {
+      margin: 0 0 5px;
+      font-size: 14px;
+    }
+    .layer-toggle {
+      background: white;
+      padding: 5px 8px;
+      border-radius: 5px;
+      margin-top: 5px;
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbars">
@@ -16,21 +41,11 @@
       </div>
       <div class="hamburger" id="hamburger">☰</div>
       <ul class="nav-menu">
-        <li class="nav-item">
-          <a href="/home" class="nav-link">Home</a>
-        </li>
-        <li class="nav-item">
-          <a href="/maps" class="nav-link active">Maps</a>
-        </li>
-        <li class="nav-item">
-          <a href="/data" class="nav-link">Data</a>
-        </li>
-        <li class="nav-item">
-          <a href="/gallery" class="nav-link">Gallery</a>
-        </li>
-        <li class="nav-item">
-          <a href="/about" class="nav-link">About</a>
-        </li>
+        <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="/maps" class="nav-link active">Maps</a></li>
+        <li class="nav-item"><a href="/data" class="nav-link">Data</a></li>
+        <li class="nav-item"><a href="/gallery" class="nav-link">Gallery</a></li>
+        <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
       </ul>
     </div>
   </nav>
@@ -44,16 +59,16 @@
       </p>
       <div class="map-container">
         <div id="map"></div>
+        <div id="legend" class="map-legend"></div>
       </div>
+
       <div class="filters">
-        <div class="labels-row">
-        </div>
         <div class="selects-row">
           <select id="datasetSelect">
             <option value="">Select dataset</option>
             <option value="landcover">Land cover</option>
             <option value="sentinel2">Sentinel-2</option>
-            <option value="landsat8">Landsat 8</option>
+            <option value="landsat">Landsat (5/7/8/9)</option>
             <option value="modis">MODIS</option>
             <option value="climate">Climate</option>
           </select>
@@ -71,6 +86,7 @@
           </select>
         </div>
       </div>
+
       <div class="time-range">
         <div>
           <strong>From:</strong>
@@ -85,16 +101,17 @@
           <select id="toDay"></select>
         </div>
       </div>
+
       <div class="button-container">
         <button id="viewBtn">View Selection</button>
         <button id="downloadBtn">Download Selection</button>
       </div>
-      <div id="legend"></div>
-      <!--div>
-        <a class="btn" href="https://ethiosathub-gee.projects.earthengine.app/view/vegind" target="_blank">
-          Open Vegetation Indices App
-        </a>
-    </div-->
+
+      <!-- Toggle visualization layer -->
+      <div class="layer-toggle">
+        <input type="checkbox" id="toggleOverlay" checked>
+        <label for="toggleOverlay">Show visualization layer</label>
+      </div>
     </div>
   </div>
 
@@ -111,95 +128,6 @@
       navmenu.classList.toggle("show");
       hamburger.textContent = (hamburger.textContent === "☰") ? "✖" : "☰";
     });
-
-    // Dynamic index selector based on dataset
-    const datasetSelect = document.getElementById('datasetSelect');
-    const indexSelect = document.getElementById('indexSelect');
-
-    datasetSelect.addEventListener('change', function() {
-      const selectedDataset = this.value;
-      let optionsHtml = '<option value="">';
-
-      if (selectedDataset === 'landcover') {
-        optionsHtml += 'Select land cover</option><option value="dynamic">dynamic land cover (10 m)</option>';
-      } else if (['sentinel2', 'landsat8', 'modis'].includes(selectedDataset)) {
-        optionsHtml += 'Select vegetation indices</option><option value="ndvi">NDVI</option><option value="evi">EVI</option><option value="savi">SAVI</option><option value="msavi">MSAVI</option><option value="ndmi">NDMI</option><option value="ndwi">NDWI</option><option value="nbr">NBR</option><option value="nbr2">NBR2</option><option value="tvi">TVI</option>';
-      } else if (selectedDataset === 'climate') {
-        optionsHtml += 'Select drought indices</option><option value="spi">SPI</option><option value="vhi">VHI</option>';
-      } else {
-        optionsHtml += 'Select sub dataset</option>';
-      }
-
-      indexSelect.innerHTML = optionsHtml;
-      indexSelect.value = '';
-      updateYears();
-    });
-
-    // Time range dynamic population
-    const startYears = {
-      'landcover': 2015,
-      'sentinel2': 2015,
-      'landsat8': 2013,
-      'modis': 2000,
-      'climate': 1981
-    };
-
-    const fromYear = document.getElementById('fromYear');
-    const toYear = document.getElementById('toYear');
-    const fromMonth = document.getElementById('fromMonth');
-    const toMonth = document.getElementById('toMonth');
-    const fromDay = document.getElementById('fromDay');
-    const toDay = document.getElementById('toDay');
-
-    function populateMonths(select) {
-      let html = '';
-      const months = ['01 (Jan)', '02 (Feb)', '03 (Mar)', '04 (Apr)', '05 (May)', '06 (Jun)', 
-                      '07 (Jul)', '08 (Aug)', '09 (Sep)', '10 (Oct)', '11 (Nov)', '12 (Dec)'];
-      for (let i = 0; i < 12; i++) {
-        html += `<option value="${i+1}">${months[i]}</option>`;
-      }
-      select.innerHTML = html;
-    }
-
-    function populateDays(select) {
-      let html = '';
-      for (let d = 1; d <= 31; d++) {
-        html += `<option value="${d}">${d}</option>`;
-      }
-      select.innerHTML = html;
-    }
-
-    function updateYears() {
-      const selectedDataset = datasetSelect.value;
-      const start = startYears[selectedDataset] || 2025;
-      const current = 2025; // As per current date
-
-      let html = '';
-      for (let y = start; y <= current; y++) {
-        html += `<option value="${y}">${y}</option>`;
-      }
-      fromYear.innerHTML = html;
-      toYear.innerHTML = html;
-
-      // Set default if needed
-      if (!fromYear.value || parseInt(fromYear.value) < start) {
-        fromYear.value = current;
-      }
-      if (!toYear.value || parseInt(toYear.value) < start) {
-        toYear.value = current;
-      }
-    }
-
-    // Initialize
-    populateMonths(fromMonth);
-    populateMonths(toMonth);
-    populateDays(fromDay);
-    populateDays(toDay);
-    fromMonth.value = '10';
-    toMonth.value = '10';
-    fromDay.value = '1';
-    toDay.value = '31';
-    updateYears();
   </script>
 </body>
 </html>
