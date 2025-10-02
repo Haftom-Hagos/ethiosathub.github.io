@@ -298,6 +298,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialYrRange = [2025, 2025];
   populateYearMonthDay("from", initialYrRange);
   populateYearMonthDay("to", initialYrRange);
+  
+  // Set years FIRST (before months and updateDays)
+  document.getElementById('fromYear').value = initialYrRange[1];
+  document.getElementById('toYear').value = initialYrRange[1];
+  
   document.getElementById('fromMonth').value = '10';
   document.getElementById('toMonth').value = '10';
   updateDays("from");
@@ -346,3 +351,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   populateAdminFeatures("adm3");
 });
+
