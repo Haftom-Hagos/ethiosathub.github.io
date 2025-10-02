@@ -367,38 +367,99 @@ async function downloadSelection() {
 
 // Init
 document.addEventListener("DOMContentLoaded", () => {
-  initMap();
+  try {
+    initMap();
 
-  const initialYrRange = [2025, 2025];
-  populateYearMonthDay("from", initialYrRange);
-  populateYearMonthDay("to", initialYrRange);
-  document.getElementById('fromMonth').value = '10';
-  document.getElementById('toMonth').value = '10';
-  updateDays("from");
-  updateDays("to");
-  document.getElementById('fromDay').value = '1';
-  document.getElementById('toDay').value = '31';
+    // Temporary minimal test (remove this entire block once map works)
+    setTimeout(() => {
+      if (map) {
+        map.setView([9, 39], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        console.log('Minimal map forced—check if tiles load');
+      }
+    }, 1000);
 
-  document.getElementById('datasetSelect').addEventListener('change', e => {
-    const ds = e.target.value;
-    populateIndexOptions(ds);
-    if (ds) {
-      const yr = DATASET_CONFIG[ds].yearRange;
-      populateYearMonthDay("from", yr);
-      populateYearMonthDay("to", yr);
-      document.getElementById('fromYear').value = yr[1];
-      document.getElementById('toYear').value = yr[1];
-      document.getElementById('fromMonth').value = '10';
-      document.getElementById('toMonth').value = '10';
-      updateDays("from");
-      updateDays("to");
-      document.getElementById('fromDay').value = '1';
-      document.getElementById('toDay').value = '31';
+    const initialYrRange = [2025, 2025];
+    populateYearMonthDay("from", initialYrRange);
+    populateYearMonthDay("to", initialYrRange);
+    document.getElementById('fromMonth').value = '10';
+    document.getElementById('toMonth').value = '10';
+    updateDays("from");
+    updateDays("to");
+    document.getElementById('fromDay').value = '1';
+    document.getElementById('toDay').value = '31';
+
+    document.getElementById('datasetSelect').addEventListener('change', e => {
+      const ds = e.target.value;
+      populateIndexOptions(ds);
+      if (ds) {
+        const yr = DATASET_CONFIG[ds].yearRange;
+        populateYearMonthDay("from", yr);
+        populateYearMonthDay("to", yr);
+        document.getElementById('fromYear').value = yr[1];
+        document.getElementById('toYear').value = yr[1];
+        document.getElementById('fromMonth').value = '10';
+        document.getElementById('toMonth').value = '10';
+        updateDays("from");
+        updateDays("to");
+        document.getElementById('fromDay').value = '1';
+        document.getElementById('toDay').value = '31';
+      }
+    });
+
+    ["fromYear","fromMonth"].forEach(id => document.getElementById(id).addEventListener("change", () => updateDays("from")));
+    ["toYear","toMonth"].forEach(id => document.getElementById(id).addEventListener("change", () => updateDays("to")));
+
+    // Admin level change: repopulate features and boundaries
+    const adminLevelEl = document.getElementById('adminLevel');
+    if (adminLevelEl) {
+      adminLevelEl.addEventListener('change', e => {
+        const level = e.target.value;
+        populateAdminFeatures(level);
+      });
     }
-  });
 
-  ["fromYear","fromMonth"].forEach(id => document.getElementById(id).addEventListener("change", () => updateDays("from")));
-  ["toYear","toMonth"].forEach(id => document.getElementById(id).addEventListener("change", () => updateDays("to")));
+    // Feature select change: highlight on map via boundary layer
+    document.getElementById('featureSelect').addEventListener('change', async e => {
+      const name = e.target.value;
+      if (!name) {
+        if (selectedFeatureGeoJSON && boundaryLayer) {
+          boundaryLayer.resetStyle();
+          selectedFeatureGeoJSON = null;
+        }
+        return;
+      }
+      const lvl = document.getElementById('adminLevel').value;
+      const data = await loadAdminFeatures(lvl);
+      if (!data) return;
+      const prop = getPropName(lvl);
+      const feat = data.features.find(f => {
+        return f.properties[prop] === name || f.properties[prop.toLowerCase()] === name || f.properties[prop.replace('_EN', '')] === name;
+      });
+      if (feat) {
+        selectedFeatureGeoJSON = feat;
+        // Find and highlight the corresponding layer
+        const targetLayer = boundaryLayer.getLayers().find(l => l.feature === feat);
+        if (targetLayer) {
+          boundaryLayer.resetStyle();
+          targetLayer.setStyle({ color: "red", weight: 2, fillOpacity: 0.1 });
+          targetLayer.openPopup();
+        }
+        // Clear drawn
+        drawnItems.clearLayers();
+        selectedGeometry = null;
+        map.fitBounds(L.geoJSON(feat).getBounds(), { maxZoom: 10 });
+      }
+    });
+
+    document.getElementById('viewBtn').addEventListener('click', viewSelection);
+    document.getElementById('downloadBtn').addEventListener('click', downloadSelection);
+
+    populateAdminFeatures("adm3");
+  } catch (err) {
+    console.error('Init failed:', err);
+  }
+});
 
   // Admin level change: repopulate features and boundaries
   const adminLevelEl = document.getElementById('adminLevel');
@@ -447,3 +508,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   populateAdminFeatures("adm3");
 });
+
