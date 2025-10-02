@@ -485,6 +485,11 @@ footer{
 
 }
 
+#map {
+    height: 600px; /* Adjust as needed for your layout */
+    width: 100%;
+}
+
 .sub-contents h2{
     font-size: 35px;
 }
@@ -882,6 +887,7 @@ footer{
     color: gray;
     } 
 }
+
 
 
 
