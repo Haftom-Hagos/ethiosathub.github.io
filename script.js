@@ -1,8 +1,15 @@
 // script.js (complete updated version with debugging logs for districts/boundaries)
+// - Ensures overlay always on top (custom pane)
+// - Better handling for VHI/SPI backend messages and missing tiles
+// - Landcover legend shows only classes present in AOI
+// - Vegetation indices use continuous colorbar with backend min/max when available
+// - White background behind legends
+// - Download filename includes selected feature name
+// - Extra debugging logs for districts/boundaries
 
 const BACKEND = (window.BACKEND_URL || 'https://hafrepo-2.onrender.com');
 
-let map, drawnItems, overlayGroup, overlayCheckbox, boundaryLayer, selectedFeatureLayer;
+let map, drawnItems, overlayGroup, overlayPaneName = 'overlayPane', boundaryLayer, selectedFeatureLayer;
 let selectedGeometry = null;
 let selectedFeatureGeoJSON = null;
 let selectedDistrictName = null; // For filename
@@ -80,6 +87,24 @@ function getPropName(level) {
 // Legend control (global definition)
 let legendControl;
 
+// Create or ensure overlay pane exists and has higher z-index so overlays are on top
+function ensureOverlayPane() {
+  if (!map) return;
+  // Create pane if not exists
+  try {
+    if (!map.getPane(overlayPaneName)) {
+      const p = map.createPane(overlayPaneName);
+      // Put this above normal tile pane (tilePane default z-index ~200)
+      p.style.zIndex = 650;
+      // Allow pointer events to pass through unless overlay has its own interactivity
+      p.style.pointerEvents = 'auto';
+      console.log('Created overlay pane with zIndex', p.style.zIndex);
+    }
+  } catch (err) {
+    console.warn('Could not create overlay pane (already exists?)', err);
+  }
+}
+
 // Init map
 function initMap() {
   const mapDiv = document.getElementById('map');
@@ -90,24 +115,25 @@ function initMap() {
   console.log('Map div found, size:', mapDiv.offsetHeight, mapDiv.offsetWidth);
 
   map = L.map('map', { center: [9.145, 40.4897], zoom: 6 });
+  ensureOverlayPane();
+
   const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap'
   }).addTo(map);
-  console.log('Basemap added');
+  console.log('Street basemap added');
 
   const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 19,
     attribution: 'Esri & contributors'
   });
 
-  overlayGroup = L.layerGroup().addTo(map); // Always added to map, for always-on
+  // overlayGroup holds result tileLayers and is added to overlay pane to always be over basemaps
+  overlayGroup = L.layerGroup([], { pane: overlayPaneName }).addTo(map); // Always added to map, for always-on
   drawnItems = new L.FeatureGroup().addTo(map);
 
   const baseLayers = { "Street": street, "Satellite": sat };
-  // Note: No overlay in control to keep always on; if needed, add separate toggle
-
-  overlayCheckbox = L.control.layers(baseLayers, null, { collapsed: false }).addTo(map); // No overlays in control
+  overlayCheckbox = L.control.layers(baseLayers, null, { collapsed: false }).addTo(map);
 
   const drawControl = new L.Control.Draw({
     draw: { polygon: false, circle: false, marker: false, polyline: false, rectangle: true },
@@ -142,6 +168,7 @@ function initMap() {
     this._div.style.padding = '10px';
     this._div.style.borderRadius = '5px';
     this._div.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+    this._div.style.maxWidth = '260px';
     this.update();
     return this._div;
   };
@@ -153,33 +180,90 @@ function initMap() {
   map.invalidateSize();
 }
 
-// Updated showLegend: colorbar for veg indices, filtered classes for landcover
-function showLegend(index, dataset, uniqueClasses = null) {
+// Show legend: for landcover use uniqueClasses, for continuous indices show colorbar using min/max if provided
+function showLegend(index, dataset, uniqueClasses = null, meta = {}) {
   if (!legendControl) return;
-  let html = `<h4>${index}</h4><div class="small">Dataset: ${dataset}</div>`;
-  if (dataset === 'landcover' && uniqueClasses) {
-    const allClasses = ['water', 'trees', 'grass', 'flooded_vegetation', 'crops', 'shrub_and_scrub', 'built', 'bare', 'snow_and_ice'];
-    const allColors = ['#419bdf', '#397d49', '#88b053', '#7a87c6', '#e49635', '#dfc35a', '#c4281b', '#a59b8f', '#b39fe1'];
-    html = `<h4>Land Cover Classes (AOI)</h4>`;
-    uniqueClasses.forEach(clsId => {
-      const cls = allClasses[clsId];
-      const color = allColors[clsId];
-      html += `<div style="display: flex; align-items: center;"><span style="display: inline-block; width: 20px; height: 20px; background: ${color}; margin-right: 5px;"></span>${cls}</div>`;
+  let html = `<h4 style="margin:0 0 6px 0;">${index}</h4><div class="small" style="margin-bottom:6px;">Dataset: ${dataset}</div>`;
+  if (dataset === 'landcover' && Array.isArray(uniqueClasses)) {
+    // Map Dynamic World class ids to names/colors (Dynamic World class order reference)
+    const allClasses = [
+      { id: 0, name: 'water', color: '#419bdf' },
+      { id: 1, name: 'trees', color: '#397d49' },
+      { id: 2, name: 'grass', color: '#88b053' },
+      { id: 3, name: 'flooded_vegetation', color: '#7a87c6' },
+      { id: 4, name: 'crops', color: '#e49635' },
+      { id: 5, name: 'shrub_and_scrub', color: '#dfc35a' },
+      { id: 6, name: 'built', color: '#c4281b' },
+      { id: 7, name: 'bare', color: '#a59b8f' },
+      { id: 8, name: 'snow_and_ice', color: '#b39fe1' }
+    ];
+    html = `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
+    // Ensure numbers
+    const ids = uniqueClasses.map(x => parseInt(x, 10)).filter(n => !isNaN(n));
+    // If backend returned strings like ['trees','water'], try to map by name
+    const namesToInclude = uniqueClasses.filter(x => isNaN(parseInt(x, 10)));
+    let foundAny = false;
+    ids.forEach(clsId => {
+      const clsObj = allClasses.find(c => c.id === clsId);
+      if (clsObj) {
+        html += `<div style="display:flex;align-items:center;margin-bottom:4px;"><span style="display:inline-block;width:20px;height:20px;background:${clsObj.color};margin-right:8px;border:1px solid #999;"></span>${clsObj.name}</div>`;
+        foundAny = true;
+      }
     });
+    // If backend returned names instead of ids, include those
+    namesToInclude.forEach(name => {
+      const clsObj = allClasses.find(c => c.name === String(name));
+      if (clsObj) {
+        html += `<div style="display:flex;align-items:center;margin-bottom:4px;"><span style="display:inline-block;width:20px;height:20px;background:${clsObj.color};margin-right:8px;border:1px solid #999;"></span>${clsObj.name}</div>`;
+        foundAny = true;
+      } else {
+        // if unknown string, display raw
+        html += `<div style="display:flex;align-items:center;margin-bottom:4px;"><span style="display:inline-block;width:20px;height:20px;background:#ccc;margin-right:8px;border:1px solid #999;"></span>${name}</div>`;
+        foundAny = true;
+      }
+    });
+
+    if (!foundAny) {
+      html += `<div>No landcover classes detected in the selected AOI.</div>`;
+    }
   } else if (['NDVI', 'NDWI', 'NBR', 'NDBI', 'NDCI', 'SPI', 'VHI'].includes(index)) {
-    // Colorbar for continuous indices
+    // Continuous colorbar
+    // Try to use meta.min / meta.max from backend if available
+    let min = (typeof meta.min !== 'undefined') ? meta.min : -1;
+    let max = (typeof meta.max !== 'undefined') ? meta.max : 1;
+
+    // For SPI might be wider range; if backend provided scale use it
+    if (index === 'SPI' && (typeof meta.min === 'undefined' && typeof meta.max === 'undefined')) {
+      min = -3; max = 3;
+    }
+    if (index === 'VHI' && (typeof meta.min === 'undefined' && typeof meta.max === 'undefined')) {
+      min = 0; max = 100; // Vegetation Health Index often 0-100
+    }
+
+    // colors: red -> yellow -> green
     html += `
-      <div style="background: linear-gradient(to right, #d73027, #fee08b, #1a9850); height: 20px; margin: 10px 0; border-radius: 3px;"></div>
-      <div style="text-align: center; font-size: 12px;">Low &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; High</div>
+      <div style="height:18px; margin:8px 0; border-radius:3px; overflow:hidden; border:1px solid #ccc;">
+        <div style="width:100%; height:100%; background: linear-gradient(to right, #d73027, #fee08b, #1a9850);"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:12px;">
+        <span>${Number(min).toFixed(2)}</span>
+        <span>${Number((min + max) / 2).toFixed(2)}</span>
+        <span>${Number(max).toFixed(2)}</span>
+      </div>
     `;
+    html += `<div style="font-size:12px; margin-top:6px;">Color: low → high</div>`;
+  } else {
+    // Fallback
+    html += `<div>No legend available for ${index}</div>`;
   }
+
   legendControl.update(html);
 }
 
-// UI populators (unchanged except for district)
+// UI populators
 function populateIndexOptions(datasetKey) {
   const sel = document.getElementById('indexSelect');
-  if (!sel) return; // Not used in HTML
+  if (!sel) return;
   sel.innerHTML = '';
   if (!datasetKey) {
     sel.innerHTML = '<option value="">Select sub dataset</option>';
@@ -283,7 +367,9 @@ async function populateDistricts() {
   console.log('Populated', sel.options.length - 1, 'districts');
 
   // Add boundary layer
-  if (boundaryLayer) map.removeLayer(boundaryLayer);
+  if (boundaryLayer) {
+    try { map.removeLayer(boundaryLayer); } catch(e) { console.warn('Removing old boundary layer failed', e); }
+  }
   boundaryLayer = L.geoJSON(data, {
     style: { color: "#3388ff", weight: 1, fillOpacity: 0 },
     onEachFeature: (feature, layer) => {
@@ -298,15 +384,19 @@ async function populateDistricts() {
         document.getElementById('districtSelect').value = name;
         drawnItems.clearLayers();
         selectedGeometry = null;
-        console.log('Selected district:', name);
+        console.log('Selected district via click:', name);
       });
     }
   }).addTo(map);
   console.log('Boundary layer added with', boundaryLayer.getLayers().length, 'layers');
 
   if (boundaryLayer.getLayers().length > 0) {
-    map.fitBounds(boundaryLayer.getBounds(), { maxZoom: 7 });
-    console.log('Fit bounds to boundaries');
+    try {
+      map.fitBounds(boundaryLayer.getBounds(), { maxZoom: 7 });
+      console.log('Fit bounds to boundaries');
+    } catch (err) {
+      console.warn('fitBounds failed for boundary layer', err);
+    }
   } else {
     console.error('No layers in boundaryLayer');
   }
@@ -315,7 +405,7 @@ async function populateDistricts() {
 // Request body builder (adapt to district)
 function buildRequestBody() {
   const dataset = document.getElementById('datasetSelect').value;
-  const index = document.getElementById('indexSelect').value || 'NDVI'; // Default for ndvi dataset
+  const index = document.getElementById('indexSelect').value || 'NDVI';
   const yearEl = document.getElementById('yearSelect');
   const mStartEl = document.getElementById('monthStart');
   const mEndEl = document.getElementById('monthEnd');
@@ -341,7 +431,18 @@ function buildRequestBody() {
   return body;
 }
 
-// View (updated for backend response with unique_classes, force overlay visible)
+// Utility: add tile layer to overlay pane with robust error handling
+function addOverlayTile(tileUrl, tileOptions = {}) {
+  if (!tileUrl) return null;
+  // Always add overlay tiles to overlay pane to keep on top
+  const opts = Object.assign({}, tileOptions, { pane: overlayPaneName });
+  const tileLayer = L.tileLayer(tileUrl, opts);
+  overlayGroup.addLayer(tileLayer);
+  console.log('Overlay tile added with url prefix:', tileUrl.slice(0, 80));
+  return tileLayer;
+}
+
+// View (updated for backend response with unique_classes, force overlay visible, improved error handling)
 async function viewSelection() {
   const body = buildRequestBody();
   if (!body || !body.dataset) { alert("Select dataset"); return; }
@@ -351,34 +452,90 @@ async function viewSelection() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
 
-    overlayGroup.clearLayers();
-    const tileUrl = data.tiles || data.mode_tiles;
-    if (!tileUrl) { alert("No tiles returned"); return; }
-    const currentTileLayer = L.tileLayer(tileUrl, { opacity: 0.8 }).addTo(overlayGroup); // Always added, opacity for visibility
-
-    // Force overlay visible (since no toggle in control)
-    overlayGroup.setOpacity(1.0);
-
-    showLegend(body.index, body.dataset, data.unique_classes);
-
-    let bounds;
-    if (selectedFeatureGeoJSON) {
-      const gj = L.geoJSON(selectedFeatureGeoJSON.geometry);
-      bounds = gj.getBounds();
-    } else if (selectedGeometry) {
-      bounds = L.geoJSON(selectedGeometry).getBounds();
-    } else {
-      bounds = map.getBounds();
+    // Try to parse both success and error JSON
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      const txt = await res.text();
+      throw new Error('Unexpected backend response: ' + txt);
     }
-    map.fitBounds(bounds);
 
+    if (!res.ok) {
+      // Backend returned an error JSON - show detailed message and suggestions
+      const msg = data.detail || data.message || JSON.stringify(data);
+      console.error('Backend error:', msg);
+      // Specific helpful messaging for common failure types
+      if (msg && msg.toLowerCase().includes('no modis lst')) {
+        alert("VHI computation failed: No MODIS LST (MOD11A2) images found for the selected date/area. Try expanding the date range, selecting a different year, or choosing a larger AOI.");
+      } else {
+        alert("View failed: " + msg);
+      }
+      return;
+    }
+
+    // clear previous overlay tiles
+    overlayGroup.clearLayers();
+
+    // backend may return one of: tiles, mode_tiles, tile
+    const tileUrl = data.tiles || data.mode_tiles || data.tile || null;
+    if (!tileUrl) {
+      // no tiles returned; show message with possible backend info
+      const backendMsg = data.detail || data.message || 'No tiles returned by backend';
+      console.warn('No tile URL in backend response', data);
+      alert("No tiles returned: " + backendMsg);
+      // Update legend if backend gave unique classes info so user still sees legend
+      try { showLegend(body.index, body.dataset, data.unique_classes, data.meta || {}); } catch(e) {}
+      return;
+    }
+
+    // Add tile layer to overlay pane so it's always on top of basemaps
+    const tileOpts = { opacity: 0.85, attribution: data.attribution || '' };
+    const currentTileLayer = addOverlayTile(tileUrl, tileOpts);
+
+    // If backend sends meta including min/max for legend, pass it
+    try {
+      showLegend(body.index, body.dataset, data.unique_classes, data.meta || {});
+    } catch (e) {
+      console.warn('showLegend failed', e);
+      showLegend(body.index, body.dataset, data.unique_classes);
+    }
+
+    // Fit bounds if available from backend (preferred) otherwise from selected feature/geometry
+    let bounds = null;
+    if (data.bounds && Array.isArray(data.bounds) && data.bounds.length === 4) {
+      // expecting [west, south, east, north]
+      const b = data.bounds;
+      try { bounds = L.latLngBounds([ [b[1], b[0]], [b[3], b[2]] ]); } catch(e) { bounds = null; }
+    }
+
+    if (!bounds) {
+      if (selectedFeatureGeoJSON) {
+        const gj = L.geoJSON(selectedFeatureGeoJSON.geometry);
+        bounds = gj.getBounds();
+      } else if (selectedGeometry) {
+        bounds = L.geoJSON(selectedGeometry).getBounds();
+      } else {
+        bounds = map.getBounds();
+      }
+    }
+
+    if (bounds && bounds.isValid && bounds.isValid()) {
+      try {
+        map.fitBounds(bounds, { maxZoom: 12 });
+      } catch (err) {
+        console.warn('fitBounds failed', err);
+      }
+    }
+
+    // Provide success feedback in console and small UI alert
+    console.log(`${body.dataset.toUpperCase()} visualized! tileUrl:`, tileUrl);
     alert(`${body.dataset.toUpperCase()} visualized!`);
   } catch (err) {
     console.error("View failed", err);
-    alert("View failed: " + err.message);
+    // If err.message contains backend JSON text, present it
+    alert("View failed: " + (err.message || err));
   }
 }
 
@@ -392,10 +549,18 @@ async function downloadSelection() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt || 'Download request failed');
+    }
     const blob = await res.blob();
+    // Build filename and sanitize selectedDistrictName for filesystem
+    function sanitize(name) {
+      if (!name) return '';
+      return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').replace(/\s+/g, '_');
+    }
     let filename = `${body.dataset}_${body.index}_${body.startDate}_to_${body.endDate}`;
-    if (selectedDistrictName) filename += `_${selectedDistrictName}`;
+    if (selectedDistrictName) filename += `_${sanitize(selectedDistrictName)}`;
     filename += '.tif';
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -403,9 +568,10 @@ async function downloadSelection() {
     document.body.appendChild(link);
     link.click();
     setTimeout(() => { URL.revokeObjectURL(link.href); document.body.removeChild(link); }, 1500);
+    console.log('Download started for', filename);
   } catch (err) {
     console.error("Download failed", err);
-    alert("Download failed: " + err.message);
+    alert("Download failed: " + (err.message || err));
   }
 }
 
@@ -413,13 +579,14 @@ async function downloadSelection() {
 document.addEventListener("DOMContentLoaded", () => {
   try {
     initMap();
+    ensureOverlayPane();
 
-    // Initial date: 2024 for data availability
+    // Initial date: currentYear-1 for data availability
     const yearSelect = document.getElementById('yearSelect');
     const monthStart = document.getElementById('monthStart');
     const monthEnd = document.getElementById('monthEnd');
     if (yearSelect && monthStart && monthEnd) {
-      const currentYear = new Date().getFullYear() - 1; // 2024
+      const currentYear = new Date().getFullYear() - 1;
       for (let y = currentYear; y >= 2016; y--) {
         const opt = document.createElement('option');
         opt.value = String(y);
@@ -439,14 +606,15 @@ document.addEventListener("DOMContentLoaded", () => {
       monthEnd.value = '9'; // Sept
     }
 
-    // Dataset change (show geeOptions, but no indexSelect in HTML)
+    // Dataset change (show geeOptions etc.)
     const datasetSelect = document.getElementById('datasetSelect');
     const geeOptions = document.getElementById('geeOptions');
     if (datasetSelect && geeOptions) {
       datasetSelect.addEventListener('change', () => {
         const value = datasetSelect.value;
-        geeOptions.style.display = (value === 'ndvi' || value === 'dw') ? 'inline-block' : 'none';
-        // Clear selections
+        // show options only for certain datasets (adjust as needed)
+        geeOptions.style.display = (value === 'ndvi' || value === 'dw' || value === 'climate') ? 'inline-block' : 'none';
+        // Clear selections and overlays on dataset change
         document.getElementById('districtSelect').value = '';
         selectedDistrictName = null;
         selectedFeatureGeoJSON = null;
@@ -454,6 +622,8 @@ document.addEventListener("DOMContentLoaded", () => {
         drawnItems.clearLayers();
         selectedGeometry = null;
         overlayGroup.clearLayers();
+        // Update indexSelect options
+        populateIndexOptions(value);
       });
     }
 
@@ -472,25 +642,42 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const data = await loadAdminFeatures();
         if (!data) return;
-        const feat = data.features.find(f => f.properties.ADM3_EN === name || f.properties.NAME_3 === name);
+        const feat = data.features.find(f => (f.properties.ADM3_EN && f.properties.ADM3_EN === name) || (f.properties.NAME_3 && f.properties.NAME_3 === name));
         if (feat) {
           selectedFeatureGeoJSON = feat;
           selectedDistrictName = name;
-          const targetLayer = boundaryLayer.getLayers().find(l => l.feature === feat);
+          // Find corresponding layer in boundaryLayer and style it
+          let targetLayer = null;
+          if (boundaryLayer && boundaryLayer.getLayers) {
+            const layers = boundaryLayer.getLayers();
+            for (let i = 0; i < layers.length; i++) {
+              if (layers[i].feature && layers[i].feature === feat) {
+                targetLayer = layers[i];
+                break;
+              }
+            }
+          }
           if (targetLayer) {
             boundaryLayer.resetStyle();
             targetLayer.setStyle({ color: "red", weight: 2, fillOpacity: 0.1 });
-            targetLayer.openPopup();
+            try { targetLayer.openPopup(); } catch(e) {}
+          } else {
+            console.log('Selected feature layer not found in boundaryLayer - styling skipped');
           }
           drawnItems.clearLayers();
           selectedGeometry = null;
-          map.fitBounds(L.geoJSON(feat).getBounds(), { maxZoom: 10 });
+          try { map.fitBounds(L.geoJSON(feat).getBounds(), { maxZoom: 10 }); } catch(e) { console.warn('fitBounds for selected district failed', e); }
+          console.log('District selected from dropdown:', name);
+        } else {
+          console.warn('District not found in admin features for name:', name);
         }
       });
     }
 
-    document.getElementById('viewSelectionBtn').addEventListener('click', viewSelection);
-    document.getElementById('downloadSelectionBtn').addEventListener('click', downloadSelection);
+    const viewBtn = document.getElementById('viewSelectionBtn');
+    if (viewBtn) viewBtn.addEventListener('click', viewSelection);
+    const downloadBtn = document.getElementById('downloadSelectionBtn');
+    if (downloadBtn) downloadBtn.addEventListener('click', downloadSelection);
 
     populateDistricts();
   } catch (err) {
