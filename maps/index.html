@@ -58,7 +58,7 @@
             <option value="climate">Climate</option>
           </select>
           <select id="indexSelect">
-            <option value="">Select ____</option>
+            <option value="">Select sub dataset</option>
           </select>
           <select id="adminLevel">
             <option value="">choose admin level</option>
@@ -102,11 +102,11 @@
         <button id="downloadBtn">Download Selection</button>
       </div>
       <div id="legend"></div>
-      <!--div>
+      <div>
         <a class="btn" href="https://ethiosathub-gee.projects.earthengine.app/view/vegind" target="_blank">
           Open Vegetation Indices App
         </a>
-    </div-->
+      </div>
     </div>
   </div>
 
@@ -122,6 +122,38 @@
     hamburger.addEventListener("click", () => {
       navmenu.classList.toggle("show");
       hamburger.textContent = (hamburger.textContent === "☰") ? "✖" : "☰";
+    });
+
+    // Dynamic index selector based on dataset
+    const datasetSelect = document.getElementById('datasetSelect');
+    const indexSelect = document.getElementById('indexSelect');
+
+    datasetSelect.addEventListener('change', function() {
+      const selectedDataset = this.value;
+      let optionsHtml = '<option value="">';
+
+      if (selectedDataset === 'landcover') {
+        optionsHtml += 'Select land cover</option><option value="dynamic">dynamic land cover (10 m)</option>';
+      } else if (['sentinel2', 'landsat8', 'modis'].includes(selectedDataset)) {
+        optionsHtml += 'Select vegetation indices</option>';
+        optionsHtml += '<option value="ndvi">NDVI</option>';
+        optionsHtml += '<option value="evi">EVI</option>';
+        optionsHtml += '<option value="savi">SAVI</option>';
+        optionsHtml += '<option value="msavi">MSAVI</option>';
+        optionsHtml += '<option value="ndmi">NDMI</option>';
+        optionsHtml += '<option value="ndwi">NDWI</option>';
+        optionsHtml += '<option value="nbr">NBR</option>';
+        optionsHtml += '<option value="nbr2">NBR2</option>';
+        optionsHtml += '<option value="tvi">TVI</option>';
+      } else if (selectedDataset === 'climate') {
+        optionsHtml += 'Select drought indices</option>';
+        optionsHtml += '<option value="spi">SPI</option>';
+        optionsHtml += '<option value="vhi">VHI</option>';
+      } else {
+        optionsHtml += 'Select sub dataset</option>';
+      }
+
+      indexSelect.innerHTML = optionsHtml;
     });
   </script>
 </body>
