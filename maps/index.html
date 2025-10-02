@@ -122,7 +122,7 @@
 
       if (selectedDataset === 'landcover') {
         optionsHtml += 'Select land cover</option><option value="dynamic">dynamic land cover (10 m)</option>';
-      } else if (['sentinel2', 'landsat8', 'modis'].includes(selectedDataset)) {
+      } else if (['sentinel2', 'landsat', 'modis'].includes(selectedDataset)) {
         optionsHtml += 'Select vegetation indices</option><option value="ndvi">NDVI</option><option value="evi">EVI</option><option value="savi">SAVI</option><option value="msavi">MSAVI</option><option value="ndmi">NDMI</option><option value="ndwi">NDWI</option><option value="nbr">NBR</option><option value="nbr2">NBR2</option><option value="tvi">TVI</option>';
       } else if (selectedDataset === 'climate') {
         optionsHtml += 'Select drought indices</option><option value="spi">SPI</option><option value="vhi">VHI</option>';
@@ -139,7 +139,7 @@
     const startYears = {
       'landcover': 2015,
       'sentinel2': 2015,
-      'landsat8': 2013,
+      'landsat': 1984,
       'modis': 2000,
       'climate': 1981
     };
