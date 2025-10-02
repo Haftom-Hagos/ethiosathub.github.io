@@ -1,7 +1,7 @@
-// script.js (updated)
+// script.js (fixed)
 
 // Your backend URL
-const BACKEND = (window.BACKEND_URL || 'https://ethiosathub.onrender.com');
+const BACKEND = (window.BACKEND_URL || 'https://hafrepo-2.onrender.com');
 
 let map, drawnItems, overlayGroup, currentTileLayer;
 let selectedGeometry = null;
@@ -173,22 +173,13 @@ async function populateAdminFeatures(level) {
   sel.innerHTML = '<option value="">-- pick feature --</option>';
   const data = await loadAdminFeatures(level);
   if (!data) return;
-  data.features.forEach(f => {
-    let name;
-    switch (level) {
-      case 'adm1':
-        name = f.properties.NAME_1 || f.properties.ADM1_EN;
-        break;
-      case 'adm2':
-        name = f.properties.NAME_2 || f.properties.ADM2_EN;
-        break;
-      case 'adm3':
-        name = f.properties.NAME_3 || f.properties.ADM3_EN;
-        break;
-    }
+  data.features.forEach((f, idx) => {
+    let name = f.properties.NAME_1 || f.properties.NAME_2 || f.properties.NAME_3 ||
+               f.properties.ADM1_EN || f.properties.ADM2_EN || f.properties.ADM3_EN;
     if (!name) return;
     const o = document.createElement('option');
-    o.value = name; o.textContent = name;
+    o.value = idx; // store index instead of name
+    o.textContent = name;
     sel.appendChild(o);
   });
 }
@@ -300,28 +291,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById('adminLevel').addEventListener('change', e => populateAdminFeatures(e.target.value));
   document.getElementById('featureSelect').addEventListener('change', async e => {
-  const val = e.target.value;
-  const lvl = document.getElementById('adminLevel').value;
-  const data = await loadAdminFeatures(lvl);
-  if (!val || !data) { selectedFeatureGeoJSON = null; return; }
-  const feat = data.features.find(f => {
-    switch (lvl) {
-      case 'adm1':
-        return (f.properties.NAME_1 || f.properties.ADM1_EN) === val;
-      case 'adm2':
-        return (f.properties.NAME_2 || f.properties.ADM2_EN) === val;
-      case 'adm3':
-        return (f.properties.NAME_3 || f.properties.ADM3_EN) === val;
+    const idx = e.target.value;
+    const lvl = document.getElementById('adminLevel').value;
+    const data = await loadAdminFeatures(lvl);
+    if (!idx || !data) { selectedFeatureGeoJSON = null; return; }
+    const feat = data.features[parseInt(idx)];
+    if (feat) {
+      selectedFeatureGeoJSON = feat;
+      drawnItems.clearLayers();
+      const l = L.geoJSON(feat, { style: { color: 'red', weight: 2, fillOpacity: 0.1 } }).addTo(map);
+      map.fitBounds(l.getBounds());
     }
-    return false;
   });
-  if (feat) {
-    selectedFeatureGeoJSON = feat;
-    drawnItems.clearLayers();
-    const l = L.geoJSON(feat, { style: { color: 'red', weight: 2, fillOpacity: 0.1 } }).addTo(map);
-    map.fitBounds(l.getBounds());
-  }
-});
 
   document.getElementById('viewBtn').addEventListener('click', viewSelection);
   document.getElementById('downloadBtn').addEventListener('click', downloadSelection);
@@ -329,4 +310,3 @@ document.addEventListener("DOMContentLoaded", () => {
   // preload defaults
   populateAdminFeatures("adm3");
 });
-
