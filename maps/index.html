@@ -46,8 +46,13 @@
         <div id="map"></div>
       </div>
       <div class="filters">
-        <div>
+        <div class="labels-row">
           <label for="datasetSelect">Select dataset</label>
+          <label id="indexLabel" for="indexSelect">Select option</label>
+          <label for="adminLevel">Select admin level</label>
+          <label for="featureSelect">Select feature</label>
+        </div>
+        <div class="selects-row">
           <select id="datasetSelect">
             <option value="">-- choose dataset --</option>
             <option value="landcover">Land cover</option>
@@ -56,23 +61,14 @@
             <option value="modis">MODIS</option>
             <option value="climate">Climate</option>
           </select>
-        </div>
-        <div>
-          <label id="indexLabel" for="indexSelect">Select option</label>
           <select id="indexSelect">
             <option value="">-- choose --</option>
           </select>
-        </div>
-        <div>
-          <label for="adminLevel">Select admin level</label>
           <select id="adminLevel">
             <option value="adm1">Level 1 (Regions)</option>
             <option value="adm2">Level 2 (Zones)</option>
             <option value="adm3" selected>Level 3 (Districts)</option>
           </select>
-        </div>
-        <div>
-          <label for="featureSelect">Select feature</label>
           <select id="featureSelect">
             <option value="">-- pick feature --</option>
           </select>
