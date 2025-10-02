@@ -27,7 +27,7 @@ const DATASET_CONFIG = {
     yearRange: [2015, new Date().getFullYear()]
   },
   landsat: {
-    label: "Landsat (5–9)",
+    label: "Landsat (4–8)",
     indicesLabel: "Select vegetation index",
     indices: [
       { v: 'NDVI', t: 'NDVI' },
@@ -464,4 +464,5 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error('Init failed:', err);
   }
 });
+
 
