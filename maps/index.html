@@ -129,5 +129,17 @@
       hamburger.textContent = (hamburger.textContent === "☰") ? "✖" : "☰";
     });
   </script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Create the map
+    const map = L.map('map').setView([9.145, 40.4897], 6); // Ethiopia center
+    
+    // Add base layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a>'
+    }).addTo(map);
+  });
+</script>
 </body>
 </html>
