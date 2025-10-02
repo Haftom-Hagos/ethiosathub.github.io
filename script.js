@@ -1,9 +1,8 @@
-// script.js (fixed)
+// script.js (rewritten with fixes)
 
-// Your backend URL
 const BACKEND = (window.BACKEND_URL || 'https://hafrepo-2.onrender.com');
 
-let map, drawnItems, overlayGroup, currentTileLayer;
+let map, drawnItems, overlayGroup, currentTileLayer, overlayCheckbox;
 let selectedGeometry = null;
 let selectedFeatureGeoJSON = null;
 
@@ -27,8 +26,8 @@ const DATASET_CONFIG = {
     ],
     yearRange: [2015, new Date().getFullYear()]
   },
-  landsat8: {
-    label: "Landsat 8",
+  landsat: {
+    label: "Landsat (5–9)",
     indicesLabel: "Select vegetation index",
     indices: [
       { v: 'NDVI', t: 'NDVI' },
@@ -36,7 +35,7 @@ const DATASET_CONFIG = {
       { v: 'NBR', t: 'NBR' },
       { v: 'NDBI', t: 'NDBI' }
     ],
-    yearRange: [2013, new Date().getFullYear()]
+    yearRange: [1984, new Date().getFullYear()]
   },
   modis: {
     label: "MODIS",
@@ -74,10 +73,15 @@ function initMap() {
   map = L.map('map', { center: [9, 39], zoom: 6 });
   const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
   const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-  L.control.layers({ Street: street, Satellite: sat }, null, { collapsed: false }).addTo(map);
 
   overlayGroup = L.layerGroup().addTo(map);
   drawnItems = new L.FeatureGroup().addTo(map);
+
+  const baseLayers = { Street: street, Satellite: sat };
+  const overlayLayers = {};
+
+  // Add checkbox for visualization toggle
+  overlayCheckbox = L.control.layers(baseLayers, overlayLayers, { collapsed: false }).addTo(map);
 
   const drawControl = new L.Control.Draw({
     draw: { polygon: false, circle: false, marker: false, polyline: false, rectangle: true },
@@ -95,12 +99,19 @@ function initMap() {
   map.on('draw:deleted', () => {
     selectedGeometry = null;
   });
-
-  map.on('baselayerchange', () => {
-    if (overlayGroup && !map.hasLayer(overlayGroup)) map.addLayer(overlayGroup);
-    if (currentTileLayer && currentTileLayer.bringToFront) currentTileLayer.bringToFront();
-  });
 }
+
+// Legend control inside map
+const legendControl = L.control({ position: 'bottomleft' });
+legendControl.onAdd = function () {
+  this._div = L.DomUtil.create('div', 'info legend');
+  this.update();
+  return this._div;
+};
+legendControl.update = function (html) {
+  this._div.innerHTML = html || '';
+};
+legendControl.addTo(map);
 
 // UI populators
 function populateIndexOptions(datasetKey) {
@@ -177,11 +188,13 @@ async function populateAdminFeatures(level) {
   const data = await loadAdminFeatures(level);
   if (!data) return;
   data.features.forEach((f, idx) => {
-    let name = f.properties.NAME_1 || f.properties.NAME_2 || f.properties.NAME_3 ||
-               f.properties.ADM1_EN || f.properties.ADM2_EN || f.properties.ADM3_EN;
+    let name;
+    if (level === "adm1") name = f.properties.NAME_1 || f.properties.ADM1_EN;
+    else if (level === "adm2") name = f.properties.NAME_2 || f.properties.ADM2_EN;
+    else if (level === "adm3") name = f.properties.NAME_3 || f.properties.ADM3_EN;
     if (!name) return;
     const o = document.createElement('option');
-    o.value = idx; // store index instead of name
+    o.value = idx;
     o.textContent = name;
     sel.appendChild(o);
   });
@@ -214,8 +227,7 @@ function buildRequestBody() {
 
 // Legend
 function showLegend(index, dataset) {
-  const el = document.getElementById('legend');
-  el.innerHTML = `<h4>${index}</h4><div class="small">Dataset: ${dataset}</div>`;
+  legendControl.update(`<h4>${index}</h4><div class="small">Dataset: ${dataset}</div>`);
 }
 
 // View
@@ -235,7 +247,11 @@ async function viewSelection() {
     if (currentTileLayer) { map.removeLayer(currentTileLayer); currentTileLayer = null; }
     const tileUrl = data.tiles || data.mode_tiles;
     if (!tileUrl) { alert("No tiles returned"); return; }
-    currentTileLayer = L.tileLayer(tileUrl, { opacity: 0.85 }).addTo(overlayGroup);
+    currentTileLayer = L.tileLayer(tileUrl, { opacity: 1.0 }).addTo(overlayGroup);
+
+    // Add to overlay toggle
+    overlayCheckbox.addOverlay(currentTileLayer, "Visualization Layer");
+
     showLegend(body.index, body.dataset);
 
     if (body.geometry) {
@@ -279,7 +295,6 @@ async function downloadSelection() {
 document.addEventListener("DOMContentLoaded", () => {
   initMap();
 
-  // Initial setup for time range
   const initialYrRange = [2025, 2025];
   populateYearMonthDay("from", initialYrRange);
   populateYearMonthDay("to", initialYrRange);
@@ -297,19 +312,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const yr = DATASET_CONFIG[ds].yearRange;
       populateYearMonthDay("from", yr);
       populateYearMonthDay("to", yr);
-      // Reset to first available year
       document.getElementById('fromYear').value = yr[1];
       document.getElementById('toYear').value = yr[1];
-      document.getElementById('fromMonth').value = '10';
-      document.getElementById('toMonth').value = '10';
-      updateDays("from");
-      updateDays("to");
-      document.getElementById('fromDay').value = '1';
-      document.getElementById('toDay').value = '31';
-    } else {
-      // Reset to initial
-      populateYearMonthDay("from", initialYrRange);
-      populateYearMonthDay("to", initialYrRange);
       document.getElementById('fromMonth').value = '10';
       document.getElementById('toMonth').value = '10';
       updateDays("from");
@@ -340,6 +344,5 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById('viewBtn').addEventListener('click', viewSelection);
   document.getElementById('downloadBtn').addEventListener('click', downloadSelection);
 
-  // preload defaults
   populateAdminFeatures("adm3");
 });
