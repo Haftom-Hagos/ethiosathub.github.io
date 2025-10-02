@@ -81,7 +81,7 @@ function getPropName(level) {
   if (level === "adm1") return "ADM1_EN";
   if (level === "adm2") return "ADM2_EN";
   if (level === "adm3") return "ADM3_EN";
-  return "NAME_1"; // fallback
+  return "ADM1_EN"; // fallback
 }
 
 // Legend control (global definition)
@@ -354,7 +354,7 @@ async function populateDistricts() {
   }
 
   data.features.forEach((f, idx) => {
-    const name = f.properties.ADM3_EN || f.properties.NAME_3 || '';
+    const name = f.properties.ADM3_EN || f.properties.ADM3_EN || '';
     if (!name) {
       console.log('No name for feature', idx);
       return;
@@ -373,7 +373,7 @@ async function populateDistricts() {
   boundaryLayer = L.geoJSON(data, {
     style: { color: "#3388ff", weight: 1, fillOpacity: 0 },
     onEachFeature: (feature, layer) => {
-      const name = feature.properties.ADM3_EN || feature.properties.NAME_3 || '';
+      const name = feature.properties.ADM3_EN || feature.properties.ADM3_EN || '';
       layer.bindPopup(`<b>${name}</b>`);
       layer.on('click', () => {
         boundaryLayer.resetStyle();
@@ -642,7 +642,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const data = await loadAdminFeatures();
         if (!data) return;
-        const feat = data.features.find(f => (f.properties.ADM3_EN && f.properties.ADM3_EN === name) || (f.properties.NAME_3 && f.properties.NAME_3 === name));
+        const feat = data.features.find(f => (f.properties.ADM3_EN && f.properties.ADM3_EN === name) || (f.properties.ADM3_EN && f.properties.ADM3_EN === name));
         if (feat) {
           selectedFeatureGeoJSON = feat;
           selectedDistrictName = name;
@@ -684,3 +684,4 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error('Init failed:', err);
   }
 });
+
