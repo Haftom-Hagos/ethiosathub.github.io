@@ -27,13 +27,14 @@ const DATASET_CONFIG = {
     yearRange: [2015, new Date().getFullYear()]
   },
   landsat: {
-    label: "Landsat (5–9)",
+    label: "Landsat (4–8)",
     indicesLabel: "Select vegetation index",
     indices: [
       { v: 'NDVI', t: 'NDVI' },
       { v: 'NDWI', t: 'NDWI' },
       { v: 'NBR', t: 'NBR' },
-      { v: 'NDBI', t: 'NDBI' }
+      { v: 'NDBI', t: 'NDBI' },
+      { v: 'NDCI', t: 'NDCI' } // added to match script.js index list
     ],
     yearRange: [1984, new Date().getFullYear()]
   },
@@ -59,6 +60,7 @@ const DATASET_CONFIG = {
     yearRange: [1981, new Date().getFullYear()]
   }
 };
+
 
 // Admin boundaries sources
 const ADMIN_SOURCES = {
@@ -346,3 +348,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   populateAdminFeatures("adm3");
 });
+
