@@ -497,4 +497,3 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error('Init failed:', err);
   }
 });
-
