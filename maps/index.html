@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
-  <!-- Navbar -->
   <nav class="navbars">
     <div class="nav-container">
       <div class="nav-logo">
@@ -25,91 +24,95 @@
       </ul>
     </div>
   </nav>
-
-  <!-- Map section -->
-  <div class="map-layout">
-    <div class="map-container">
-      <div id="map"></div>
-    </div>
-  </div>
-
-  <!-- Tabs/Controls below the map -->
+  
   <div class="sub-contents">
     <div id="maps" class="tabcontent">
-      <div class="sidebar">
-        <h2>Map view</h2>
-        <p>
-          Select a dataset, time range, and administrative feature (or draw an area) to visualize and download. 
-          For larger areas or more satellite sources, please use the Vegetation Indices app.
-        </p>
-
-        <!-- Dataset -->
-        <label for="datasetSelect">Select dataset</label>
-        <select id="datasetSelect">
-          <option value="">-- choose dataset --</option>
-          <option value="landcover">Land cover</option>
-          <option value="sentinel2">Sentinel-2</option>
-          <option value="landsat8">Landsat 8</option>
-          <option value="modis">MODIS</option>
-          <option value="climate">Climate</option>
-        </select>
-
-        <!-- Dynamic index selector -->
-        <label id="indexLabel" for="indexSelect">Select option</label>
-        <select id="indexSelect">
-          <option value="">-- choose --</option>
-        </select>
-
-        <!-- Admin level -->
-        <label for="adminLevel">Select admin level</label>
-        <select id="adminLevel">
-          <option value="adm1">Level 1 (Regions)</option>
-          <option value="adm2">Level 2 (Zones)</option>
-          <option value="adm3" selected>Level 3 (Districts)</option>
-        </select>
-
-        <!-- Admin feature -->
-        <label for="featureSelect">Select feature</label>
-        <select id="featureSelect">
-          <option value="">-- pick feature --</option>
-        </select>
-
-        <!-- Time range -->
-        <h3>Time Range</h3>
-        <div class="time-range">
-          <div>
-            <strong>From:</strong>
-            <label for="fromYear">Year</label>
-            <select id="fromYear"></select>
-            <label for="fromMonth">Month</label>
-            <select id="fromMonth"></select>
-            <label for="fromDay">Day</label>
-            <select id="fromDay"></select>
-          </div>
-          <div>
-            <strong>To:</strong>
-            <label for="toYear">Year</label>
-            <select id="toYear"></select>
-            <label for="toMonth">Month</label>
-            <select id="toMonth"></select>
-            <label for="toDay">Day</label>
-            <select id="toDay"></select>
-          </div>
+      <div class="map-layout">
+        <!-- Map -->
+        <div class="map-container">
+          <div id="map"></div>
         </div>
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <h2>Map view</h2>
+          <p>
+            Select a dataset, time range, and administrative feature (or draw an area) to visualize and download. 
+            For larger areas or more satellite sources, please use the Vegetation Indices app.
+          </p>
+          <!-- Dataset -->
+          <label for="datasetSelect">Select dataset</label>
+          <select id="datasetSelect">
+            <option value="">-- choose dataset --</option>
+            <option value="landcover">Land cover</option>
+            <option value="sentinel2">Sentinel-2</option>
+            <option value="landsat8">Landsat 8</option>
+            <option value="modis">MODIS</option>
+            <option value="climate">Climate</option>
+          </select>
 
-        <!-- Actions -->
-        <div class="button-container">
-          <button id="viewBtn">View Selection</button>
-          <button id="downloadBtn">Download Selection</button>
+          <!-- Dynamic index selector -->
+          <label id="indexLabel" for="indexSelect">Select option</label>
+          <select id="indexSelect">
+            <option value="">-- choose --</option>
+          </select>
+
+          <!-- Admin level -->
+          <label for="adminLevel">Select admin level</label>
+          <select id="adminLevel">
+            <option value="adm1">Level 1 (Regions)</option>
+            <option value="adm2">Level 2 (Zones)</option>
+            <option value="adm3" selected>Level 3 (Districts)</option>
+          </select>
+
+          <!-- Admin feature -->
+          <label for="featureSelect">Select feature</label>
+          <select id="featureSelect">
+            <option value="">-- pick feature --</option>
+          </select>
+
+          <!-- Time range -->
+          <h3>Time Range</h3>
+          <div class="time-range">
+            <div>
+              <strong>From:</strong>
+              <label for="fromYear">Year</label>
+              <select id="fromYear"></select>
+              <label for="fromMonth">Month</label>
+              <select id="fromMonth"></select>
+              <label for="fromDay">Day</label>
+              <select id="fromDay"></select>
+            </div>
+            <div>
+              <strong>To:</strong>
+              <label for="toYear">Year</label>
+              <select id="toYear"></select>
+              <label for="toMonth">Month</label>
+              <select id="toMonth"></select>
+              <label for="toDay">Day</label>
+              <select id="toDay"></select>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="button-container">
+            <button id="viewBtn">View Selection</button>
+            <button id="downloadBtn">Download Selection</button>
+          </div>
+
+          <!-- Legend -->
+          <div id="legend"></div>
+
+          <!-- External App -->
+          <!--div>
+            <a class="btn" href="https://ethiosathub-gee.projects.earthengine.app/view/vegind" target="_blank">
+              Open Vegetation Indices App
+            </a>
+        </div-->
         </div>
-
-        <!-- Legend -->
-        <div id="legend"></div>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
   <script src="https://unpkg.com/esri-leaflet"></script>
