@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
+  <!-- Navbar -->
   <nav class="navbars">
     <div class="nav-container">
       <div class="nav-logo">
@@ -16,121 +17,112 @@
       </div>
       <div class="hamburger" id="hamburger">☰</div>
       <ul class="nav-menu">
-        <li class="nav-item">
-          <a href="/home" class="nav-link">Home</a>
-        </li>
-        <li class="nav-item">
-          <a href="/maps" class="nav-link active">Maps</a>
-        </li>
-        <li class="nav-item">
-          <a href="/data" class="nav-link">Data</a>
-        </li>
-        <li class="nav-item">
-          <a href="/gallery" class="nav-link">Gallery</a>
-        </li>
-        <li class="nav-item">
-          <a href="/about" class="nav-link">About</a>
-        </li>
+        <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="/maps" class="nav-link active">Maps</a></li>
+        <li class="nav-item"><a href="/data" class="nav-link">Data</a></li>
+        <li class="nav-item"><a href="/gallery" class="nav-link">Gallery</a></li>
+        <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
       </ul>
     </div>
   </nav>
-  
+
+  <!-- Map section -->
+  <div class="map-layout">
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- Tabs/Controls below the map -->
   <div class="sub-contents">
     <div id="maps" class="tabcontent">
-      <h2>Map view</h2>
-      <p>Select a dataset, year, and district (or draw an area for NDVI/DW) to visualize and download. Currently, this service works for small areas. For larger areas, access to more satellite sources, and additional vegetation indices, please use the Vegetation Indices app.</p>
-      <div id="map"></div>
-      <div class="filters">
-        <label for="datasetSelect">Dataset:</label>
+      <div class="sidebar">
+        <h2>Map view</h2>
+        <p>
+          Select a dataset, time range, and administrative feature (or draw an area) to visualize and download. 
+          For larger areas or more satellite sources, please use the Vegetation Indices app.
+        </p>
+
+        <!-- Dataset -->
+        <label for="datasetSelect">Select dataset</label>
         <select id="datasetSelect">
-          <option value="">Select Dataset</option>
-          <!--option value="landcover">Land Cover</option-->
-          <option value="ndvi">NDVI (Sentinel-2)</option>
-          <option value="dw">Land Cover (Dynamic World) </option>
+          <option value="">-- choose dataset --</option>
+          <option value="landcover">Land cover</option>
+          <option value="sentinel2">Sentinel-2</option>
+          <option value="landsat8">Landsat 8</option>
+          <option value="modis">MODIS</option>
+          <option value="climate">Climate</option>
         </select>
-        <!--div id="landcoverOptions" style="display: none;">
-          <label for="yearSelectLC">Year:</label>
-          <select id="yearSelectLC">
-            <option value="">Select Year</option>
-            <option value="2017">2017</option>
-            <option value="2018">2018</option>
-            <option value="2019">2019</option>
-            <option value="2020">2020</option>
-            <option value="2021">2021</option>
-            <option value="2022">2022</option>
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-          </select>
-      </div-->
-        <div id="geeOptions" style="display: none;"> <!-- Renamed from ndviOptions to geeOptions for shared NDVI/DW -->
-          <label for="yearSelect">Year:</label>
-          <select id="yearSelect"></select>
-          <label for="monthStart">From:</label>
-          <select id="monthStart"></select>
-          <label for="monthEnd">To:</label>
-          <select id="monthEnd"></select>
+
+        <!-- Dynamic index selector -->
+        <label id="indexLabel" for="indexSelect">Select option</label>
+        <select id="indexSelect">
+          <option value="">-- choose --</option>
+        </select>
+
+        <!-- Admin level -->
+        <label for="adminLevel">Select admin level</label>
+        <select id="adminLevel">
+          <option value="adm1">Level 1 (Regions)</option>
+          <option value="adm2">Level 2 (Zones)</option>
+          <option value="adm3" selected>Level 3 (Districts)</option>
+        </select>
+
+        <!-- Admin feature -->
+        <label for="featureSelect">Select feature</label>
+        <select id="featureSelect">
+          <option value="">-- pick feature --</option>
+        </select>
+
+        <!-- Time range -->
+        <h3>Time Range</h3>
+        <div class="time-range">
+          <div>
+            <strong>From:</strong>
+            <label for="fromYear">Year</label>
+            <select id="fromYear"></select>
+            <label for="fromMonth">Month</label>
+            <select id="fromMonth"></select>
+            <label for="fromDay">Day</label>
+            <select id="fromDay"></select>
+          </div>
+          <div>
+            <strong>To:</strong>
+            <label for="toYear">Year</label>
+            <select id="toYear"></select>
+            <label for="toMonth">Month</label>
+            <select id="toMonth"></select>
+            <label for="toDay">Day</label>
+            <select id="toDay"></select>
+          </div>
         </div>
-        <label for="districtSelect">District:</label>
-        <select id="districtSelect">
-          <option value="">Select a district</option>
-        </select>
-      </div>
-      <!--div id="layer-toggles" style="display: none;"> 
-        <label><input type="checkbox" id="ndvi-toggle" checked> NDVI</label>
-        <label><input type="checkbox" id="dw-mode-toggle"> DW Mode</label>
-        <label><input type="checkbox" id="dw-prob-toggle"> DW Prob</label>
-    </div-->
-      <div class="button-container">
-        <button id="viewSelectionBtn">View Selection</button>
-        <button id="downloadSelectionBtn">Download Selection</button>
-      </div>
-      <div id="legend"></div> <!-- DW legend container -->
-      <div>
-        <a class="btn" href="https://ethiosathub-gee.projects.earthengine.app/view/vegind" target="_blank">
-          Open Vegetation Indices App
-        </a>
+
+        <!-- Actions -->
+        <div class="button-container">
+          <button id="viewBtn">View Selection</button>
+          <button id="downloadBtn">Download Selection</button>
+        </div>
+
+        <!-- Legend -->
+        <div id="legend"></div>
       </div>
     </div>
   </div>
 
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
   <script src="https://unpkg.com/esri-leaflet"></script>
   <script src="https://unpkg.com/proj4@2.7.5/dist/proj4.js"></script>
   <script src="../script.js"></script>
   <script>
+    // Navbar toggle
     const hamburger = document.getElementById("hamburger");
     const navmenu = document.querySelector(".nav-menu");
     hamburger.addEventListener("click", () => {
       navmenu.classList.toggle("show");
-      if (hamburger.textContent === "☰") {
-        hamburger.textContent = "✖"; // change to X
-      } else {
-        hamburger.textContent = "☰"; // change back
-      }
+      hamburger.textContent = (hamburger.textContent === "☰") ? "✖" : "☰";
     });
-
-    // Toggle visibility of options based on dataset selection
-    const datasetSelect = document.getElementById('datasetSelect');
-    const geeOptions = document.getElementById('geeOptions');
-    const layerToggles = document.getElementById('layer-toggles');
-    const ndviLegend = document.getElementById('ndvi-legend');
-    const dwLegend = document.getElementById('dw-legend');
-
-    datasetSelect.addEventListener('change', () => {
-      const value = datasetSelect.value;
-      geeOptions.style.display = (value === 'ndvi' || value === 'dw') ? 'inline-block' : 'none';
-      layerToggles.style.display = (value === 'ndvi' || value === 'dw') ? 'block' : 'none';
-  
-      // Handle legends: Show relevant one, hide others
-      if (ndviLegend) ndviLegend.style.display = value === 'ndvi' ? 'block' : 'none';
-      if (dwLegend) dwLegend.style.display = value === 'dw' ? 'block' : 'none';
-  
-      // Clear legends if switching away
-      if (value !== 'ndvi' && ndviLegend) ndviLegend.innerHTML = '';
-      if (value !== 'dw' && dwLegend) dwLegend.innerHTML = '';
-    });
-
   </script>
 </body>
 </html>
