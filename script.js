@@ -1,18 +1,19 @@
-// script.js (rewritten with fixes, merged map and overlay tick box from provided code)
+// script.js (complete updated version with debugging logs for districts/boundaries)
 
 const BACKEND = (window.BACKEND_URL || 'https://hafrepo-2.onrender.com');
 
 let map, drawnItems, overlayGroup, overlayCheckbox, boundaryLayer, selectedFeatureLayer;
 let selectedGeometry = null;
 let selectedFeatureGeoJSON = null;
+let selectedDistrictName = null; // For filename
 
-// Dataset config
+// Dataset config (adjust yearRange max to current-1 for safety)
 const DATASET_CONFIG = {
   landcover: {
     label: "Land cover",
     indicesLabel: "Select land cover",
     indices: [{ v: 'dynamic_world', t: 'Dynamic World (10m)' }],
-    yearRange: [2015, new Date().getFullYear()]
+    yearRange: [2015, new Date().getFullYear() - 1]
   },
   sentinel2: {
     label: "Sentinel-2",
@@ -24,7 +25,7 @@ const DATASET_CONFIG = {
       { v: 'NDBI', t: 'NDBI' },
       { v: 'NDCI', t: 'NDCI' }
     ],
-    yearRange: [2015, new Date().getFullYear()]
+    yearRange: [2015, new Date().getFullYear() - 1]
   },
   landsat: {
     label: "Landsat (4–8)",
@@ -35,7 +36,7 @@ const DATASET_CONFIG = {
       { v: 'NBR', t: 'NBR' },
       { v: 'NDBI', t: 'NDBI' }
     ],
-    yearRange: [1984, new Date().getFullYear()]
+    yearRange: [1984, new Date().getFullYear() - 1]
   },
   modis: {
     label: "MODIS",
@@ -47,7 +48,7 @@ const DATASET_CONFIG = {
       { v: 'NDBI', t: 'NDBI' },
       { v: 'NDCI', t: 'NDCI' }
     ],
-    yearRange: [2000, new Date().getFullYear()]
+    yearRange: [2000, new Date().getFullYear() - 1]
   },
   climate: {
     label: "Climate",
@@ -56,7 +57,7 @@ const DATASET_CONFIG = {
       { v: 'SPI', t: 'SPI' },
       { v: 'VHI', t: 'VHI' }
     ],
-    yearRange: [1981, new Date().getFullYear()]
+    yearRange: [1981, new Date().getFullYear() - 1]
   }
 };
 
@@ -76,38 +77,37 @@ function getPropName(level) {
   return "NAME_1"; // fallback
 }
 
-// Legend control (global definition, but addTo called in initMap)
+// Legend control (global definition)
 let legendControl;
 
-// Init map (merged with provided code for base maps, satellite, overlay tick box via group)
+// Init map
 function initMap() {
   const mapDiv = document.getElementById('map');
   if (!mapDiv) {
     console.error('Map div not found!');
     return;
   }
-  console.log('Map div found, size:', mapDiv.offsetHeight, mapDiv.offsetWidth);  // Debug log
+  console.log('Map div found, size:', mapDiv.offsetHeight, mapDiv.offsetWidth);
 
   map = L.map('map', { center: [9.145, 40.4897], zoom: 6 });
   const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap'
   }).addTo(map);
-  console.log('Basemap added');  // Debug log
+  console.log('Basemap added');
 
   const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 19,
     attribution: 'Esri & contributors'
   });
 
-  overlayGroup = L.layerGroup().addTo(map);
+  overlayGroup = L.layerGroup().addTo(map); // Always added to map, for always-on
   drawnItems = new L.FeatureGroup().addTo(map);
 
   const baseLayers = { "Street": street, "Satellite": sat };
-  const overlayLayers = { "Overlay": overlayGroup };
+  // Note: No overlay in control to keep always on; if needed, add separate toggle
 
-  // Layer control with overlays (tick box for overlay group)
-  overlayCheckbox = L.control.layers(baseLayers, overlayLayers, { collapsed: false }).addTo(map);
+  overlayCheckbox = L.control.layers(baseLayers, null, { collapsed: false }).addTo(map); // No overlays in control
 
   const drawControl = new L.Control.Draw({
     draw: { polygon: false, circle: false, marker: false, polyline: false, rectangle: true },
@@ -120,7 +120,8 @@ function initMap() {
     drawnItems.addLayer(e.layer);
     selectedGeometry = e.layer.toGeoJSON().geometry;
     selectedFeatureGeoJSON = null;
-    if (boundaryLayer) boundaryLayer.resetStyle(); // Clear admin highlight
+    selectedDistrictName = null;
+    if (boundaryLayer) boundaryLayer.resetStyle();
     console.log('Area drawn');
   });
 
@@ -129,13 +130,18 @@ function initMap() {
     if (selectedFeatureGeoJSON && boundaryLayer) {
       boundaryLayer.resetStyle();
       selectedFeatureGeoJSON = null;
+      selectedDistrictName = null;
     }
   });
 
-  // Legend control added here, after map is created
+  // Legend control with white background
   legendControl = L.control({ position: 'bottomleft' });
   legendControl.onAdd = function () {
     this._div = L.DomUtil.create('div', 'info legend');
+    this._div.style.backgroundColor = 'white';
+    this._div.style.padding = '10px';
+    this._div.style.borderRadius = '5px';
+    this._div.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
     this.update();
     return this._div;
   };
@@ -144,40 +150,36 @@ function initMap() {
   };
   legendControl.addTo(map);
 
-  map.invalidateSize();  // Force resize check
+  map.invalidateSize();
 }
 
-// Enhanced showLegend with hardcoded palettes for key datasets/indices
-function showLegend(index, dataset) {
+// Updated showLegend: colorbar for veg indices, filtered classes for landcover
+function showLegend(index, dataset, uniqueClasses = null) {
   if (!legendControl) return;
   let html = `<h4>${index}</h4><div class="small">Dataset: ${dataset}</div>`;
-  if (dataset === 'landcover') {
-    const classes = ['water', 'trees', 'grass', 'flooded_vegetation', 'crops', 'shrub_and_scrub', 'built', 'bare', 'snow_and_ice'];
-    const colors = ['419bdf', '397d49', '88b053', '7a87c6', 'e49635', 'dfc35a', 'c4281b', 'a59b8f', 'b39fe1'];
-    html = `<h4>Land Cover Classes</h4>`;
-    classes.forEach((cls, i) => {
-      html += `<div style="display: flex; align-items: center;"><span style="display: inline-block; width: 20px; height: 20px; background: #${colors[i]}; margin-right: 5px;"></span>${cls}</div>`;
+  if (dataset === 'landcover' && uniqueClasses) {
+    const allClasses = ['water', 'trees', 'grass', 'flooded_vegetation', 'crops', 'shrub_and_scrub', 'built', 'bare', 'snow_and_ice'];
+    const allColors = ['#419bdf', '#397d49', '#88b053', '#7a87c6', '#e49635', '#dfc35a', '#c4281b', '#a59b8f', '#b39fe1'];
+    html = `<h4>Land Cover Classes (AOI)</h4>`;
+    uniqueClasses.forEach(clsId => {
+      const cls = allClasses[clsId];
+      const color = allColors[clsId];
+      html += `<div style="display: flex; align-items: center;"><span style="display: inline-block; width: 20px; height: 20px; background: ${color}; margin-right: 5px;"></span>${cls}</div>`;
     });
-  } else if (index === 'NDVI' || index === 'NDCI') {
+  } else if (['NDVI', 'NDWI', 'NBR', 'NDBI', 'NDCI', 'SPI', 'VHI'].includes(index)) {
+    // Colorbar for continuous indices
     html += `
-      <div style="display: flex; align-items: center; margin-bottom: 5px;">
-        <span style="display: inline-block; width: 20px; height: 20px; background: red; margin-right: 5px;"></span> Low (-1 to 0)
-      </div>
-      <div style="display: flex; align-items: center; margin-bottom: 5px;">
-        <span style="display: inline-block; width: 20px; height: 20px; background: yellow; margin-right: 5px;"></span> Medium (0)
-      </div>
-      <div style="display: flex; align-items: center;">
-        <span style="display: inline-block; width: 20px; height: 20px; background: green; margin-right: 5px;"></span> High (0 to 1)
-      </div>
+      <div style="background: linear-gradient(to right, #d73027, #fee08b, #1a9850); height: 20px; margin: 10px 0; border-radius: 3px;"></div>
+      <div style="text-align: center; font-size: 12px;">Low &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; High</div>
     `;
   }
-  // Add more for other indices as needed
   legendControl.update(html);
 }
 
-// UI populators
+// UI populators (unchanged except for district)
 function populateIndexOptions(datasetKey) {
   const sel = document.getElementById('indexSelect');
+  if (!sel) return; // Not used in HTML
   sel.innerHTML = '';
   if (!datasetKey) {
     sel.innerHTML = '<option value="">Select sub dataset</option>';
@@ -197,6 +199,7 @@ function populateYearMonthDay(prefix, yearRange) {
   const ySel = document.getElementById(prefix + 'Year');
   const mSel = document.getElementById(prefix + 'Month');
   const dSel = document.getElementById(prefix + 'Day');
+  if (!ySel || !mSel || !dSel) return;
   ySel.innerHTML = '';
   for (let y = yearRange[1]; y >= yearRange[0]; y--) {
     let o = document.createElement('option');
@@ -220,6 +223,7 @@ function updateDays(prefix) {
   const y = parseInt(document.getElementById(prefix + 'Year').value);
   const m = parseInt(document.getElementById(prefix + 'Month').value);
   const dSel = document.getElementById(prefix + 'Day');
+  if (!dSel) return;
   dSel.innerHTML = '';
   const last = new Date(y, m, 0).getDate();
   for (let d = 1; d <= last; d++) {
@@ -229,13 +233,20 @@ function updateDays(prefix) {
   }
 }
 
-// Load admin features
-async function loadAdminFeatures(level) {
+// Load admin features (only adm3)
+async function loadAdminFeatures() {
+  const level = 'adm3';
   if (!ADMIN_SOURCES[level]) return null;
   if (adminCache[level]) return adminCache[level];
   try {
+    console.log('Fetching admin boundaries from:', ADMIN_SOURCES[level]);
     const res = await fetch(ADMIN_SOURCES[level]);
+    if (!res.ok) {
+      console.error('Fetch failed with status:', res.status);
+      return null;
+    }
     const data = await res.json();
+    console.log('Fetched data.features length:', data.features ? data.features.length : 'no features');
     adminCache[level] = data;
     return data;
   } catch (err) {
@@ -244,64 +255,82 @@ async function loadAdminFeatures(level) {
   }
 }
 
-// Enhanced populateAdminFeatures to also add boundary layer to map with click interactions
-async function populateAdminFeatures(level) {
-  const sel = document.getElementById('featureSelect');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">-- pick feature --</option>';
-  const data = await loadAdminFeatures(level);
-  if (!data) return;
+// Populate districts dropdown and boundary layer
+async function populateDistricts() {
+  const sel = document.getElementById('districtSelect');
+  if (!sel) {
+    console.error('districtSelect not found!');
+    return;
+  }
+  sel.innerHTML = '<option value="">Select a district</option>';
+  const data = await loadAdminFeatures();
+  if (!data || !data.features || data.features.length === 0) {
+    console.error('No features in data');
+    return;
+  }
 
-  const prop = getPropName(level);
-  data.features.forEach(f => {
-    let name = f.properties[prop] || f.properties[prop.toLowerCase()] || f.properties[prop.replace('_EN', '')] || '';
-    if (!name) return;
+  data.features.forEach((f, idx) => {
+    const name = f.properties.ADM3_EN || f.properties.NAME_3 || '';
+    if (!name) {
+      console.log('No name for feature', idx);
+      return;
+    }
     const o = document.createElement('option');
     o.value = name;
     o.textContent = name;
     sel.appendChild(o);
   });
+  console.log('Populated', sel.options.length - 1, 'districts');
 
-  // Add boundary layer to map
+  // Add boundary layer
   if (boundaryLayer) map.removeLayer(boundaryLayer);
   boundaryLayer = L.geoJSON(data, {
     style: { color: "#3388ff", weight: 1, fillOpacity: 0 },
     onEachFeature: (feature, layer) => {
-      const name = feature.properties[prop] || feature.properties[prop.toLowerCase()] || feature.properties[prop.replace('_EN', '')] || '';
+      const name = feature.properties.ADM3_EN || feature.properties.NAME_3 || '';
       layer.bindPopup(`<b>${name}</b>`);
       layer.on('click', () => {
         boundaryLayer.resetStyle();
         layer.setStyle({ color: "red", weight: 2, fillOpacity: 0.1 });
         layer.openPopup();
         selectedFeatureGeoJSON = feature;
-        document.getElementById('featureSelect').value = name;
-        // Clear drawn area
+        selectedDistrictName = name;
+        document.getElementById('districtSelect').value = name;
         drawnItems.clearLayers();
         selectedGeometry = null;
+        console.log('Selected district:', name);
       });
     }
   }).addTo(map);
+  console.log('Boundary layer added with', boundaryLayer.getLayers().length, 'layers');
 
   if (boundaryLayer.getLayers().length > 0) {
     map.fitBounds(boundaryLayer.getBounds(), { maxZoom: 7 });
+    console.log('Fit bounds to boundaries');
+  } else {
+    console.error('No layers in boundaryLayer');
   }
 }
 
-// Request body builder
+// Request body builder (adapt to district)
 function buildRequestBody() {
   const dataset = document.getElementById('datasetSelect').value;
-  const index = document.getElementById('indexSelect').value;
-  const fromY = document.getElementById('fromYear').value;
-  const fromM = document.getElementById('fromMonth').value;
-  const fromD = document.getElementById('fromDay').value;
-  const toY = document.getElementById('toYear').value;
-  const toM = document.getElementById('toMonth').value;
-  const toD = document.getElementById('toDay').value;
+  const index = document.getElementById('indexSelect').value || 'NDVI'; // Default for ndvi dataset
+  const yearEl = document.getElementById('yearSelect');
+  const mStartEl = document.getElementById('monthStart');
+  const mEndEl = document.getElementById('monthEnd');
+  if (!yearEl || !mStartEl || !mEndEl) return null;
 
-  const startDate = `${fromY}-${String(fromM).padStart(2, '0')}-${String(fromD).padStart(2, '0')}`;
-  const endDate = `${toY}-${String(toM).padStart(2, '0')}-${String(toD).padStart(2, '0')}`;
+  const year = parseInt(yearEl.value, 10);
+  const ms = parseInt(mStartEl.value, 10);
+  const me = parseInt(mEndEl.value, 10);
+  const mStart = Math.min(ms, me);
+  const mEnd = Math.max(ms, me);
+  const startDate = `${year}-${String(mStart).padStart(2, '0')}-01`;
+  const lastDay = new Date(year, mEnd, 0).getDate();
+  const endDate = `${year}-${String(mEnd).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-  let body = { dataset, index, startDate, endDate };
+  let body = { dataset: dataset === 'ndvi' ? 'sentinel2' : (dataset === 'dw' ? 'landcover' : dataset), index, startDate, endDate };
 
   if (selectedGeometry) body.geometry = selectedGeometry;
   else if (selectedFeatureGeoJSON) body.geometry = selectedFeatureGeoJSON.geometry;
@@ -312,10 +341,10 @@ function buildRequestBody() {
   return body;
 }
 
-// View
+// View (updated for backend response with unique_classes, force overlay visible)
 async function viewSelection() {
   const body = buildRequestBody();
-  if (!body.dataset || !body.index) { alert("Select dataset and option"); return; }
+  if (!body || !body.dataset) { alert("Select dataset"); return; }
   try {
     const res = await fetch(`${BACKEND}/gee_layers`, {
       method: "POST",
@@ -328,26 +357,35 @@ async function viewSelection() {
     overlayGroup.clearLayers();
     const tileUrl = data.tiles || data.mode_tiles;
     if (!tileUrl) { alert("No tiles returned"); return; }
-    const currentTileLayer = L.tileLayer(tileUrl, { opacity: 1.0 }).addTo(overlayGroup);
+    const currentTileLayer = L.tileLayer(tileUrl, { opacity: 0.8 }).addTo(overlayGroup); // Always added, opacity for visibility
 
-    showLegend(body.index, body.dataset);
+    // Force overlay visible (since no toggle in control)
+    overlayGroup.setOpacity(1.0);
 
-    if (body.geometry) {
-      const gj = L.geoJSON(body.geometry);
-      map.fitBounds(gj.getBounds(), { maxZoom: 10 });
-    } else if (body.bbox) {
-      map.fitBounds([[body.bbox.south, body.bbox.west], [body.bbox.north, body.bbox.east]]);
+    showLegend(body.index, body.dataset, data.unique_classes);
+
+    let bounds;
+    if (selectedFeatureGeoJSON) {
+      const gj = L.geoJSON(selectedFeatureGeoJSON.geometry);
+      bounds = gj.getBounds();
+    } else if (selectedGeometry) {
+      bounds = L.geoJSON(selectedGeometry).getBounds();
+    } else {
+      bounds = map.getBounds();
     }
+    map.fitBounds(bounds);
+
+    alert(`${body.dataset.toUpperCase()} visualized!`);
   } catch (err) {
     console.error("View failed", err);
     alert("View failed: " + err.message);
   }
 }
 
-// Download
+// Download (add district name to filename)
 async function downloadSelection() {
   const body = buildRequestBody();
-  if (!body.dataset || !body.index) { alert("Select dataset and option"); return; }
+  if (!body || !body.dataset) { alert("Select dataset"); return; }
   try {
     const res = await fetch(`${BACKEND}/download`, {
       method: "POST",
@@ -356,7 +394,9 @@ async function downloadSelection() {
     });
     if (!res.ok) throw new Error(await res.text());
     const blob = await res.blob();
-    const filename = `${body.dataset}_${body.index}_${body.startDate}_to_${body.endDate}.tif`;
+    let filename = `${body.dataset}_${body.index}_${body.startDate}_to_${body.endDate}`;
+    if (selectedDistrictName) filename += `_${selectedDistrictName}`;
+    filename += '.tif';
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = filename;
@@ -369,100 +409,91 @@ async function downloadSelection() {
   }
 }
 
-// Init
+// Init (adapt to HTML: yearSelect, monthStart/End, districtSelect, viewSelectionBtn, downloadSelectionBtn)
 document.addEventListener("DOMContentLoaded", () => {
   try {
     initMap();
 
-    // Temporary minimal test (remove this entire block once map works)
-    setTimeout(() => {
-      if (map) {
-        map.setView([9.145, 40.4897], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        console.log('Minimal map forced—check if tiles load');
+    // Initial date: 2024 for data availability
+    const yearSelect = document.getElementById('yearSelect');
+    const monthStart = document.getElementById('monthStart');
+    const monthEnd = document.getElementById('monthEnd');
+    if (yearSelect && monthStart && monthEnd) {
+      const currentYear = new Date().getFullYear() - 1; // 2024
+      for (let y = currentYear; y >= 2016; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        yearSelect.appendChild(opt);
       }
-    }, 1000);
-
-    const initialYrRange = [2025, 2025];
-    populateYearMonthDay("from", initialYrRange);
-    populateYearMonthDay("to", initialYrRange);
-    document.getElementById('fromMonth').value = '10';
-    document.getElementById('toMonth').value = '10';
-    updateDays("from");
-    updateDays("to");
-    document.getElementById('fromDay').value = '1';
-    document.getElementById('toDay').value = '31';
-
-    document.getElementById('datasetSelect').addEventListener('change', e => {
-      const ds = e.target.value;
-      populateIndexOptions(ds);
-      if (ds) {
-        const yr = DATASET_CONFIG[ds].yearRange;
-        populateYearMonthDay("from", yr);
-        populateYearMonthDay("to", yr);
-        document.getElementById('fromYear').value = yr[1];
-        document.getElementById('toYear').value = yr[1];
-        document.getElementById('fromMonth').value = '10';
-        document.getElementById('toMonth').value = '10';
-        updateDays("from");
-        updateDays("to");
-        document.getElementById('fromDay').value = '1';
-        document.getElementById('toDay').value = '31';
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      for (let m = 1; m <= 12; m++) {
+        const opt1 = document.createElement('option');
+        opt1.value = String(m);
+        opt1.textContent = `${String(m).padStart(2, '0')} (${monthNames[m - 1]})`;
+        monthStart.appendChild(opt1);
+        monthEnd.appendChild(opt1.cloneNode(true));
       }
-    });
+      yearSelect.value = String(currentYear);
+      monthStart.value = '7'; // July for summer data
+      monthEnd.value = '9'; // Sept
+    }
 
-    ["fromYear","fromMonth"].forEach(id => document.getElementById(id).addEventListener("change", () => updateDays("from")));
-    ["toYear","toMonth"].forEach(id => document.getElementById(id).addEventListener("change", () => updateDays("to")));
-
-    // Admin level change: repopulate features and boundaries
-    const adminLevelEl = document.getElementById('adminLevel');
-    if (adminLevelEl) {
-      adminLevelEl.addEventListener('change', e => {
-        const level = e.target.value;
-        populateAdminFeatures(level);
+    // Dataset change (show geeOptions, but no indexSelect in HTML)
+    const datasetSelect = document.getElementById('datasetSelect');
+    const geeOptions = document.getElementById('geeOptions');
+    if (datasetSelect && geeOptions) {
+      datasetSelect.addEventListener('change', () => {
+        const value = datasetSelect.value;
+        geeOptions.style.display = (value === 'ndvi' || value === 'dw') ? 'inline-block' : 'none';
+        // Clear selections
+        document.getElementById('districtSelect').value = '';
+        selectedDistrictName = null;
+        selectedFeatureGeoJSON = null;
+        if (boundaryLayer) boundaryLayer.resetStyle();
+        drawnItems.clearLayers();
+        selectedGeometry = null;
+        overlayGroup.clearLayers();
       });
     }
 
-    // Feature select change: highlight on map via boundary layer
-    document.getElementById('featureSelect').addEventListener('change', async e => {
-      const name = e.target.value;
-      if (!name) {
-        if (selectedFeatureGeoJSON && boundaryLayer) {
-          boundaryLayer.resetStyle();
-          selectedFeatureGeoJSON = null;
+    // District select change
+    const districtSelect = document.getElementById('districtSelect');
+    if (districtSelect) {
+      districtSelect.addEventListener('change', async e => {
+        const name = e.target.value;
+        if (!name) {
+          if (selectedFeatureGeoJSON && boundaryLayer) {
+            boundaryLayer.resetStyle();
+            selectedFeatureGeoJSON = null;
+            selectedDistrictName = null;
+          }
+          return;
         }
-        return;
-      }
-      const lvl = document.getElementById('adminLevel').value;
-      const data = await loadAdminFeatures(lvl);
-      if (!data) return;
-      const prop = getPropName(lvl);
-      const feat = data.features.find(f => {
-        return f.properties[prop] === name || f.properties[prop.toLowerCase()] === name || f.properties[prop.replace('_EN', '')] === name;
+        const data = await loadAdminFeatures();
+        if (!data) return;
+        const feat = data.features.find(f => f.properties.ADM3_EN === name || f.properties.NAME_3 === name);
+        if (feat) {
+          selectedFeatureGeoJSON = feat;
+          selectedDistrictName = name;
+          const targetLayer = boundaryLayer.getLayers().find(l => l.feature === feat);
+          if (targetLayer) {
+            boundaryLayer.resetStyle();
+            targetLayer.setStyle({ color: "red", weight: 2, fillOpacity: 0.1 });
+            targetLayer.openPopup();
+          }
+          drawnItems.clearLayers();
+          selectedGeometry = null;
+          map.fitBounds(L.geoJSON(feat).getBounds(), { maxZoom: 10 });
+        }
       });
-      if (feat) {
-        selectedFeatureGeoJSON = feat;
-        // Find and highlight the corresponding layer
-        const targetLayer = boundaryLayer.getLayers().find(l => l.feature === feat);
-        if (targetLayer) {
-          boundaryLayer.resetStyle();
-          targetLayer.setStyle({ color: "red", weight: 2, fillOpacity: 0.1 });
-          targetLayer.openPopup();
-        }
-        // Clear drawn
-        drawnItems.clearLayers();
-        selectedGeometry = null;
-        map.fitBounds(L.geoJSON(feat).getBounds(), { maxZoom: 10 });
-      }
-    });
+    }
 
-    document.getElementById('viewBtn').addEventListener('click', viewSelection);
-    document.getElementById('downloadBtn').addEventListener('click', downloadSelection);
+    document.getElementById('viewSelectionBtn').addEventListener('click', viewSelection);
+    document.getElementById('downloadSelectionBtn').addEventListener('click', downloadSelection);
 
-    populateAdminFeatures("adm3");
+    populateDistricts();
   } catch (err) {
     console.error('Init failed:', err);
   }
 });
-
-
