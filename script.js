@@ -76,6 +76,9 @@ function getPropName(level) {
   return "NAME_1"; // fallback
 }
 
+// Legend control (global definition, but addTo called in initMap)
+let legendControl;
+
 // Init map (merged with provided code for base maps, satellite, overlay tick box via group)
 function initMap() {
   const mapDiv = document.getElementById('map');
@@ -85,7 +88,7 @@ function initMap() {
   }
   console.log('Map div found, size:', mapDiv.offsetHeight, mapDiv.offsetWidth);  // Debug log
 
-  map = L.map('map', { center: [9, 39], zoom: 6 });
+  map = L.map('map', { center: [9.145, 40.4897], zoom: 6 });
   const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap'
@@ -101,7 +104,7 @@ function initMap() {
   drawnItems = new L.FeatureGroup().addTo(map);
 
   const baseLayers = { "Street": street, "Satellite": sat };
-  const overlayLayers = { "Visualization Layer": overlayGroup };
+  const overlayLayers = { "Overlay": overlayGroup };
 
   // Layer control with overlays (tick box for overlay group)
   overlayCheckbox = L.control.layers(baseLayers, overlayLayers, { collapsed: false }).addTo(map);
@@ -129,23 +132,24 @@ function initMap() {
     }
   });
 
+  // Legend control added here, after map is created
+  legendControl = L.control({ position: 'bottomleft' });
+  legendControl.onAdd = function () {
+    this._div = L.DomUtil.create('div', 'info legend');
+    this.update();
+    return this._div;
+  };
+  legendControl.update = function (html) {
+    this._div.innerHTML = html || '';
+  };
+  legendControl.addTo(map);
+
   map.invalidateSize();  // Force resize check
 }
 
-// Legend control inside map
-const legendControl = L.control({ position: 'bottomleft' });
-legendControl.onAdd = function () {
-  this._div = L.DomUtil.create('div', 'info legend');
-  this.update();
-  return this._div;
-};
-legendControl.update = function (html) {
-  this._div.innerHTML = html || '';
-};
-legendControl.addTo(map);
-
 // Enhanced showLegend with hardcoded palettes for key datasets/indices
 function showLegend(index, dataset) {
+  if (!legendControl) return;
   let html = `<h4>${index}</h4><div class="small">Dataset: ${dataset}</div>`;
   if (dataset === 'landcover') {
     const classes = ['water', 'trees', 'grass', 'flooded_vegetation', 'crops', 'shrub_and_scrub', 'built', 'bare', 'snow_and_ice'];
@@ -373,7 +377,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Temporary minimal test (remove this entire block once map works)
     setTimeout(() => {
       if (map) {
-        map.setView([9, 39], 6);
+        map.setView([9.145, 40.4897], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         console.log('Minimal map forced—check if tiles load');
       }
@@ -460,52 +464,3 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error('Init failed:', err);
   }
 });
-
-  // Admin level change: repopulate features and boundaries
-  const adminLevelEl = document.getElementById('adminLevel');
-  if (adminLevelEl) {
-    adminLevelEl.addEventListener('change', e => {
-      const level = e.target.value;
-      populateAdminFeatures(level);
-    });
-  }
-
-  // Feature select change: highlight on map via boundary layer
-  document.getElementById('featureSelect').addEventListener('change', async e => {
-    const name = e.target.value;
-    if (!name) {
-      if (selectedFeatureGeoJSON && boundaryLayer) {
-        boundaryLayer.resetStyle();
-        selectedFeatureGeoJSON = null;
-      }
-      return;
-    }
-    const lvl = document.getElementById('adminLevel').value;
-    const data = await loadAdminFeatures(lvl);
-    if (!data) return;
-    const prop = getPropName(lvl);
-    const feat = data.features.find(f => {
-      return f.properties[prop] === name || f.properties[prop.toLowerCase()] === name || f.properties[prop.replace('_EN', '')] === name;
-    });
-    if (feat) {
-      selectedFeatureGeoJSON = feat;
-      // Find and highlight the corresponding layer
-      const targetLayer = boundaryLayer.getLayers().find(l => l.feature === feat);
-      if (targetLayer) {
-        boundaryLayer.resetStyle();
-        targetLayer.setStyle({ color: "red", weight: 2, fillOpacity: 0.1 });
-        targetLayer.openPopup();
-      }
-      // Clear drawn
-      drawnItems.clearLayers();
-      selectedGeometry = null;
-      map.fitBounds(L.geoJSON(feat).getBounds(), { maxZoom: 10 });
-    }
-  });
-
-  document.getElementById('viewBtn').addEventListener('click', viewSelection);
-  document.getElementById('downloadBtn').addEventListener('click', downloadSelection);
-
-  populateAdminFeatures("adm3");
-});
-
