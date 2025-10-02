@@ -74,27 +74,15 @@
       <div class="time-range">
         <div>
           <strong>From:</strong>
-          <select id="fromYear">
-            <option value="2025">2025</option>
-          </select>
-          <select id="fromMonth">
-            <option value="10">10 (Oct)</option>
-          </select>
-          <select id="fromDay">
-            <option value="1">1</option>
-          </select>
+          <select id="fromYear"></select>
+          <select id="fromMonth"></select>
+          <select id="fromDay"></select>
         </div>
         <div>
           <strong>To:</strong>
-          <select id="toYear">
-            <option value="2025">2025</option>
-          </select>
-          <select id="toMonth">
-            <option value="10">10 (Oct)</option>
-          </select>
-          <select id="toDay">
-            <option value="31">31</option>
-          </select>
+          <select id="toYear"></select>
+          <select id="toMonth"></select>
+          <select id="toDay"></select>
         </div>
       </div>
       <div class="button-container">
@@ -144,7 +132,74 @@
 
       indexSelect.innerHTML = optionsHtml;
       indexSelect.value = '';
+      updateYears();
     });
+
+    // Time range dynamic population
+    const startYears = {
+      'landcover': 2015,
+      'sentinel2': 2015,
+      'landsat8': 2013,
+      'modis': 2000,
+      'climate': 1981
+    };
+
+    const fromYear = document.getElementById('fromYear');
+    const toYear = document.getElementById('toYear');
+    const fromMonth = document.getElementById('fromMonth');
+    const toMonth = document.getElementById('toMonth');
+    const fromDay = document.getElementById('fromDay');
+    const toDay = document.getElementById('toDay');
+
+    function populateMonths(select) {
+      let html = '';
+      const months = ['01 (Jan)', '02 (Feb)', '03 (Mar)', '04 (Apr)', '05 (May)', '06 (Jun)', 
+                      '07 (Jul)', '08 (Aug)', '09 (Sep)', '10 (Oct)', '11 (Nov)', '12 (Dec)'];
+      for (let i = 0; i < 12; i++) {
+        html += `<option value="${i+1}">${months[i]}</option>`;
+      }
+      select.innerHTML = html;
+    }
+
+    function populateDays(select) {
+      let html = '';
+      for (let d = 1; d <= 31; d++) {
+        html += `<option value="${d}">${d}</option>`;
+      }
+      select.innerHTML = html;
+    }
+
+    function updateYears() {
+      const selectedDataset = datasetSelect.value;
+      const start = startYears[selectedDataset] || 2025;
+      const current = 2025; // As per current date
+
+      let html = '';
+      for (let y = start; y <= current; y++) {
+        html += `<option value="${y}">${y}</option>`;
+      }
+      fromYear.innerHTML = html;
+      toYear.innerHTML = html;
+
+      // Set default if needed
+      if (!fromYear.value || parseInt(fromYear.value) < start) {
+        fromYear.value = current;
+      }
+      if (!toYear.value || parseInt(toYear.value) < start) {
+        toYear.value = current;
+      }
+    }
+
+    // Initialize
+    populateMonths(fromMonth);
+    populateMonths(toMonth);
+    populateDays(fromDay);
+    populateDays(toDay);
+    fromMonth.value = '10';
+    toMonth.value = '10';
+    fromDay.value = '1';
+    toDay.value = '31';
+    updateYears();
   </script>
 </body>
 </html>
