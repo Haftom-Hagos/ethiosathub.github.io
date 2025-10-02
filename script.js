@@ -1,4 +1,4 @@
-// script.js (updated to fix issues: adapt to HTML districtSelect/adm3 only, always-on overlay, initial date 2024, legend colorbar, white bg, filename with district, etc.)
+// script.js (complete updated version with debugging logs for districts/boundaries)
 
 const BACKEND = (window.BACKEND_URL || 'https://hafrepo-2.onrender.com');
 
@@ -28,7 +28,7 @@ const DATASET_CONFIG = {
     yearRange: [2015, new Date().getFullYear() - 1]
   },
   landsat: {
-    label: "Landsat (5–9)",
+    label: "Landsat (4–8)",
     indicesLabel: "Select vegetation index",
     indices: [
       { v: 'NDVI', t: 'NDVI' },
@@ -229,8 +229,14 @@ async function loadAdminFeatures() {
   if (!ADMIN_SOURCES[level]) return null;
   if (adminCache[level]) return adminCache[level];
   try {
+    console.log('Fetching admin boundaries from:', ADMIN_SOURCES[level]);
     const res = await fetch(ADMIN_SOURCES[level]);
+    if (!res.ok) {
+      console.error('Fetch failed with status:', res.status);
+      return null;
+    }
     const data = await res.json();
+    console.log('Fetched data.features length:', data.features ? data.features.length : 'no features');
     adminCache[level] = data;
     return data;
   } catch (err) {
@@ -242,26 +248,36 @@ async function loadAdminFeatures() {
 // Populate districts dropdown and boundary layer
 async function populateDistricts() {
   const sel = document.getElementById('districtSelect');
-  if (!sel) return;
+  if (!sel) {
+    console.error('districtSelect not found!');
+    return;
+  }
   sel.innerHTML = '<option value="">Select a district</option>';
   const data = await loadAdminFeatures();
-  if (!data) return;
+  if (!data || !data.features || data.features.length === 0) {
+    console.error('No features in data');
+    return;
+  }
 
-  data.features.forEach(f => {
-    const name = f.properties.ADM3_EN || '';
-    if (!name) return;
+  data.features.forEach((f, idx) => {
+    const name = f.properties.ADM3_EN || f.properties.NAME_3 || '';
+    if (!name) {
+      console.log('No name for feature', idx);
+      return;
+    }
     const o = document.createElement('option');
     o.value = name;
     o.textContent = name;
     sel.appendChild(o);
   });
+  console.log('Populated', sel.options.length - 1, 'districts');
 
   // Add boundary layer
   if (boundaryLayer) map.removeLayer(boundaryLayer);
   boundaryLayer = L.geoJSON(data, {
     style: { color: "#3388ff", weight: 1, fillOpacity: 0 },
     onEachFeature: (feature, layer) => {
-      const name = feature.properties.ADM3_EN || '';
+      const name = feature.properties.ADM3_EN || feature.properties.NAME_3 || '';
       layer.bindPopup(`<b>${name}</b>`);
       layer.on('click', () => {
         boundaryLayer.resetStyle();
@@ -272,12 +288,17 @@ async function populateDistricts() {
         document.getElementById('districtSelect').value = name;
         drawnItems.clearLayers();
         selectedGeometry = null;
+        console.log('Selected district:', name);
       });
     }
   }).addTo(map);
+  console.log('Boundary layer added with', boundaryLayer.getLayers().length, 'layers');
 
   if (boundaryLayer.getLayers().length > 0) {
     map.fitBounds(boundaryLayer.getBounds(), { maxZoom: 7 });
+    console.log('Fit bounds to boundaries');
+  } else {
+    console.error('No layers in boundaryLayer');
   }
 }
 
@@ -441,7 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const data = await loadAdminFeatures();
         if (!data) return;
-        const feat = data.features.find(f => f.properties.ADM3_EN === name);
+        const feat = data.features.find(f => f.properties.ADM3_EN === name || f.properties.NAME_3 === name);
         if (feat) {
           selectedFeatureGeoJSON = feat;
           selectedDistrictName = name;
