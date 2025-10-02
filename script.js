@@ -1,301 +1,364 @@
 // script.js (complete)
-const BACKEND_URL = 'https://hafrepo-2.onrender.com'; // keep your backend URL
+const BACKEND = (window.BACKEND_URL || 'https://your-backend.example.com'); // change to your backend
+let map, drawnItems, overlayGroup, currentTileLayer;
+let selectedGeometry = null;
+let selectedFeatureGeoJSON = null;
 
-let map, drawnItems, overlayGroup;
-let selectedArea = null;
-let selectedDistrict = null;
-let selectedDistrictGeoJSON = null;
-let currentLayers = {};   // { ndvi: L.TileLayer, dw: L.TileLayer }
-let currentDataset = null;
+// dataset -> indices mapping and year ranges
+const DATASET_CONFIG = {
+  landcover: {
+    label: "Land cover",
+    indicesLabel: "Select land cover",
+    indices: [{v:'dynamic_world', t:'Dynamic World (10m)'}],
+    yearRange: [2020, new Date().getFullYear()] // DW available from ~2020
+  },
+  sentinel2: {
+    label: "Sentinel-2",
+    indicesLabel: "Select vegetation index",
+    indices: [
+      {v:'NDVI', t:'NDVI'},
+      {v:'EVI', t:'EVI (not implemented here)'},
+      {v:'NDBI', t:'NDBI'},
+      {v:'NDWI', t:'NDWI'},
+      {v:'NBR', t:'NBR'},
+      {v:'NDCI', t:'NDCI'}
+    ],
+    yearRange: [2015, new Date().getFullYear()]
+  },
+  landsat8: {
+    label: "Landsat 8",
+    indicesLabel: "Select vegetation index",
+    indices: [
+      {v:'NDVI', t:'NDVI'},
+      {v:'NDBI', t:'NDBI'},
+      {v:'NDWI', t:'NDWI'},
+      {v:'NBR', t:'NBR'},
+      {v:'NDCI', t:'NDCI'} ],
+    yearRange: [2013, new Date().getFullYear()]
+  },
+  modis: {
+    label: "MODIS",
+    indicesLabel: "Select vegetation index",
+    indices: [
+      {v:'NDVI', t:'NDVI'},
+      {v:'NDWI', t:'NDWI'},
+      {v:'NBR', t:'NBR'},
+      {v:'NDBI', t:'NDBI'},
+      {v:'NDCI', t:'NDCI'} ],
+    yearRange: [2000, new Date().getFullYear()]
+  },
+  climate: {
+    label: "Climate",
+    indicesLabel: "Select drought index",
+    indices: [
+      {v:'SPI', t:'SPI'},
+      {v:'VHI', t:'VHI'}
+    ],
+    yearRange: [1981, new Date().getFullYear()]
+  }
+};
 
-function getSelectedDateRange() {
-    const yearEl = document.getElementById('yearSelect');
-    const mStartEl = document.getElementById('monthStart');
-    const mEndEl = document.getElementById('monthEnd');
-    if (!yearEl || !mStartEl || !mEndEl) return null;
+function initMap() {
+  map = L.map('map', { center: [9.0, 39.0], zoom: 6 });
+  const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+  L.control.layers({'Street': street, 'Satellite': satellite}, null, {collapsed:false}).addTo(map);
 
-    const year = parseInt(yearEl.value, 10);
-    const ms = parseInt(mStartEl.value, 10);
-    const me = parseInt(mEndEl.value, 10);
-    const mStart = Math.min(ms, me);
-    const mEnd = Math.max(ms, me);
+  overlayGroup = L.layerGroup().addTo(map);
 
-    const startDate = `${year}-${String(mStart).padStart(2,'0')}-01`;
-    const lastDay = new Date(year, mEnd, 0).getDate();
-    const endDate = `${year}-${String(mEnd).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+  // drawing control (rectangle)
+  drawnItems = new L.FeatureGroup().addTo(map);
+  const drawControl = new L.Control.Draw({
+    draw: { polygon:false, polyline:false, marker:false, circle:false, rectangle:true },
+    edit: { featureGroup: drawnItems }
+  });
+  map.addControl(drawControl);
 
-    return { startDate, endDate };
+  map.on('draw:created', function(e){
+    drawnItems.clearLayers();
+    drawnItems.addLayer(e.layer);
+    selectedGeometry = e.layer.toGeoJSON().geometry;
+    // clear selected feature from admin list
+    document.getElementById('featureSelect').value = '';
+    selectedFeatureGeoJSON = null;
+  });
+
+  map.on('draw:edited', function(e){
+    const layers = e.layers;
+    layers.eachLayer(layer => {
+      selectedGeometry = layer.toGeoJSON().geometry;
+    });
+  });
+
+  map.on('draw:deleted', function(){
+    selectedGeometry = null;
+  });
+
+  map.on('baselayerchange', () => {
+    // make sure overlays stay visible
+    if (overlayGroup && !map.hasLayer(overlayGroup)) map.addLayer(overlayGroup);
+    if (currentTileLayer && currentTileLayer.bringToFront) currentTileLayer.bringToFront();
+  });
 }
 
-function downloadBlob(blob, filename) {
+// UI helpers
+function populateIndexOptions(datasetKey) {
+  const indexSelect = document.getElementById('indexSelect');
+  const indexLabel = document.getElementById('indexLabel');
+  indexSelect.innerHTML = '';
+  if (!datasetKey) {
+    indexLabel.textContent = 'Select option';
+    indexSelect.innerHTML = '<option value="">-- choose --</option>';
+    return;
+  }
+  const cfg = DATASET_CONFIG[datasetKey];
+  indexLabel.textContent = cfg.indicesLabel;
+  cfg.indices.forEach(opt => {
+    const o = document.createElement('option');
+    o.value = opt.v;
+    o.textContent = opt.t;
+    indexSelect.appendChild(o);
+  });
+}
+
+function populateYears(datasetKey) {
+  const sel = document.getElementById('yearSelect');
+  sel.innerHTML = '';
+  const cfg = DATASET_CONFIG[datasetKey] || { yearRange: [2000, new Date().getFullYear()] };
+  const [start, end] = cfg.yearRange;
+  for (let y = end; y >= start; y--) {
+    const o = document.createElement('option'); o.value = String(y); o.textContent = String(y); sel.appendChild(o);
+  }
+}
+
+function populateMonths() {
+  const m = document.getElementById('monthSelect');
+  m.innerHTML = '';
+  for (let i=1;i<=12;i++){
+    const o = document.createElement('option'); o.value = String(i); o.textContent = String(i).padStart(2,'0'); m.appendChild(o);
+  }
+}
+
+function populateDaysForMonth(year, month) {
+  const d = document.getElementById('daySelect');
+  d.innerHTML = '';
+  const lastDay = new Date(year, month, 0).getDate();
+  for (let i=1;i<=lastDay;i++){
+    const o = document.createElement('option'); o.value = String(i); o.textContent = String(i).padStart(2,'0'); d.appendChild(o);
+  }
+}
+
+// Admin features loader (levels 1/2/3)
+let adminGeojson = null; // loaded once
+async function loadAdminGeojson() {
+  if (adminGeojson) return adminGeojson;
+  try {
+    const url = 'https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson';
+    const r = await fetch(url);
+    const data = await r.json();
+    adminGeojson = data;
+    return data;
+  } catch (err) {
+    console.error('Failed to load admin GeoJSON', err);
+    return null;
+  }
+}
+
+async function populateAdminFeatures(levelKey) {
+  const sel = document.getElementById('featureSelect');
+  sel.innerHTML = '<option value="">-- choose feature --</option>';
+  const data = await loadAdminGeojson();
+  if (!data) return;
+  // admin GeoJSON currently has ADM1/ADM2/ADM3 properties; adapt as needed
+  data.features.forEach(f => {
+    let name = '';
+    if (levelKey === 'adm1') name = f.properties.ADM1_EN || f.properties.ADM1 || f.properties.NAME_1;
+    if (levelKey === 'adm2') name = f.properties.ADM2_EN || f.properties.ADM2 || f.properties.NAME_2;
+    if (levelKey === 'adm3') name = f.properties.ADM3_EN || f.properties.ADM3 || f.properties.NAME_3;
+    if (!name) return;
+    // avoid duplicates
+    if (![...sel.options].some(o => o.text === name)) {
+      const o = document.createElement('option'); o.value = name; o.textContent = name; sel.appendChild(o);
+    }
+  });
+}
+
+// build request body for gee endpoints using selected UI values
+function buildRequestBody() {
+  const dataset = document.getElementById('datasetSelect').value;
+  const index = document.getElementById('indexSelect').value;
+  const year = document.getElementById('yearSelect').value;
+  const month = document.getElementById('monthSelect').value;
+  const day = document.getElementById('daySelect').value;
+
+  let startDate = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  let endDate = startDate; // single-day by default (you could expand to whole month)
+
+  let bbox = null;
+  if (selectedGeometry) {
+    // use geometry drawn
+  } else if (selectedFeatureGeoJSON) {
+    // pass geometry
+  } else {
+    // default to current map bounds
+    const b = map.getBounds();
+    bbox = { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() };
+  }
+
+  const body = { dataset, index, startDate, endDate };
+  if (selectedGeometry) body.geometry = selectedGeometry;
+  else if (selectedFeatureGeoJSON) body.geometry = selectedFeatureGeoJSON.geometry;
+  else body.bbox = bbox;
+  return body;
+}
+
+// show legend in sidebar (simple)
+function showLegend(index, vis_params, dataset) {
+  const el = document.getElementById('index-legend');
+  el.style.display = 'block';
+  if (dataset === 'landcover') {
+    // basic dynamic world legend example
+    el.innerHTML = `<h4>Land cover (Dynamic World)</h4>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div><span style="display:inline-block;width:18px;height:12px;background:#419bdf;margin-right:8px"></span>Water</div>
+        <div><span style="display:inline-block;width:18px;height:12px;background:#397d49;margin-right:8px"></span>Trees</div>
+        <div><span style="display:inline-block;width:18px;height:12px;background:#88b053;margin-right:8px"></span>Grass</div>
+        <div><span style="display:inline-block;width:18px;height:12px;background:#e49635;margin-right:8px"></span>Crops</div>
+      </div>`;
+    return;
+  }
+  // default simple legend
+  el.innerHTML = `<h4>${index}</h4><div class="small">Visualization from ${dataset}</div>`;
+}
+
+// perform visualization request
+async function viewSelection() {
+  const body = buildRequestBody();
+  if (!body.dataset || !body.index) { alert('Select dataset and option'); return; }
+  try {
+    const res = await fetch(`${BACKEND}/gee_layers`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if (!res.ok) { const t = await res.text(); throw new Error(t); }
+    const data = await res.json();
+    // clear previous overlay
+    overlayGroup.clearLayers();
+    if (currentTileLayer) {
+      map.removeLayer(currentTileLayer);
+      currentTileLayer = null;
+    }
+    const tileUrl = data.mode_tiles || data.tiles || data.mode_tiles || data.mode_tiles || data.tile || data.tiles;
+    const tiles = tileUrl || data.tiles;
+    if (!tiles) {
+      alert('Backend did not return tiles for visualization');
+      return;
+    }
+    currentTileLayer = L.tileLayer(tiles, { opacity: 0.85 }).addTo(overlayGroup);
+    showLegend(body.index, data.vis_params, body.dataset);
+    // zoom to geometry if available
+    if (body.geometry) {
+      try {
+        const gj = body.geometry;
+        const layer = L.geoJSON(gj);
+        map.fitBounds(layer.getBounds(), { maxZoom: 12 });
+      } catch (e) { /* ignore */ }
+    } else if (body.bbox) {
+      map.fitBounds([[body.bbox.south, body.bbox.west],[body.bbox.north, body.bbox.east]]);
+    }
+  } catch (err) {
+    console.error('View error', err);
+    alert('View failed: ' + err.message);
+  }
+}
+
+// perform download request
+async function downloadSelection() {
+  const body = buildRequestBody();
+  if (!body.dataset || !body.index) { alert('Select dataset and option'); return; }
+
+  try {
+    const res = await fetch(`${BACKEND}/download`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const msg = await res.text();
+      throw new Error(msg);
+    }
+    const blob = await res.blob();
+    const filename = `${body.dataset}_${body.index}_${body.startDate}.tif`;
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     setTimeout(()=> {
-        URL.revokeObjectURL(link.href);
-        document.body.removeChild(link);
-    }, 2000);
+      URL.revokeObjectURL(link.href);
+      document.body.removeChild(link);
+    }, 1500);
+  } catch (err) {
+    console.error('Download error', err);
+    alert('Download failed: ' + (err.message || err));
+  }
 }
 
-function updateOverlayOpacity() {
-    const toggle = document.getElementById('overlay-toggle');
-    const opacity = (toggle && toggle.checked) ? 1.0 : 0.0;
-    Object.values(currentLayers).forEach(l => {
-        if (l && l.setOpacity) l.setOpacity(opacity);
-    });
-}
+// initialize UI wiring
+document.addEventListener('DOMContentLoaded', async () => {
+  initMap();
+  populateMonths();
+  populateIndexOptions();
+  populateYears('sentinel2'); // defaults
+  populateDaysForMonth(new Date().getFullYear(), 1);
 
-function updateNDVILegend() {
-    const el = document.getElementById('ndvi-legend');
-    if (!el) return;
-    el.innerHTML = `
-      <h4>NDVI legend</h4>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div style="width:18px;height:12px;background:#d73027"></div><small>-1 (low)</small>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div style="width:18px;height:12px;background:#fee08b"></div><small>0 (medium)</small>
-      </div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div style="width:18px;height:12px;background:#1a9850"></div><small>1 (high)</small>
-      </div>
-    `;
-}
+  document.getElementById('datasetSelect').addEventListener('change', (e) => {
+    const ds = e.target.value;
+    populateIndexOptions(ds);
+    populateYears(ds);
+    const year = document.getElementById('yearSelect').value;
+    populateDaysForMonth(parseInt(year,10), parseInt(document.getElementById('monthSelect').value,10));
+  });
 
-function updateDWLegend(legendData) {
-    const el = document.getElementById('dw-legend');
-    if (!el) return;
-    if (!legendData || !legendData.classes || !legendData.colors) {
-        el.innerHTML = `<h4>Land Cover</h4><div>No legend available</div>`;
-        return;
+  document.getElementById('monthSelect').addEventListener('change', (e) => {
+    const year = parseInt(document.getElementById('yearSelect').value,10);
+    const month = parseInt(e.target.value,10);
+    populateDaysForMonth(year, month);
+  });
+
+  document.getElementById('yearSelect').addEventListener('change', (e) => {
+    const year = parseInt(e.target.value,10);
+    const month = parseInt(document.getElementById('monthSelect').value,10);
+    populateDaysForMonth(year, month);
+  });
+
+  document.getElementById('viewBtn').addEventListener('click', viewSelection);
+  document.getElementById('downloadBtn').addEventListener('click', downloadSelection);
+
+  document.getElementById('adminLevel').addEventListener('change', (e) => {
+    populateAdminFeatures(e.target.value);
+  });
+
+  document.getElementById('featureSelect').addEventListener('change', async (e) => {
+    const name = e.target.value;
+    if (!name) {
+      selectedFeatureGeoJSON = null;
+      return;
     }
-    el.innerHTML = '<h4>Land Cover Classes</h4>' + legendData.classes.map((c, i) => {
-        const color = legendData.colors[i] ? `#${legendData.colors[i]}` : '#ccc';
-        return `<div style="display:flex;gap:8px;align-items:center;"><div style="width:18px;height:12px;background:${color}"></div><small>${c}</small></div>`;
-    }).join('');
-}
+    const data = await loadAdminGeojson();
+    const feat = data.features.find(f => (f.properties.ADM3_EN === name || f.properties.ADM2_EN === name || f.properties.ADM1_EN === name || f.properties.ADM3 === name));
+    if (!feat) {
+      // try other matches
+      const f2 = data.features.find(f => JSON.stringify(f.properties).includes(name));
+      if (f2) selectedFeatureGeoJSON = f2;
+      else selectedFeatureGeoJSON = null;
+    } else selectedFeatureGeoJSON = feat;
 
-function ensureOverlayPresent() {
-    // Make sure overlayGroup is on the map (fixes disappearance when basemapchanged)
-    if (!map) return;
-    if (!map.hasLayer(overlayGroup)) map.addLayer(overlayGroup);
-    // bring overlay tile layers to front
-    Object.values(currentLayers).forEach(l => { if (l && l.bringToFront) l.bringToFront(); });
-}
-
-function initializeMap() {
-    if (map) return;
-
-    map = L.map('map', { center:[9.145,40.4897], zoom:6, layers: [] });
-
-    const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-    const satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
-
-    // Add layer control for base maps only. Overlays will be managed manually (prevents odd removal on basemap change).
-    const baseMaps = { "Street Map": streetMap, "Satellite Map": satelliteMap };
-    L.control.layers(baseMaps, null, { collapsed: false }).addTo(map);
-
-    // Overlay group where we will add NDVI/DW tile layers. Keep this separate.
-    overlayGroup = L.layerGroup().addTo(map);
-
-    // Load admin boundaries and populate district dropdown
-    fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
-      .then(r => r.json())
-      .then(data => {
-          const boundaryLayer = L.geoJSON(data, {
-              style: { color:'#3388ff', weight:1, fillOpacity:0 },
-              onEachFeature: (feature, layer) => {
-                  const sel = document.getElementById('districtSelect');
-                  const opt = document.createElement('option');
-                  opt.value = feature.properties.ADM3_EN;
-                  opt.textContent = feature.properties.ADM3_EN;
-                  sel.appendChild(opt);
-
-                  layer.on('click', () => {
-                      if (selectedDistrict) map.removeLayer(selectedDistrict);
-                      selectedDistrict = L.geoJSON(feature, { style: { color:'red', weight:2, fillOpacity:0.1 } }).addTo(map);
-                      selectedDistrictGeoJSON = feature;
-                      document.getElementById('districtSelect').value = feature.properties.ADM3_EN;
-                      drawnItems.clearLayers();
-                      selectedArea = null;
-                      ensureOverlayPresent();
-                  });
-              }
-          }).addTo(map);
-          map.fitBounds(boundaryLayer.getBounds());
-      })
-      .catch(err => console.error('Failed to load boundary:', err));
-
-    // Draw control
-    drawnItems = new L.FeatureGroup().addTo(map);
-    const drawControl = new L.Control.Draw({
-        draw: { rectangle: true, polygon: false, circle: false, marker: false, polyline: false },
-        edit: { featureGroup: drawnItems }
-    });
-    map.addControl(drawControl);
-
-    map.on('draw:created', e => {
-        drawnItems.clearLayers();
-        selectedArea = e.layer;
-        drawnItems.addLayer(selectedArea);
-        if (selectedDistrict) { map.removeLayer(selectedDistrict); selectedDistrict = null; selectedDistrictGeoJSON = null; document.getElementById('districtSelect').value = ''; }
-        // clear current visual overlays to avoid confusion
-        overlayGroup.clearLayers();
-        currentLayers = {};
-        currentDataset = null;
-        ensureOverlayPresent();
-    });
-
-    map.on('baselayerchange', () => {
-        // ensure our overlay group remains visible and its tiles on top after a basemap change
-        ensureOverlayPresent();
-    });
-
-    // overlay toggle
-    const overlayToggle = document.getElementById('overlay-toggle');
-    if (overlayToggle) {
-        overlayToggle.addEventListener('change', updateOverlayOpacity);
+    // show selection on map
+    if (selectedFeatureGeoJSON) {
+      drawnItems.clearLayers();
+      const layer = L.geoJSON(selectedFeatureGeoJSON, { style:{ color:'red', weight:2, fillOpacity:0.1 } }).addTo(map);
+      map.fitBounds(layer.getBounds());
     }
-}
+  });
 
-document.addEventListener('DOMContentLoaded', () => {
-    // populate years/months
-    const yearSelect = document.getElementById('yearSelect');
-    const monthStart = document.getElementById('monthStart');
-    const monthEnd = document.getElementById('monthEnd');
-    const currentYear = new Date().getFullYear();
-    for (let y = currentYear; y >= 2016; y--) {
-        const o = document.createElement('option'); o.value = String(y); o.text = String(y); yearSelect.appendChild(o);
-    }
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    for (let m=1;m<=12;m++){
-        const o = document.createElement('option'); o.value = String(m); o.text = `${String(m).padStart(2,'0')} (${monthNames[m-1]})`; monthStart.appendChild(o);
-        monthEnd.appendChild(o.cloneNode(true));
-    }
-    yearSelect.value = String(currentYear); monthStart.value = '1'; monthEnd.value = '12';
-
-    try {
-        initializeMap();
-    } catch (err) {
-        console.error('Map init failed', err);
-        const md = document.getElementById('map'); if (md) md.innerHTML = '<p style="color:red">Map failed to initialize</p>';
-    }
-
-    // --- View Selection ---
-    document.getElementById('viewSelectionBtn').addEventListener('click', async () => {
-        const dataset = document.getElementById('datasetSelect').value;
-        if (!(dataset === 'ndvi' || dataset === 'dw')) { alert('Select NDVI or DW'); return; }
-
-        let bounds;
-        if (selectedDistrict) bounds = selectedDistrict.getBounds();
-        else if (selectedArea) bounds = selectedArea.getBounds();
-        else { alert('Select district or draw area'); return; }
-
-        const dateRange = getSelectedDateRange();
-        if (!dateRange) { alert('Invalid dates'); return; }
-
-        // build body
-        const body = { ...dateRange, bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() } };
-        if (selectedDistrictGeoJSON) body.geometry = selectedDistrictGeoJSON.geometry;
-        if (selectedArea) body.geometry = selectedArea.toGeoJSON().geometry;
-
-        try {
-            const res = await fetch(`${BACKEND_URL}/gee_layers`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-            if (!res.ok) throw new Error(await res.text());
-            const data = await res.json();
-
-            // clear previous overlays
-            overlayGroup.clearLayers();
-            currentLayers = {};
-            currentDataset = dataset;
-
-            if (dataset === 'ndvi' && data.ndvi && data.ndvi.tiles) {
-                const turl = data.ndvi.tiles;
-                currentLayers.ndvi = L.tileLayer(turl, { opacity:1.0, attribution: 'NDVI' }).addTo(overlayGroup);
-                updateNDVILegend();
-                document.getElementById('ndvi-legend').style.display = 'block';
-                document.getElementById('dw-legend').style.display = 'none';
-            } else if (dataset === 'dw' && data.dw && data.dw.mode_tiles) {
-                currentLayers.dw = L.tileLayer(data.dw.mode_tiles, { opacity:0.85, attribution: 'DW (mode)' }).addTo(overlayGroup);
-                updateDWLegend(data.dw.legend || {});
-                document.getElementById('ndvi-legend').style.display = 'none';
-                document.getElementById('dw-legend').style.display = 'block';
-            } else {
-                alert('Backend returned no layer URLs for the selected dataset');
-                return;
-            }
-
-            // ensure overlays visible and on top
-            ensureOverlayPresent();
-            updateOverlayOpacity();
-            map.fitBounds(bounds);
-            alert(`${dataset.toUpperCase()} added to map`);
-        } catch (err) {
-            console.error('ViewSelection error', err);
-            alert('Failed to load layer: ' + err.message);
-        }
-    });
-
-    // --- Download Selection ---
-    document.getElementById('downloadSelectionBtn').addEventListener('click', async () => {
-        const dataset = document.getElementById('datasetSelect').value;
-        let bounds;
-        if (selectedDistrict) bounds = selectedDistrict.getBounds();
-        else if (selectedArea) bounds = selectedArea.getBounds();
-        else { alert('Select district or draw area'); return; }
-
-        const dateRange = getSelectedDateRange();
-        if (!dateRange) { alert('Invalid dates'); return; }
-
-        const body = { ...dateRange, bbox: { west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth() } };
-        if (selectedDistrictGeoJSON) body.geometry = selectedDistrictGeoJSON.geometry;
-        if (selectedArea) body.geometry = selectedArea.toGeoJSON().geometry;
-
-        try {
-            if (dataset === 'ndvi') {
-                const res = await fetch(`${BACKEND_URL}/ndvi/download`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-                if (!res.ok) throw new Error(await res.text());
-                const blob = await res.blob();
-                downloadBlob(blob, `NDVI_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
-            } else if (dataset === 'dw') {
-                // DW download endpoint added in backend
-                const res = await fetch(`${BACKEND_URL}/dw/download`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-                if (!res.ok) throw new Error(await res.text());
-                const blob = await res.blob();
-                downloadBlob(blob, `DW_${dateRange.startDate}_to_${dateRange.endDate}.tif`);
-            } else {
-                alert('Select NDVI or DW to download');
-                return;
-            }
-        } catch (err) {
-            console.error('Download error', err);
-            alert('Download failed: ' + err.message);
-        }
-    });
-
-    // district dropdown changes
-    document.getElementById('districtSelect').addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (!val) {
-            if (selectedDistrict) map.removeLayer(selectedDistrict);
-            selectedDistrict = null;
-            selectedDistrictGeoJSON = null;
-            return;
-        }
-        // fetch geojson and select the feature
-        fetch('https://raw.githubusercontent.com/Haftom-Hagos/ethiosathub.github.io/main/data/ethiopia_admin_level_3_gcs_simplified.geojson')
-          .then(r => r.json())
-          .then(data => {
-              const feature = data.features.find(f => f.properties.ADM3_EN === val);
-              if (!feature) return;
-              if (selectedDistrict) map.removeLayer(selectedDistrict);
-              selectedDistrict = L.geoJSON(feature, { style:{ color:'red', weight:2, fillOpacity:0.1 } }).addTo(map);
-              selectedDistrictGeoJSON = feature;
-              if (selectedArea) { drawnItems.clearLayers(); selectedArea = null; }
-              map.fitBounds(selectedDistrict.getBounds());
-              ensureOverlayPresent();
-          });
-    });
+  // preload admin features default
+  populateAdminFeatures('adm3');
 });
