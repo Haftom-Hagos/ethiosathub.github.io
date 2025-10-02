@@ -47,14 +47,10 @@
       </div>
       <div class="filters">
         <div class="labels-row">
-          <label for="datasetSelect">Select dataset</label>
-          <label id="indexLabel" for="indexSelect">Select option</label>
-          <label for="adminLevel">Select admin level</label>
-          <label for="featureSelect">Select feature</label>
         </div>
         <div class="selects-row">
           <select id="datasetSelect">
-            <option value="">-- choose dataset --</option>
+            <option value="">Select dataset</option>
             <option value="landcover">Land cover</option>
             <option value="sentinel2">Sentinel-2</option>
             <option value="landsat8">Landsat 8</option>
@@ -62,30 +58,43 @@
             <option value="climate">Climate</option>
           </select>
           <select id="indexSelect">
-            <option value="">-- choose --</option>
+            <option value="">Select ____</option>
           </select>
           <select id="adminLevel">
+            <option value="">choose admin level</option>
             <option value="adm1">Level 1 (Regions)</option>
             <option value="adm2">Level 2 (Zones)</option>
             <option value="adm3" selected>Level 3 (Districts)</option>
           </select>
           <select id="featureSelect">
-            <option value="">-- pick feature --</option>
+            <option value="">choose feature</option>
           </select>
         </div>
       </div>
       <div class="time-range">
         <div>
           <strong>From:</strong>
-          <select id="fromYear"></select>
-          <select id="fromMonth"></select>
-          <select id="fromDay"></select>
+          <select id="fromYear">
+            <option value="2025">2025</option>
+          </select>
+          <select id="fromMonth">
+            <option value="1">01 (Jan)</option>
+          </select>
+          <select id="fromDay">
+            <option value="1">1</option>
+          </select>
         </div>
         <div>
           <strong>To:</strong>
-          <select id="toYear"></select>
-          <select id="toMonth"></select>
-          <select id="toDay"></select>
+          <select id="toYear">
+            <option value="2025">2025</option>
+          </select>
+          <select id="toMonth">
+            <option value="1">01 (Jan)</option>
+          </select>
+          <select id="toDay">
+            <option value="31">31</option>
+          </select>
         </div>
       </div>
       <div class="button-container">
