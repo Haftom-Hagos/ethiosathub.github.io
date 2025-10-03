@@ -1,11 +1,5 @@
 // script.js (full updated version)
-// - Supports adm1/adm2/adm3 properly (featureSelect drives Regions/Zones/Districts)
-// - Populates date selectors on load and on dataset change
-// - Adds overlay pane & overlay toggle (keeps overlay tiles always on top)
-// - Calls backend endpoints /gee_layers and /download
-// - Legend: continuous colorbar for indices, filtered classes for landcover
-// - Download filename appends selected feature name (sanitized)
-// - Better error handling & logging
+
 
 const BACKEND = (window.BACKEND_URL || 'https://hafrepo-2.onrender.com');
 
@@ -287,7 +281,7 @@ async function populateFeatureSelect(level) {
   sel.innerHTML = '<option value="">Loading...</option>';
   const data = await loadAdmin(level);
   if (!data || !data.features) {
-    sel.innerHTML = '<option value="">No features</option>';
+    sel.innerHTML = '<option value="">Select feature</option>';
     return;
   }
   const propName = getPropName(level);
@@ -555,6 +549,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // admin level wiring
     const adminLevel = document.getElementById('adminLevel');
     if (adminLevel) {
+      // Add placeholder option if it doesn't exist
+      if (!Array.from(adminLevel.options).some(opt => opt.value === '')) {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select admin level';
+        adminLevel.insertBefore(placeholder, adminLevel.firstChild);
+      }
+      adminLevel.value = '';
       adminLevel.addEventListener('change', async (e) => {
         const lvl = e.target.value;
         const sel = document.getElementById('featureSelect');
