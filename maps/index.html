@@ -7,6 +7,11 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
   <link rel="stylesheet" href="../styles.css" />
+  <style>
+    #geeOptions {
+      display: inline-block !important;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbars">
@@ -60,41 +65,32 @@
           <select id="indexSelect">
             <option value="">Select sub dataset</option>
           </select>
-          <select id="adminLevel">
-            <option value="">choose admin level</option>
-            <option value="adm1">Level 1 (Regions)</option>
-            <option value="adm2">Level 2 (Zones)</option>
-            <option value="adm3" selected>Level 3 (Districts)</option>
-          </select>
           <select id="featureSelect">
-            <option value="">choose feature</option>
+            <option value="">Select a district</option>
           </select>
         </div>
       </div>
-      <div class="time-range">
+      <div id="geeOptions" class="time-range">
         <div>
-          <strong>From:</strong>
-          <select id="fromYear"></select>
-          <select id="fromMonth"></select>
-          <select id="fromDay"></select>
+          <strong>Year:</strong>
+          <select id="yearSelect"></select>
         </div>
         <div>
-          <strong>To:</strong>
-          <select id="toYear"></select>
-          <select id="toMonth"></select>
-          <select id="toDay"></select>
+          <strong>From Month:</strong>
+          <select id="monthStart"></select>
+          <strong>To Month:</strong>
+          <select id="monthEnd"></select>
         </div>
       </div>
       <div class="button-container">
         <button id="viewSelectionBtn">View Selection</button>
         <button id="downloadSelectionBtn">Download Selection</button>
       </div>
-      <div id="legend"></div>
       <!--div>
         <a class="btn" href="https://ethiosathub-gee.projects.earthengine.app/view/vegind" target="_blank">
           Open Vegetation Indices App
         </a>
-    </div-->
+      </div-->
     </div>
   </div>
 
@@ -111,95 +107,6 @@
       navmenu.classList.toggle("show");
       hamburger.textContent = (hamburger.textContent === "☰") ? "✖" : "☰";
     });
-
-    // Dynamic index selector based on dataset
-    const datasetSelect = document.getElementById('datasetSelect');
-    const indexSelect = document.getElementById('indexSelect');
-
-    datasetSelect.addEventListener('change', function() {
-      const selectedDataset = this.value;
-      let optionsHtml = '<option value="">';
-
-      if (selectedDataset === 'landcover') {
-        optionsHtml += 'Select land cover</option><option value="dynamic">dynamic land cover (10 m)</option>';
-      } else if (['sentinel2', 'landsat', 'modis'].includes(selectedDataset)) {
-        optionsHtml += 'Select vegetation indices</option><option value="ndvi">NDVI</option><option value="ndwi">NDWI</option><option value="nbr">NBR</option><option value="ndbi">NDBI</option><option value="ndci">NDCI</option>';
-      } else if (selectedDataset === 'climate') {
-        optionsHtml += 'Select drought indices</option><option value="spi">SPI</option><option value="vhi">VHI</option>';
-      } else {
-        optionsHtml += 'Select sub dataset</option>';
-      }
-
-      indexSelect.innerHTML = optionsHtml;
-      indexSelect.value = '';
-      updateYears();
-    });
-
-    // Time range dynamic population
-    const startYears = {
-      'landcover': 2015,
-      'sentinel2': 2015,
-      'landsat': 1984,
-      'modis': 2000,
-      'climate': 1981
-    };
-
-    const fromYear = document.getElementById('fromYear');
-    const toYear = document.getElementById('toYear');
-    const fromMonth = document.getElementById('fromMonth');
-    const toMonth = document.getElementById('toMonth');
-    const fromDay = document.getElementById('fromDay');
-    const toDay = document.getElementById('toDay');
-
-    function populateMonths(select) {
-      let html = '';
-      const months = ['01 (Jan)', '02 (Feb)', '03 (Mar)', '04 (Apr)', '05 (May)', '06 (Jun)', 
-                      '07 (Jul)', '08 (Aug)', '09 (Sep)', '10 (Oct)', '11 (Nov)', '12 (Dec)'];
-      for (let i = 0; i < 12; i++) {
-        html += `<option value="${i+1}">${months[i]}</option>`;
-      }
-      select.innerHTML = html;
-    }
-
-    function populateDays(select) {
-      let html = '';
-      for (let d = 1; d <= 31; d++) {
-        html += `<option value="${d}">${d}</option>`;
-      }
-      select.innerHTML = html;
-    }
-
-    function updateYears() {
-      const selectedDataset = datasetSelect.value;
-      const start = startYears[selectedDataset] || 2025;
-      const current = 2025; // As per current date
-
-      let html = '';
-      for (let y = start; y <= current; y++) {
-        html += `<option value="${y}">${y}</option>`;
-      }
-      fromYear.innerHTML = html;
-      toYear.innerHTML = html;
-
-      // Set default if needed
-      if (!fromYear.value || parseInt(fromYear.value) < start) {
-        fromYear.value = current;
-      }
-      if (!toYear.value || parseInt(toYear.value) < start) {
-        toYear.value = current;
-      }
-    }
-
-    // Initialize
-    populateMonths(fromMonth);
-    populateMonths(toMonth);
-    populateDays(fromDay);
-    populateDays(toDay);
-    fromMonth.value = '10';
-    toMonth.value = '10';
-    fromDay.value = '1';
-    toDay.value = '31';
-    updateYears();
   </script>
 </body>
 </html>
