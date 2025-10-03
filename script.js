@@ -341,9 +341,9 @@ async function loadAdminFeatures() {
 
 // Populate districts dropdown and boundary layer
 async function populateDistricts() {
-  const sel = document.getElementById('districtSelect');
+  const sel = document.getElementById('featureSelect');
   if (!sel) {
-    console.error('districtSelect not found!');
+    console.error('featureSelect not found!');
     return;
   }
   sel.innerHTML = '<option value="">Select a district</option>';
@@ -381,7 +381,7 @@ async function populateDistricts() {
         layer.openPopup();
         selectedFeatureGeoJSON = feature;
         selectedDistrictName = name;
-        document.getElementById('districtSelect').value = name;
+        document.getElementById('featureSelect').value = name;
         drawnItems.clearLayers();
         selectedGeometry = null;
         console.log('Selected district via click:', name);
@@ -575,7 +575,7 @@ async function downloadSelection() {
   }
 }
 
-// Init (adapt to HTML: yearSelect, monthStart/End, districtSelect, viewSelectionBtn, downloadSelectionBtn)
+// Init (adapt to HTML: yearSelect, monthStart/End, featureSelect, viewSelectionBtn, downloadSelectionBtn)
 document.addEventListener("DOMContentLoaded", () => {
   try {
     initMap();
@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // show options only for certain datasets (adjust as needed)
         geeOptions.style.display = (value === 'ndvi' || value === 'dw' || value === 'climate') ? 'inline-block' : 'none';
         // Clear selections and overlays on dataset change
-        document.getElementById('districtSelect').value = '';
+        document.getElementById('featureSelect').value = '';
         selectedDistrictName = null;
         selectedFeatureGeoJSON = null;
         if (boundaryLayer) boundaryLayer.resetStyle();
@@ -628,9 +628,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // District select change
-    const districtSelect = document.getElementById('districtSelect');
-    if (districtSelect) {
-      districtSelect.addEventListener('change', async e => {
+    const featureSelect = document.getElementById('featureSelect');
+    if (featureSelect) {
+      featureSelect.addEventListener('change', async e => {
         const name = e.target.value;
         if (!name) {
           if (selectedFeatureGeoJSON && boundaryLayer) {
@@ -684,3 +684,4 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error('Init failed:', err);
   }
 });
+
