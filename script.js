@@ -617,24 +617,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       indexSelect.innerHTML = '<option value="">Select sub dataset</option>';
     }
 
-
-
-
-    // initial admin level feature load: default to HTML selection OR "Select admin level"
+    // initial admin level feature load: default to HTML selection 
     const initialAdmin = (adminLevel && adminLevel.value) ? adminLevel.value : '';
-
-    // only populate if a value is actually chosen
-    if (initialAdmin) {
-      await populateFeatureSelect(initialAdmin);
-    } else {
-      featureSelect.innerHTML = '<option value="">Select admin level</option>';
-    }
-
+    await populateFeatureSelect(initialAdmin);
     console.log('script.js initialized (admin level:', initialAdmin || 'none', ', dataset:', initialDataset, ')');
   } catch (err) {
     console.error('Initialization failed', err);
   }
 });
-
-
-
