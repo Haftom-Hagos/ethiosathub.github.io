@@ -123,7 +123,7 @@
       if (selectedDataset === 'landcover') {
         optionsHtml += 'Select land cover</option><option value="dynamic">dynamic land cover (10 m)</option>';
       } else if (['sentinel2', 'landsat', 'modis'].includes(selectedDataset)) {
-        optionsHtml += 'Select vegetation indices</option><option value="ndvi">NDVI</option><option value="ndwi">NDWI</option><option value="nbr">NBR</option>';
+        optionsHtml += 'Select vegetation indices</option><option value="ndvi">NDVI</option><option value="ndwi">NDWI</option><option value="nbr">NBR</option><option value="ndbi">NDBI</option><option value="ndci">NDCI</option>';
       } else if (selectedDataset === 'climate') {
         optionsHtml += 'Select drought indices</option><option value="spi">SPI</option><option value="vhi">VHI</option>';
       } else {
