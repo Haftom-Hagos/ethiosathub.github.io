@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           selectedFeatureGeoJSON = null;
           return;
         }
-        const level = document.getElementById('adminLevel') ? document.getElementById('adminLevel').value || 'adm3' : 'adm3';
+        const level = document.getElementById('adminLevel') ? document.getElementById('adminLevel').value || '' : '';
         const data = await loadAdmin(level);
         if (!data) return;
         const prop = getPropName(level);
@@ -625,7 +625,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
-
-
-   
-
