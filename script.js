@@ -606,10 +606,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (downloadBtn) downloadBtn.addEventListener('click', downloadSelection);
 
     // initial dataset & years population:
-    const initialDataset = (ds && ds.value) ? ds.value : 'sentinel2';
+    const initialDataset = (ds && ds.value) ? ds.value : '';
     if (ds && !ds.value) ds.value = initialDataset;
-    populateIndexOptions(initialDataset);
-    populateYearsForDataset(initialDataset);
+
+    // Only populate options if a dataset is selected
+    if (initialDataset) {
+      populateIndexOptions(initialDataset);
+      populateYearsForDataset(initialDataset);
+    } else {
+      indexSelect.innerHTML = '<option value="">Select sub dataset</option>';
+    }
+
+
+
 
     // initial admin level feature load: default to HTML selection OR adm3
     const initialAdmin = (adminLevel && adminLevel.value) ? adminLevel.value : 'adm3';
@@ -620,4 +629,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
 
