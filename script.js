@@ -542,103 +542,89 @@ document.addEventListener('DOMContentLoaded', async () => {
       toDay.value = '30';
     }
 
-   // dataset select wiring
-const ds = document.getElementById('datasetSelect');
-if (ds) {
-  ds.addEventListener('change', (e) => {
-    const value = e.target.value;
-    if (value) {
-      populateIndexOptions(value);
-      populateYearsForDataset(value);
+     // dataset select wiring
+    const ds = document.getElementById('datasetSelect');
+    if (ds) {
+      ds.addEventListener('change', (e) => {
+        const value = e.target.value;
+        populateIndexOptions(value);
+        populateYearsForDataset(value);
+      });
+    }
+
+    // admin level wiring
+    const adminLevel = document.getElementById('adminLevel');
+    if (adminLevel) {
+      adminLevel.addEventListener('change', async (e) => {
+        const lvl = e.target.value || 'adm3';
+        const sel = document.getElementById('featureSelect');
+        if (sel) sel.innerHTML = `<option value="">Loading ${lvl}...</option>`;
+        await populateFeatureSelect(lvl);
+      });
+    }
+
+    // feature select wiring (highlight on select)
+    const featureSel = document.getElementById('featureSelect');
+    if (featureSel) {
+      featureSel.addEventListener('change', async (e) => {
+        const name = (e.target.value || '').trim();
+        selectedFeatureName = name || null;
+        if (!name) {
+          if (boundaryLayer) boundaryLayer.resetStyle();
+          selectedFeatureGeoJSON = null;
+          return;
+        }
+        const level = document.getElementById('adminLevel') ? document.getElementById('adminLevel').value || 'adm3' : 'adm3';
+        const data = await loadAdmin(level);
+        if (!data) return;
+        const prop = getPropName(level);
+        const feat = data.features.find(f => {
+          const p = f.properties && f.properties[prop] ? String(f.properties[prop]).trim() : '';
+          return p === name;
+        });
+        if (feat) {
+          selectedFeatureGeoJSON = feat;
+          if (boundaryLayer) {
+            boundaryLayer.resetStyle();
+            boundaryLayer.eachLayer(l => {
+              if (l.feature === feat) {
+                try { l.setStyle({ color: 'red', weight: 2, fillOpacity: 0.08 }); } catch (e) {}
+                try { map.fitBounds(l.getBounds(), { maxZoom: 10 }); } catch (e) {}
+              }
+            });
+          }
+        } else {
+          console.warn('Selected feature not found in loaded admin data:', name);
+        }
+      });
+    }
+
+    // view & download buttons
+    const viewBtn = document.getElementById('viewSelectionBtn');
+    if (viewBtn) viewBtn.addEventListener('click', viewSelection);
+    const downloadBtn = document.getElementById('downloadSelectionBtn');
+    if (downloadBtn) downloadBtn.addEventListener('click', downloadSelection);
+
+    // initial dataset & years population:
+    const initialDataset = (ds && ds.value) ? ds.value : '';
+    if (ds && !ds.value) ds.value = initialDataset;
+
+    // Only populate options if a dataset is selected
+    if (initialDataset) {
+      populateIndexOptions(initialDataset);
+      populateYearsForDataset(initialDataset);
     } else {
       indexSelect.innerHTML = '<option value="">Select sub dataset</option>';
     }
-  });
-}
 
-// admin level wiring
-const adminLevel = document.getElementById('adminLevel');
-if (adminLevel) {
-  adminLevel.addEventListener('change', async (e) => {
-    const lvl = e.target.value; // no default to adm3
-    const sel = document.getElementById('featureSelect');
-    if (!lvl) {
-      if (sel) sel.innerHTML = '<option value="">Select admin level</option>';
-      return;
-    }
-    if (sel) sel.innerHTML = `<option value="">Loading ${lvl}...</option>`;
-    await populateFeatureSelect(lvl);
-  });
-}
-
-// feature select wiring (highlight on select)
-const featureSel = document.getElementById('featureSelect');
-if (featureSel) {
-  featureSel.addEventListener('change', async (e) => {
-    const name = (e.target.value || '').trim();
-    selectedFeatureName = name || null;
-
-    if (!name) {
-      if (boundaryLayer) boundaryLayer.resetStyle();
-      selectedFeatureGeoJSON = null;
-      return;
-    }
-
-    const level = document.getElementById('adminLevel')?.value || '';
-    if (!level) return;
-
-    const data = await loadAdmin(level);
-    if (!data) return;
-
-    const prop = getPropName(level);
-    const feat = data.features.find(f => {
-      const p = f.properties && f.properties[prop] ? String(f.properties[prop]).trim() : '';
-      return p === name;
-    });
-
-    if (feat) {
-      selectedFeatureGeoJSON = feat;
-      if (boundaryLayer) {
-        boundaryLayer.resetStyle();
-        boundaryLayer.eachLayer(l => {
-          if (l.feature === feat) {
-            try { l.setStyle({ color: 'red', weight: 2, fillOpacity: 0.08 }); } catch (e) {}
-            try { map.fitBounds(l.getBounds(), { maxZoom: 10 }); } catch (e) {}
-          }
-        });
-      }
-    } else {
-      console.warn('Selected feature not found in loaded admin data:', name);
-    }
-  });
-}
-
-// view & download buttons
-const viewBtn = document.getElementById('viewSelectionBtn');
-if (viewBtn) viewBtn.addEventListener('click', viewSelection);
-
-const downloadBtn = document.getElementById('downloadSelectionBtn');
-if (downloadBtn) downloadBtn.addEventListener('click', downloadSelection);
-
-// initial dataset & years population
-const initialDataset = (ds && ds.value) ? ds.value : '';
-if (ds && !ds.value) ds.value = initialDataset;
-
-if (initialDataset) {
-  populateIndexOptions(initialDataset);
-  populateYearsForDataset(initialDataset);
-} else {
-  indexSelect.innerHTML = '<option value="">Select sub dataset</option>';
-}
-
-// initial admin level feature load: default to "Select admin level"
-const initialAdmin = (adminLevel && adminLevel.value) ? adminLevel.value : '';
-if (initialAdmin) {
-  await populateFeatureSelect(initialAdmin);
-} else {
-  featureSelect.innerHTML = '<option value="">Select admin level</option>';
-}
-
-console.log('script.js initialized (admin level:', initialAdmin || 'none', ', dataset:', initialDataset, ')');
+    // initial admin level feature load: default to HTML selection 
+    const initialAdmin = (adminLevel && adminLevel.value) ? adminLevel.value : '';
+    await populateFeatureSelect(initialAdmin);
+    console.log('script.js initialized (admin level:', initialAdmin || 'none', ', dataset:', initialDataset, ')');
+  } catch (err) {
+    console.error('Initialization failed', err);
+  }
+});
 
 
+   
