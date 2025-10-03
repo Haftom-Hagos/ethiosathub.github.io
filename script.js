@@ -32,12 +32,12 @@ const ADMIN_SOURCES = {
 // Dataset config (used to populate indexSelect and year ranges)
 const DATASET_CONFIG = {
   landcover: {
-    label: "Land cover",
+    label: "Select land cover",
     indices: [{ v: 'dynamic', t: 'Dynamic World (10m)' }],
     yearRange: [2015, new Date().getFullYear() - 1]
   },
   sentinel2: {
-    label: "Sentinel-2",
+    label: "Select vegetation index",
     indices: [
       { v: 'NDVI', t: 'NDVI' },
       { v: 'NDWI', t: 'NDWI' },
@@ -48,7 +48,7 @@ const DATASET_CONFIG = {
     yearRange: [2015, new Date().getFullYear() - 1]
   },
   landsat: {
-    label: "Landsat (4–8)",
+    label: "Select vegetation index",
     indices: [
       { v: 'NDVI', t: 'NDVI' },
       { v: 'NDWI', t: 'NDWI' },
@@ -58,18 +58,17 @@ const DATASET_CONFIG = {
     yearRange: [1984, new Date().getFullYear() - 1]
   },
   modis: {
-    label: "MODIS",
+    label: "Select vegetation index",
     indices: [
       { v: 'NDVI', t: 'NDVI' },
       { v: 'NDWI', t: 'NDWI' },
       { v: 'NBR', t: 'NBR' },
-      { v: 'NDBI', t: 'NDBI' },
-      { v: 'NDCI', t: 'NDCI' }
+      { v: 'NDBI', t: 'NDBI' }
     ],
     yearRange: [2000, new Date().getFullYear() - 1]
   },
   climate: {
-    label: "Climate",
+    label: "Select drought index",
     indices: [
       { v: 'SPI', t: 'SPI' },
       { v: 'VHI', t: 'VHI' }
@@ -621,3 +620,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
