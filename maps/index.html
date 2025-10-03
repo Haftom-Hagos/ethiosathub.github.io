@@ -1,99 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EGSH-Map</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EGSH - Map</title>
+
+  <!-- Leaflet & draw CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
   <link rel="stylesheet" href="../styles.css" />
+
+  <style>
+    /* minimal styling so the controls look OK out of the box */
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; }
+    .map-container { height: 62vh; width: 100%; }
+    #map { height: 100%; width: 100%; }
+    .controls-row { display:flex; gap:8px; align-items:center; padding:10px; flex-wrap:wrap; }
+    select, button { padding:6px 8px; font-size:14px; }
+    .time-range { display:flex; gap:16px; padding:10px; align-items:center; }
+    #legend { position: relative; padding: 0 10px 10px 10px; }
+    /* small styling to place the overlay checkbox near the layer control visually */
+    .overlay-ui { display:flex; align-items:center; gap:6px; font-size:13px; }
+  </style>
 </head>
 <body>
-  <nav class="navbars">
-    <div class="nav-container">
-      <div class="nav-logo">
-        <a href="/home">EGSH</a>
-      </div>
-      <div class="hamburger" id="hamburger">☰</div>
-      <ul class="nav-menu">
-        <li class="nav-item"><a href="/home" class="nav-link">Home</a></li>
-        <li class="nav-item"><a href="/maps" class="nav-link active">Maps</a></li>
-        <li class="nav-item"><a href="/data" class="nav-link">Data</a></li>
-        <li class="nav-item"><a href="/gallery" class="nav-link">Gallery</a></li>
-        <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
-      </ul>
-    </div>
+
+  <nav style="padding:8px 12px; background:#0b3b5c; color:white;">
+    <strong><a href="/home" style="color:white; text-decoration:none">EGSH</a></strong>
   </nav>
-  
-  <div class="sub-contents">
-    <div id="maps" class="tabcontent">
-      <h2>Map view</h2>
-      <p>
-        Select a dataset, time range, and administrative feature (or draw an area) to visualize and download. 
-        For larger areas or more satellite sources, please use the Vegetation Indices app.
-      </p>
-      <div class="map-container">
-        <div id="map"></div>
-      </div>
-      <div class="filters">
-        <div class="selects-row">
-          <select id="datasetSelect">
-            <option value="">Select dataset</option>
-            <option value="landcover">Land cover</option>
-            <option value="sentinel2">Sentinel-2</option>
-            <option value="landsat">Landsat (4–8)</option>
-            <option value="modis">MODIS</option>
-            <option value="climate">Climate</option>
-          </select>
-          <select id="indexSelect">
-            <option value="">Select sub dataset</option>
-          </select>
-          <select id="adminLevel">
-            <option value="">Choose admin level</option>
-            <option value="adm1">Level 1 (Regions)</option>
-            <option value="adm2">Level 2 (Zones)</option>
-            <option value="adm3" selected>Level 3 (Districts)</option>
-          </select>
-          <select id="featureSelect">
-            <option value="">Choose feature</option>
-          </select>
-        </div>
-      </div>
-      <div class="time-range">
-        <div>
-          <strong>From:</strong>
-          <select id="fromYear"></select>
-          <select id="fromMonth"></select>
-          <select id="fromDay"></select>
-        </div>
-        <div>
-          <strong>To:</strong>
-          <select id="toYear"></select>
-          <select id="toMonth"></select>
-          <select id="toDay"></select>
-        </div>
-      </div>
-      <div class="button-container">
+
+  <div style="padding:10px;">
+    <h2>Map view</h2>
+    <p>Select dataset, time-range and admin feature (or draw an area) to visualize/download. </p>
+
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row" style="padding-top:10px;">
+      <select id="datasetSelect" aria-label="Dataset">
+        <option value="">Select dataset</option>
+        <option value="landcover">Land cover</option>
+        <option value="sentinel2">Sentinel-2</option>
+        <option value="landsat">Landsat (4–8)</option>
+        <option value="modis">MODIS</option>
+        <option value="climate">Climate</option>
+      </select>
+
+      <select id="indexSelect" aria-label="Sub dataset / index">
+        <option value="">Select sub dataset</option>
+      </select>
+
+      <select id="adminLevel" aria-label="Admin level">
+        <option value="">Choose admin level</option>
+        <option value="adm1">Level 1 (Regions)</option>
+        <option value="adm2">Level 2 (Zones)</option>
+        <option value="adm3" selected>Level 3 (Districts)</option>
+      </select>
+
+      <select id="featureSelect" aria-label="Feature (region/zone/district)">
+        <option value="">Choose feature</option>
+      </select>
+
+      <div style="margin-left:auto;">
         <button id="viewSelectionBtn">View Selection</button>
         <button id="downloadSelectionBtn">Download Selection</button>
       </div>
-      <div id="legend"></div>
     </div>
+
+    <div class="time-range">
+      <div>
+        <strong>From:</strong>
+        <select id="fromYear"></select>
+        <select id="fromMonth"></select>
+        <select id="fromDay"></select>
+      </div>
+      <div>
+        <strong>To:</strong>
+        <select id="toYear"></select>
+        <select id="toMonth"></select>
+        <select id="toDay"></select>
+      </div>
+    </div>
+
+    <!-- Legend area (script creates white background & content) -->
+    <div id="legend"></div>
   </div>
 
+  <!-- Libraries -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-  <script src="https://unpkg.com/esri-leaflet"></script>
-  <script src="https://unpkg.com/proj4@2.7.5/dist/proj4.js"></script>
+
+  <!-- Main app script (replace with new script.js file) -->
   <script src="../script.js"></script>
-  <script>
-    // Navbar toggle
-    const hamburger = document.getElementById("hamburger");
-    const navmenu = document.querySelector(".nav-menu");
-    hamburger.addEventListener("click", () => {
-      navmenu.classList.toggle("show");
-      hamburger.textContent = (hamburger.textContent === "☰") ? "✖" : "☰";
-    });
-  </script>
 </body>
 </html>
