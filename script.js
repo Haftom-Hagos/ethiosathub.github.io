@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const adminLevel = document.getElementById('adminLevel');
     if (adminLevel) {
       adminLevel.addEventListener('change', async (e) => {
-        const lvl = e.target.value || 'adm3';
+        const lvl = e.target.value;
         const sel = document.getElementById('featureSelect');
         if (sel) sel.innerHTML = `<option value="">Loading ${lvl}...</option>`;
         await populateFeatureSelect(lvl);
@@ -628,3 +628,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
    
+
