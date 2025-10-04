@@ -430,6 +430,7 @@ async function viewSelection() {
       data = null;
     }
 
+
     if (!r.ok) {
       const msg = (data && (data.detail || data.message)) || `Status ${r.status}`;
       console.error('Backend returned error:', msg);
@@ -439,8 +440,10 @@ async function viewSelection() {
         alert("View failed: " + msg);
       }
       // Update legend even on error if data is available
-      if (data) showLegend(body.index, body.dataset, body.dataset === 'landcover' ? data : data.legend || {});
-      //if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
+      if (data) {
+        console.log('Legend data for showLegend:', body.dataset === 'landcover' ? data : data.legend);
+        showLegend(body.index, body.dataset, body.dataset === 'landcover' ? { unique_classes: data.unique_classes || [] } : data.legend || {});
+      }
       return;
     }
 
@@ -448,8 +451,10 @@ async function viewSelection() {
     if (!tileUrl) {
       console.error('No tiles in response:', data);
       alert("No tiles returned by backend.");
-      showLegend(body.index, body.dataset, body.dataset === 'landcover' ? data : data.legend || {});
-      //if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
+      if (data) {
+        console.log('Legend data for showLegend:', body.dataset === 'landcover' ? data : data.legend);
+        showLegend(body.index, body.dataset, body.dataset === 'landcover' ? { unique_classes: data.unique_classes || [] } : data.legend || {});
+      }
       return;
     }
 
@@ -460,7 +465,40 @@ async function viewSelection() {
     overlayLayers = [];
 
     addOverlayTile(tileUrl, { attribution: data.attribution || '' });
-    showLegend(body.index, body.dataset, data.legend || {});
+    console.log('Legend data for showLegend:', body.dataset === 'landcover' ? data : data.legend);
+    showLegend(body.index, body.dataset, body.dataset === 'landcover' ? { unique_classes: data.unique_classes || [] } : data.legend || {});
+
+    // if (!r.ok) {
+    //   const msg = (data && (data.detail || data.message)) || `Status ${r.status}`;
+    //   console.error('Backend returned error:', msg);
+    //   if (String(msg).toLowerCase().includes('no modis lst')) {
+    //     alert("VHI computation failed: No MODIS LST (MOD11A2) images found for the selected period/area. Try expanding date range or selecting a larger AOI.");
+    //   } else {
+    //     alert("View failed: " + msg);
+    //   }
+    //   // Update legend even on error if data is available
+    //   if (data) showLegend(body.index, body.dataset, body.dataset === 'landcover' ? data : data.legend || {});
+    //   //if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
+    //   return;
+    // }
+
+    // const tileUrl = data && (data.tiles || data.mode_tiles || data.tile);
+    // if (!tileUrl) {
+    //   console.error('No tiles in response:', data);
+    //   alert("No tiles returned by backend.");
+    //   showLegend(body.index, body.dataset, body.dataset === 'landcover' ? data : data.legend || {});
+    //   //if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
+    //   return;
+    // }
+
+    // // Clear existing overlay layers
+    // overlayLayers.forEach(layer => {
+    //   try { map.removeLayer(layer); } catch (e) {}
+    // });
+    // overlayLayers = [];
+
+    // addOverlayTile(tileUrl, { attribution: data.attribution || '' });
+    // showLegend(body.index, body.dataset, data.legend || {});
 
     // Fit to bounds if backend provided them
     if (data && data.bounds && Array.isArray(data.bounds) && data.bounds.length === 4) {
@@ -636,6 +674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
 
 
 
