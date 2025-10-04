@@ -360,52 +360,45 @@ function buildRequestBody() {
   return body;
 }
 
-// Legend rendering: discrete classes for landcover, continuous colorbar for indices
+// Legend rendering: dynamic colors from backend
 function showLegend(index, dataset, uniqueClasses = null, meta = {}) {
   if (!window._updateLegend) {
     const el = document.getElementById('legend');
     if (!el) return;
     window._updateLegend = (html) => { el.innerHTML = html; };
   }
-  let html = `<h4 style="margin:0 0 6px 0;">${index || dataset}</h4><div style="font-size:12px;margin-bottom:6px;">Dataset: ${dataset}</div>`;
+
+  let html = `<h4 style="margin:0 0 6px 0;">${index || dataset}</h4>`;
+  html += `<div style="font-size:12px;margin-bottom:6px;">Dataset: ${dataset}</div>`;
+
+  // Landcover: discrete classes
   if (dataset === 'landcover' && Array.isArray(uniqueClasses)) {
-    const all = [
-      { id: 0, name: 'water', color: '#419bdf' },
-      { id: 1, name: 'trees', color: '#397d49' },
-      { id: 2, name: 'grass', color: '#88b053' },
-      { id: 3, name: 'flooded_vegetation', color: '#7a87c6' },
-      { id: 4, name: 'crops', color: '#e49635' },
-      { id: 5, name: 'shrub_and_scrub', color: '#dfc35a' },
-      { id: 6, name: 'built', color: '#c4281b' },
-      { id: 7, name: 'bare', color: '#a59b8f' },
-      { id: 8, name: 'snow_and_ice', color: '#b39fe1' }
-    ];
-    html = `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
-    const ids = uniqueClasses.map(x => (typeof x === 'string' && !isNaN(parseInt(x, 10))) ? parseInt(x, 10) : x);
-    let found = false;
-    ids.forEach(c => {
-      let entry = (typeof c === 'number') ? all.find(a => a.id === c) : all.find(a => a.name === String(c));
-      if (entry) {
-        html += `<div style="display:flex;align-items:center;margin:4px 0;"><span style="width:18px;height:18px;background:${entry.color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${entry.name}</div>`;
-        found = true;
-      } else {
-        html += `<div style="display:flex;align-items:center;margin:4px 0;"><span style="width:18px;height:18px;background:#ccc;display:inline-block;margin-right:8px;border:1px solid #999;"></span>${c}</div>`;
-        found = true;
-      }
+    const all = uniqueClasses.map((c, i) => ({
+      id: i,
+      name: c.name || c.id || `Class ${i}`,
+      color: c.color || '#ccc'
+    }));
+    html += `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
+    all.forEach(c => {
+      html += `<div style="display:flex;align-items:center;margin:4px 0;">
+                 <span style="width:18px;height:18px;background:${c.color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${c.name}
+               </div>`;
     });
-    if (!found) html += `<div style="font-size:12px;">No classes in AOI</div>`;
-  } else if (['NDVI', 'NDWI', 'NBR', 'NDBI', 'NDCI', 'SPI', 'VHI'].includes(index)) {
-    let min = (meta && typeof meta.min !== 'undefined') ? meta.min : (index === 'VHI' ? 0 : -1);
-    let max = (meta && typeof meta.max !== 'undefined') ? meta.max : (index === 'VHI' ? 100 : 1);
-    if (index === 'SPI' && typeof meta.min === 'undefined') { min = -3; max = 3; }
+
+  // Continuous indices: colorbar
+  } else if (meta.palette && meta.min !== undefined && meta.max !== undefined) {
+    const gradient = meta.palette.join(',');
     html += `
       <div style="height:18px;border-radius:3px;overflow:hidden;border:1px solid #ccc;margin:8px 0;">
-        <div style="width:100%;height:100%;background:linear-gradient(to right,#d73027,#fee08b,#1a9850)"></div>
+        <div style="width:100%;height:100%;background:linear-gradient(to right,${gradient})"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12px;">
-        <span>${Number(min).toFixed(2)}</span><span>${Number((min + max) / 2).toFixed(2)}</span><span>${Number(max).toFixed(2)}</span>
+        <span>${Number(meta.min).toFixed(2)}</span>
+        <span>${Number((meta.min + meta.max) / 2).toFixed(2)}</span>
+        <span>${Number(meta.max).toFixed(2)}</span>
       </div>
     `;
+
   } else {
     html += `<div style="font-size:12px;">No legend available</div>`;
   }
@@ -627,3 +620,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
