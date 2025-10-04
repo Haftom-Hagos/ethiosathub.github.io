@@ -376,17 +376,25 @@ function showLegend(index, dataset, legendData = {}) {
 
   // Landcover: discrete classes
   if (dataset === 'landcover' && legendData.unique_classes && Array.isArray(legendData.unique_classes)) {
-    const uniqueClasses = legendData.unique_classes.map((c, i) => ({
-      id: c.id || i,
-      name: c.name || `Class ${i + 1}`,
-      color: c.color || '#ccc'
-    }));
+    const uniqueClasses = legendData.unique_classes.map((c, i) => {
+        const color = c.color && /^#[0-9A-Fa-f]{6}$/.test(c.color) ? c.color : '#ccc';
+        if (!c.color || c.color !== color) {
+            console.warn(`Invalid color for class ${c.name || i}: ${c.color}, using fallback #ccc`);
+        }
+        return {
+            id: c.id || i,
+            name: c.name || `Class ${i + 1}`,
+            color: color
+        };
+    });
     html += `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
     uniqueClasses.forEach(c => {
-      html += `<div style="display:flex;align-items:center;margin:4px 0;">
-                 <span style="width:18px;height:18px;background:${c.color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${c.name}
-               </div>`;
+        html += `<div style="display:flex;align-items:center;margin:4px 0;">
+                   <span style="width:18px;height:18px;background:${c.color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${c.name}
+                 </div>`;
     });
+}
+  
   // Continuous indices: colorbar
   } else if (legendData.meta && Array.isArray(legendData.meta.palette) && legendData.meta.palette.length > 0 && legendData.meta.min !== undefined && legendData.meta.max !== undefined) {
     const gradient = legendData.meta.palette.join(',');
@@ -674,6 +682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
 
 
 
