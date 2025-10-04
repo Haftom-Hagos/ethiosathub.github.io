@@ -687,10 +687,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
-
-
-
-
-
-
-
