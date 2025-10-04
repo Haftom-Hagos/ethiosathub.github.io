@@ -375,11 +375,11 @@ function showLegend(index, dataset, legendData = {}) {
   html += `<div style="font-size:12px;margin-bottom:6px;">Dataset: ${dataset}</div>`;
 
   // Landcover: discrete classes
-  if (dataset === 'landcover' && legendData.classes && Array.isArray(legendData.classes) && legendData.colors && Array.isArray(legendData.colors)) {
-    const uniqueClasses = legendData.classes.map((name, i) => ({
-      id: i,
-      name: name || `Class ${i + 1}`,
-      color: legendData.colors[i] || '#ccc'
+  if (dataset === 'landcover' && legendData.unique_classes && Array.isArray(legendData.unique_classes)) {
+    const uniqueClasses = legendData.unique_classes.map((c, i) => ({
+      id: c.id || i,
+      name: c.name || `Class ${i + 1}`,
+      color: c.color || '#ccc'
     }));
     html += `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
     uniqueClasses.forEach(c => {
@@ -404,7 +404,7 @@ function showLegend(index, dataset, legendData = {}) {
     // Fallback for debugging
     console.warn('No valid legend data provided:', { legendData });
     html += `<div style="font-size:12px;color:#888;">
-               No legend available. Check backend response for legend.classes or legend.meta.
+               No legend available. Check backend response for unique_classes or legend.meta.
              </div>`;
   }
 
@@ -634,5 +634,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
 
 
