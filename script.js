@@ -439,7 +439,8 @@ async function viewSelection() {
         alert("View failed: " + msg);
       }
       // Update legend even on error if data is available
-      if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
+      if (data) showLegend(body.index, body.dataset, body.dataset === 'landcover' ? data : data.legend || {});
+      //if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
       return;
     }
 
@@ -447,7 +448,8 @@ async function viewSelection() {
     if (!tileUrl) {
       console.error('No tiles in response:', data);
       alert("No tiles returned by backend.");
-      if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
+      showLegend(body.index, body.dataset, body.dataset === 'landcover' ? data : data.legend || {});
+      //if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
       return;
     }
 
@@ -634,6 +636,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
 
 
 
