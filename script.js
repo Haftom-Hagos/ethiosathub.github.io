@@ -176,7 +176,7 @@ function initMap() {
 // Handle overlay visibility without removing layers
 function setOverlayVisibility(visible) {
   overlayLayers.forEach(t => {
-    try { t.setOpacity(visible ? 0.85 : 0); } catch (e) {}
+    try { t.setOpacity(visible ? 1 : 0); } catch (e) {}
   });
 }
 
@@ -186,7 +186,7 @@ function addOverlayTile(tileUrl, opts = {}) {
   const options = Object.assign({}, opts, { pane: overlayPaneName });
   const tl = L.tileLayer(tileUrl, options).addTo(map);
   overlayLayers.push(tl);
-  try { tl.setOpacity(overlayVisible ? 0.85 : 0); } catch (e) {}
+  try { tl.setOpacity(overlayVisible ? 1 : 0); } catch (e) {}
   return tl;
 }
 
@@ -361,10 +361,13 @@ function buildRequestBody() {
 }
 
 // Legend rendering: dynamic colors from backend
-function showLegend(index, dataset, uniqueClasses = null, meta = {}) {
+function showLegend(index, dataset, legendData = {}) {
   if (!window._updateLegend) {
     const el = document.getElementById('legend');
-    if (!el) return;
+    if (!el) {
+      console.error('Legend element not found');
+      return;
+    }
     window._updateLegend = (html) => { el.innerHTML = html; };
   }
 
@@ -372,41 +375,42 @@ function showLegend(index, dataset, uniqueClasses = null, meta = {}) {
   html += `<div style="font-size:12px;margin-bottom:6px;">Dataset: ${dataset}</div>`;
 
   // Landcover: discrete classes
-  if (dataset === 'landcover' && Array.isArray(uniqueClasses)) {
-    const all = uniqueClasses.map((c, i) => ({
+  if (dataset === 'landcover' && legendData.classes && Array.isArray(legendData.classes) && legendData.colors && Array.isArray(legendData.colors)) {
+    const uniqueClasses = legendData.classes.map((name, i) => ({
       id: i,
-      name: c.name || c.id || `Class ${i}`,
-      color: c.color || '#ccc'
+      name: name || `Class ${i + 1}`,
+      color: legendData.colors[i] || '#ccc'
     }));
     html += `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
-    all.forEach(c => {
+    uniqueClasses.forEach(c => {
       html += `<div style="display:flex;align-items:center;margin:4px 0;">
                  <span style="width:18px;height:18px;background:${c.color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${c.name}
                </div>`;
     });
-
   // Continuous indices: colorbar
-  } else if (meta.palette && meta.min !== undefined && meta.max !== undefined) {
-    const gradient = meta.palette.join(',');
+  } else if (legendData.meta && Array.isArray(legendData.meta.palette) && legendData.meta.palette.length > 0 && legendData.meta.min !== undefined && legendData.meta.max !== undefined) {
+    const gradient = legendData.meta.palette.join(',');
     html += `
       <div style="height:18px;border-radius:3px;overflow:hidden;border:1px solid #ccc;margin:8px 0;">
         <div style="width:100%;height:100%;background:linear-gradient(to right,${gradient})"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:12px;">
-        <span>${Number(meta.min).toFixed(2)}</span>
-        <span>${Number((meta.min + meta.max) / 2).toFixed(2)}</span>
-        <span>${Number(meta.max).toFixed(2)}</span>
+        <span>${Number(legendData.meta.min).toFixed(2)}</span>
+        <span>${Number((legendData.meta.min + legendData.meta.max) / 2).toFixed(2)}</span>
+        <span>${Number(legendData.meta.max).toFixed(2)}</span>
       </div>
     `;
-
   } else {
-    html += `<div style="font-size:12px;">No legend available</div>`;
+    // Fallback for debugging
+    console.warn('No valid legend data provided:', { legendData });
+    html += `<div style="font-size:12px;color:#888;">
+               No legend available. Check backend response for legend.classes or legend.meta.
+             </div>`;
   }
 
   window._updateLegend(html);
 }
 
-// VIEW: request backend for tiles and add overlay
 async function viewSelection() {
   const body = buildRequestBody();
   if (!body) return;
@@ -417,9 +421,14 @@ async function viewSelection() {
       body: JSON.stringify(body)
     });
 
-    // Try to parse JSON (backend might send error JSON)
     let data = null;
-    try { data = await r.json(); } catch (e) { data = null; }
+    try {
+      data = await r.json();
+      console.log('Backend response:', data); // Log full response for debugging
+    } catch (e) {
+      console.error('Failed to parse backend response:', e);
+      data = null;
+    }
 
     if (!r.ok) {
       const msg = (data && (data.detail || data.message)) || `Status ${r.status}`;
@@ -429,21 +438,27 @@ async function viewSelection() {
       } else {
         alert("View failed: " + msg);
       }
-      // update legend if backend provided info
-      if (data) showLegend(body.index, body.dataset, data.unique_classes, data.meta || {});
+      // Update legend even on error if data is available
+      if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
       return;
     }
 
-    // success path
     const tileUrl = data && (data.tiles || data.mode_tiles || data.tile);
     if (!tileUrl) {
+      console.error('No tiles in response:', data);
       alert("No tiles returned by backend.");
-      if (data) showLegend(body.index, body.dataset, data.unique_classes, data.meta || {});
+      if (data && data.legend) showLegend(body.index, body.dataset, data.legend);
       return;
     }
 
+    // Clear existing overlay layers
+    overlayLayers.forEach(layer => {
+      try { map.removeLayer(layer); } catch (e) {}
+    });
+    overlayLayers = [];
+
     addOverlayTile(tileUrl, { attribution: data.attribution || '' });
-    showLegend(body.index, body.dataset, data.unique_classes, data.meta || {});
+    showLegend(body.index, body.dataset, data.legend || {});
 
     // Fit to bounds if backend provided them
     if (data && data.bounds && Array.isArray(data.bounds) && data.bounds.length === 4) {
@@ -452,7 +467,6 @@ async function viewSelection() {
         map.fitBounds([[b[1], b[0]], [b[3], b[2]]], { maxZoom: 12 });
       } catch (e) { console.warn('fitBounds from backend bounds failed', e); }
     } else {
-      // fallback to feature or geometry
       try {
         if (selectedFeatureGeoJSON) {
           const gj = L.geoJSON(selectedFeatureGeoJSON.geometry);
@@ -583,7 +597,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             boundaryLayer.resetStyle();
             boundaryLayer.eachLayer(l => {
               if (l.feature === feat) {
-                try { l.setStyle({ color: 'red', weight: 2, fillOpacity: 0.08 }); } catch (e) {}
+                try { l.setStyle({ color: 'red', weight: 2, fillOpacity: 0.00 }); } catch (e) {}
                 try { map.fitBounds(l.getBounds(), { maxZoom: 10 }); } catch (e) {}
               }
             });
@@ -620,4 +634,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
 
