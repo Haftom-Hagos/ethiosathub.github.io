@@ -376,52 +376,54 @@ function showLegend(index, dataset, legendData = {}) {
 
  // Landcover: discrete classes
 if (dataset === 'landcover' && legendData.unique_classes && Array.isArray(legendData.unique_classes)) {
-  const uniqueClasses = legendData.unique_classes.map((c, i) => {
-    const color = c.color && /^#[0-9A-Fa-f]{6}$/.test(c.color) ? c.color : '#ccc';
-    if (!c.color || c.color !== color) {
-      console.warn(`Invalid color for class ${c.name || i}: ${c.color}, using fallback #ccc`);
-    }
-    return {
-      id: c.id || i,
-      name: c.name || `Class ${i + 1}`,
-      color: color
-    };
-  });
-  html += `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
-  uniqueClasses.forEach(c => {
-    html += `<div style="display:flex;align-items:center;margin:4px 0;">
-               <span style="width:18px;height:18px;background:${c.color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${c.name}
-             </div>`;
-  });
+    const uniqueClasses = legendData.unique_classes.map((c, i) => {
+        const color = c.color && /^#[0-9A-Fa-f]{6}$/.test(c.color) ? c.color : '#ccc';
+        if (!c.color || c.color !== color) {
+            console.warn(`Invalid color for class ${c.name || i}: ${c.color}, using fallback #ccc`);
+        }
+        return {
+            id: c.id || i,
+            name: c.name || `Class ${i + 1}`,
+            color: color
+        };
+    });
+    html += `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
+    uniqueClasses.forEach(c => {
+        html += `<div style="display:flex;align-items:center;margin:4px 0;">
+                   <span style="width:18px;height:18px;background:${c.color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${c.name}
+                 </div>`;
+    });
+}
   
 // Continuous indices: colorbar
 } else if (
-  legendData.meta &&
-  Array.isArray(legendData.meta.palette) &&
-  legendData.meta.palette.length > 0 &&
-  legendData.meta.min !== undefined &&
-  legendData.meta.max !== undefined
-) {
-  const gradient = legendData.meta.palette.join(',');
-  html += `
-    <div style="height:18px;border-radius:3px;overflow:hidden;border:1px solid #ccc;margin:8px 0;">
-      <div style="width:100%;height:100%;background:linear-gradient(to right,${gradient})"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;">
-      <span>${Number(legendData.meta.min).toFixed(2)}</span>
-      <span>${Number((legendData.meta.min + legendData.meta.max) / 2).toFixed(2)}</span>
-      <span>${Number(legendData.meta.max).toFixed(2)}</span>
-    </div>
-  `;
-} else {
-  // Fallback for debugging
-  console.warn('No valid legend data provided:', { legendData });
-  html += `<div style="font-size:12px;color:#888;">
-             No legend available. Check backend response for unique_classes or legend.meta.
-           </div>`;
-}
+        legendData.meta &&
+        Array.isArray(legendData.meta.palette) &&
+        legendData.meta.palette.length > 0 &&
+        legendData.meta.min !== undefined &&
+        legendData.meta.max !== undefined
+    ) {
+        const gradient = legendData.meta.palette.join(',');
+        html += `
+            <div style="height:18px;border-radius:3px;overflow:hidden;border:1px solid #ccc;margin:8px 0;">
+                <div style="width:100%;height:100%;background:linear-gradient(to right,${gradient})"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span>${Number(legendData.meta.min).toFixed(2)}</span>
+                <span>${Number((legendData.meta.min + legendData.meta.max) / 2).toFixed(2)}</span>
+                <span>${Number(legendData.meta.max).toFixed(2)}</span>
+            </div>
+        `;
+    } else {
+        // Fallback for debugging
+        console.warn('No valid legend data provided:', JSON.stringify(legendData));
+        html += `<div style="font-size:12px;color:#888;">
+                   No legend available. Check backend response for unique_classes or legend.meta.
+                 </div>`;
+    }
 
-window._updateLegend(html);
+    window._updateLegend(html);
+}
 
 
 async function viewSelection() {
@@ -687,3 +689,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Initialization failed', err);
   }
 });
+
