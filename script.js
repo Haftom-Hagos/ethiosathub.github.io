@@ -299,17 +299,7 @@ const showLegend = (index, dataset, legendData = {}) => {
   if (dataset === 'landcover' && Array.isArray(legendData.unique_classes)) {
     html += `<h4 style="margin:0 0 6px 0;">Land Cover Classes (AOI)</h4>`;
     legendData.unique_classes.forEach((c, i) => {
-      // Handle both hex colors and RGB arrays
-      let color = '#ccc';
-      if (c.color) {
-        if (typeof c.color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(c.color)) {
-          color = c.color;
-        } else if (Array.isArray(c.color) && c.color.length >= 3) {
-          // Convert RGB array to hex
-          const [r, g, b] = c.color;
-          color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-        }
-      }
+      const color = /^#[0-9A-Fa-f]{6}$/.test(c.color) ? c.color : '#ccc';
       const name = c.name || `Class ${i + 1}`;
       html += `<div style="display:flex;align-items:center;margin:4px 0;">
                  <span style="width:18px;height:18px;background:${color};display:inline-block;margin-right:8px;border:1px solid #999;"></span>${name}
