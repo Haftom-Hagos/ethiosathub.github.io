@@ -213,16 +213,30 @@ async function populateFeatureSelect(level) {
   const sel = DOM.featureSelect;
   if (!sel) return;
   sel.innerHTML = `<option value="">Loading...</option>`;
-  const data = await loadAdmin(level);
-  if (!data?.features) {
+
+  // Prevent running on empty selection
+  if (!level) {
     sel.innerHTML = '<option value="">Select feature</option>';
+    if (boundaryLayer) map.removeLayer(boundaryLayer);
     return;
   }
-  const propName = getPropName(level);
-  const unique = [...new Set(data.features.map(f => f.properties?.[propName]?.trim()).filter(Boolean))].sort();
-  sel.innerHTML = ['<option value="">Select feature</option>', ...unique.map(n => `<option value="${n}">${n}</option>`)].join('');
 
-  boundaryLayer && map.removeLayer(boundaryLayer);
+  const data = await loadAdmin(level);
+  if (!data || !data.features) {
+    sel.innerHTML = '<option value="">Select feature</option>';
+    console.error('Invalid GeoJSON for level:', level, data);
+    return;
+  }
+
+  // ✅ Populate dropdown list
+  const propName = getPropName(level);
+  const features = data.features.filter(f => f.properties && f.properties[propName]);
+  const names = [...new Set(features.map(f => f.properties[propName].trim()))].sort();
+
+  sel.innerHTML = ['<option value="">Select feature</option>', ...names.map(n => `<option value="${n}">${n}</option>`)].join('');
+
+  // ✅ Add to map
+  if (boundaryLayer) map.removeLayer(boundaryLayer);
   boundaryLayer = L.geoJSON(data, {
     style: { color: "#3388ff", weight: 1, fillOpacity: 0 },
     onEachFeature: (feature, layer) => {
@@ -237,8 +251,13 @@ async function populateFeatureSelect(level) {
       });
     }
   }).addTo(map);
-  try { map.fitBounds(boundaryLayer.getBounds(), { maxZoom: 7 }); } catch {}
+
+  // ✅ Fit map view to layer extent
+  try { map.fitBounds(boundaryLayer.getBounds(), { maxZoom: 7 }); } catch (err) {
+    console.warn('fitBounds failed:', err);
+  }
 }
+
 
 // --------------------------
 // Request Builder
@@ -349,6 +368,7 @@ async function downloadSelection() {
 // --------------------------
 // Initialization
 // --------------------------
+// During DOMContentLoaded initialization
 document.addEventListener('DOMContentLoaded', async () => {
   [
     'datasetSelect', 'indexSelect', 'fromYear', 'toYear', 'fromMonth', 'toMonth',
@@ -358,23 +378,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   initMap();
   ensureOverlayPane();
 
+  // Populate months/days
   populateMonths(DOM.fromMonth);
   populateMonths(DOM.toMonth);
   populateDays(DOM.fromDay);
   populateDays(DOM.toDay);
-  Object.assign(DOM, { fromMonth: { value: '7' }, toMonth: { value: '9' }, fromDay: { value: '1' }, toDay: { value: '30' } });
 
+  // ✅ Set proper defaults
+  if (DOM.adminLevel) {
+    DOM.adminLevel.innerHTML = `
+      <option value="">Select admin level</option>
+      <option value="adm1">Level 1 (Regions)</option>
+      <option value="adm2">Level 2 (Zones)</option>
+      <option value="adm3">Level 3 (Districts)</option>`;
+    DOM.adminLevel.value = ''; // make sure nothing is pre-selected
+  }
+
+  // Wire events
   DOM.datasetSelect?.addEventListener('change', e => {
     populateIndexOptions(e.target.value);
     populateYearsForDataset(e.target.value);
   });
+
   DOM.adminLevel?.addEventListener('change', e => populateFeatureSelect(e.target.value));
-  DOM.featureSelect?.addEventListener('change', async e => {
+
+  DOM.featureSelect?.addEventListener('change', e => {
     const name = e.target.value;
     if (!name || !boundaryLayer) return;
     boundaryLayer.eachLayer(layer => {
-      const n = layer.feature.properties?.[getPropName(DOM.adminLevel.value)]?.trim();
-      if (n === name) {
+      const propName = getPropName(DOM.adminLevel.value);
+      const layerName = layer.feature.properties?.[propName]?.trim();
+      if (layerName === name) {
         boundaryLayer.resetStyle();
         layer.setStyle({ color: 'red', weight: 2, fillOpacity: 0.08 });
         selectedFeatureGeoJSON = layer.feature;
@@ -383,6 +417,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   });
+
   DOM.viewSelectionBtn?.addEventListener('click', viewSelection);
   DOM.downloadSelectionBtn?.addEventListener('click', downloadSelection);
 });
+
